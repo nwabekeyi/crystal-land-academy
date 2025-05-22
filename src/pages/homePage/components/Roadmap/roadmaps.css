@@ -1,0 +1,12 @@
+/* Slide and fade-in animation */
+.roadmap-item {
+    opacity: 0;
+    transform: translateY(50px); /* Start below the viewport */
+    transition: transform 0.6s ease, opacity 0.6s ease;
+  }
+  
+  .slide-in {
+    opacity: 1;
+    transform: translateY(0); /* End position at its normal place */
+  }
+  

@@ -1,0 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap");
+
+*{
+  margin: 0;
+}
+html,
+body,
+#root,
+.app,
+.content {
+  width: 100%;
+  font-family: "Source Sans Pro", sans-serif;
+}
+.content {
+  /* border: 4px solid red; */
+  margin-left: -25px;
+  /* z-index: 4000; */
+}
+
+
+
+/* Remove scrollbar globally */
+::-webkit-scrollbar {
+  display: none;
+}
+
+.content {
+  overflow: hidden; /* Disable scrolling globally */
+}
+
+/* Add scrollbar only for #dashboard */
+#dashboard {
+  overflow: auto; /* Enable scroll only for #dashboard */
+  max-height: 100vh; /* Optional: restrict the height for scrolling */
+}
+
+/* Style for the scrollbar */
+#dashboard::-webkit-scrollbar {
+  width: 5px;
+}
+
+/* Track */
+#dashboard::-webkit-scrollbar-track {
+  background: e0e0e0;
+}
+
+/* Handle */
+#dashboard::-webkit-scrollbar-thumb {
+  background: #3d3d3d;
+}
+
+/* Handle on hover */
+#dashboard::-webkit-scrollbar-thumb:hover {
+  background: #a4a9fc;
+}
