@@ -14,9 +14,9 @@ function App() {
       <PersistGate loading={null} persistor={persistor}> {/* Wait for persisted state */}
           {/* <MyRoute /> */}
 
-          <div style={{height:'100vh', width:'100vw', display:"grid", placeContent: 'center'}}>
-              <p style={{fontSize:"4em", fontWeight:'3em', color:'green'}}>Crystal land academy</p>
-              <p style={{fontSize:"2em", fontWeight:'2em', textAlign:'center'}}>Please view web app updates here </p>
+          <div style={{height:'100vh', width:'100vw', display:"grid", placeContent: 'center', }}>
+              <p style={{fontSize:"3em", fontWeight:'2em', color:'green', textAlign: 'center'}}>Crystal land academy</p>
+              <p style={{fontSize:"1em", fontWeight:'1em', textAlign:'center'}}>Please view web app updates here </p>
 
           </div>
       </PersistGate>
