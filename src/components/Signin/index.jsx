@@ -150,7 +150,7 @@ console.log(path)
                 <IconButton size="small" color="primary">
                   <BadgeRoundedIcon sx={{ color: '#fff' }}/>
                 </IconButton>
-                <Typography variant="h6">Beks e-learning</Typography>
+                <Typography variant="h6">Crystal Land Academy</Typography>
               </Box>
             </Box>
 

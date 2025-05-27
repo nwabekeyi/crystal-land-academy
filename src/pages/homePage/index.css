@@ -3,6 +3,38 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300&display=swap");
 
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* /root/horizon-server/public/admin/src/styles.css */
+.dark-overlay-before::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4); /* 70% opaque black */
+  z-index: 1; /* Above <img> (z-0), below foreground (z-1, z-10) */
+}
+
+
+/* Existing styles (if any) */
+.absolute { position: absolute; }
+.top-\[54\%\] { top: 54%; }
+.left-1\/2 { left: 50%; }
+.w-\[234\%\] { width: 234%; }
+.-translate-x-1\/2 { transform: translateX(-50%); }
+.z-\[-1\] { z-index: -1; }
+@media (min-width: 768px) {
+  .md\:-top-\[4\%\] { top: -4%; }
+  .md\:w-\[138\%\] { width: 138%; }
+}
+@media (min-width: 1024px) {
+  .lg\:-top-\[104\%\] { top: -104%; }
+}
 
 :root {
   --font-sora: "Sora", sans-serif;

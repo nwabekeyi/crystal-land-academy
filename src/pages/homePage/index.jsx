@@ -1,5 +1,4 @@
  import ButtonGradient from './assets/svg/ButtonGradient'
-import Courses from './components/Courses';
 import Button from './components/Button';
 import Collaboration from './components/Collaboration';
 import Footer from './components/Footer';
@@ -14,10 +13,9 @@ import './index.css'
 const App = () => {
   return (
     <>
-      <div className='pt-[4.75rem] lg:pt-[5.25rem] overflow-x-hidden overflow-y-auto'>
+      <div className='pt-[4.75rem] lg:pt-[5.25rem] overflow-x-hidden overflow-y-auto bg-[#fff]'>
         <Header />
         <Hero />
-        <Courses />
         <Collaboration />
         <Services />
         <About />
