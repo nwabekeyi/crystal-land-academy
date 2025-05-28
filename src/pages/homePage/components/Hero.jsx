@@ -5,8 +5,9 @@ import Button from './Button';
 import { useNavigate } from 'react-router-dom';
 
 import { curve, heroBackground } from '../assets';
-import { BackgroundCircles, BottomLine, Gradient } from './design/Hero';
+import { Gradient } from './design/Hero';
 import Generating from './Generating';
+import classImage from  "../assets/class.png"
 
 const Hero = () => {
     const navigate = useNavigate();
@@ -45,18 +46,18 @@ const Hero = () => {
                 </div>
 
                 <div className='relative max-w-[23rem] mx-auto md:max-w-5xl xl:mb-24'>
-                    <div className='relative z-1 p-0.5 rounded-2xl bg-conic-gradient'>
+                    <div className='relative z-1 p-0.5 rounded-2xl bg-yellow'>
                         <div className='relative bg-n-8 rounded-[1rem]'>
-                            <div className='h-[1.4rem] bg-n-10 rounded-t-[0.9rem]' />
+                            <div className='h-[1.4rem] bg-green rounded-t-[0.9rem]' />
                             <div className='aspect-[33/40] rounded-b-[0.9rem] overflow-hidden md:aspect-[688/490] lg:aspect-[1024/490]'>
                                 <div className="relative group h-[auto]">
                                     <div className="absolute top-0 left-0 right-0 bottom-0 bg-black opacity-50 z-10 group-hover:opacity-30 transition-opacity"></div>
                                     <div className="top-[60%] left-1/2 w-full absolute md:top-[40%] md:left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 text-white text-xl font-semibold text-center px-4 md:text-3xl">
-                                        <p>"Empowering you with tech skills for tomorrow's challenges."</p>
+                                        <p>"we build knowledge, faith, and friendship"</p>
                                     </div>
 
                                     <img
-                                        src='https://dl.dropboxusercontent.com/scl/fi/lbpxul04t1alamp6dmnna/techie.jpeg?rlkey=navep0n71tpl463h4tbao7c82&st=i7d4af1u&dl=0'
+                                        src={classImage}
                                         alt="learners image"
                                         className='w-full h-[100%] scale-[1.7] translate-y-[8%] md:scale-[1] md:-translate-y-[10%] lg:-translate-y-[23%] z-0'
                                         width={1024} height={490}

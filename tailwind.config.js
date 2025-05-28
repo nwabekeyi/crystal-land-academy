@@ -19,6 +19,8 @@ export default {
           5: "#858DFF",
           6: "#FF98E2",
         },
+        green: "#1D3F14",   // Named green
+        yellow: "#FFDA3B",  // Named yellow
         stroke: {
           1: "#26242C",
         },

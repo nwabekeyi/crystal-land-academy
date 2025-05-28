@@ -109,20 +109,21 @@ import {
   
   
   export const collabText =
-"With cutting-edge technology and robust security, it's the ideal platform for students and educators to enhance learning and collaboration."  
+"Proving a structured approach to creating a high-quality Islamic school that combines modern education with islamic values "
+  
   export const collabContent = [
     {
       id: "0",
-      title: "Expereinced instrcutors",
+      title: "Qualified teachers",
       text: collabText,
     },
     {
       id: "1",
-      title: "Comfortbale online education",
+      title: "Islamic studies",
     },
     {
       id: "2",
-      title: "tailored mentorship",
+      title: "Conducive learning environment",
     },
   ];
   

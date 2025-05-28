@@ -11,7 +11,7 @@ const Collaboration = () => {
       <div className="relative bg-[url('https://dl.dropboxusercontent.com/scl/fi/5qwvni6b9f4zil5rbvvf8/Crosstown-Selects-01.jpeg?rlkey=ffbdexdd7tpdpy4sbd3mvfrhk&st=els4zffz&dl=0')] bg-cover bg-fixed bg-center min-h-screen before:absolute before:inset-0 before:bg-black before:opacity-80 py-10">
         <div className='container lg:flex relative z-10'>
           <div className='max-w-[25rem]'>
-            <h2 className='h2 mb-4 md:mb-8'> Register for our online classes </h2>
+            <h2 className='h2 mb-4 md:mb-8'> Brighter future for your kids</h2>
             <ul className='max-w-[22rem] mb-10 md:mb-14'>
               {collabContent.map((item) => (
                 <li className='mb-3 py-3' key={item.id}>
@@ -25,7 +25,7 @@ const Collaboration = () => {
                 </li>
               ))}
             </ul>
-            <Button href='#hero'>Try it now</Button>
+            <Button href='#hero'>Register now</Button>
           </div>
 
           <div className='lg:ml-auto xl:w-[38rem] mt-4'>
