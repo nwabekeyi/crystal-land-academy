@@ -5,15 +5,17 @@ import { check, service1 } from '../assets'
 import { services, servicesIcons } from '../constants'
 import Generating from './Generating'
 import { Gradient } from './design/Services'
+import muslimGirl from '../assets/muslim_girl.png';
+import islamiclearning from '../assets/islamic_learning.png'
 
 const Services = () => {
   return (
     <Section id='services'>
       <div className='container'>
         <Heading
-          className='text-center'
-          title='Build Your Tech Career with Virtual Classes'
-          text='We empower you to master essential tech skills through hands-on, application-based learning from top-notch instructors.'
+          className='text-center text-blue font-bold'
+          title='Enroll Today and Build a Brighter Future'
+          text='Nurturing Young Minds with Islamic Values and Academic Excellence'
         />
 
         <div className='relative'>
@@ -23,16 +25,16 @@ const Services = () => {
             <div className='absolute top-0 left-0 w-full h-full pointer-events-none md:w-3/5 xl:w-auto'>
               <img
                 className='w-full h-full object-cover md:object-right'
-                width={800} height={730}
-                src={service1}
+                width={700} height={600}
+                src={muslimGirl}
                 alt="Virtual Tech Classes"
               />
             </div>
 
             <div className='relative z-1 max-w-[17rem] ml-auto'>
-              <h4 className='h4 mb-4'>Let's guide you to the future</h4>
-              <p className='body-2 mb-[3rem] text-n-3'>
-                Learn cutting-edge technology skills through virtual classrooms led by industry experts. Gain practical experience and accelerate your career growth.
+              <h4 className='h4 mb-4 text-purple'>Let's guide your kids to the future</h4>
+              <p className='body-2 mb-[3rem] text-blue'>
+                we provide cutting-edge education integrated with Islamic principle that nutures your children in the fear of God.
               </p>
               <ul className='body-2'>
                 {services.map((item, index) => (
@@ -42,7 +44,7 @@ const Services = () => {
                       alt="check"
                       height={24} width={24}
                     />
-                    <p className='ml-4'>{item}</p>
+                    <p className='ml-4 text-blue'>{item}</p>
                   </li>
                 ))}
               </ul>
@@ -62,19 +64,18 @@ const Services = () => {
               </div>
 
               <div className='absolute inset-0 flex flex-col justify-end p-8 bg-gradient-to-b from-n-8/0 to-n-8/90'>
-                <h4 className='h4 mb-4'>Top-Level Tech Education</h4>
+                <h4 className='h4 mb-4'>Top-Level Education</h4>
                 <p className='body-2 mb-[3rem] text-n-3'>
-                  Master the latest in-demand tech skills through virtual classes taught by leading professionals. Learn by doing, with real-world projects and practical applications.
+                We provide a conducive learning environment where students feel safe, supported, and inspired. With caring teachers, calm classrooms, and a focus on respect and growth, every child is encouraged to reach their full potential.
                 </p>
               </div>
             </div>
 
             <div className='p-4 bg-n-7 lg:min-h-[46rem] rounded-3xl overflow-hidden'>
               <div className='py-12 px-4 xl:px-8'>
-                <h4 className='h4 mb-4'>Application-Based Learning</h4>
+                <h4 className='h4 mb-4'>Islamic-Based Learning</h4>
                 <p className='body-2 mb-[2rem] text-n-3'>
-                  Experience hands-on learning through projects and challenges designed to build your skills in software development, cloud computing, data analysis, and more.
-                </p>
+                At our Islamic school, we believe in nurturing the hearts and minds of children through a balanced education rooted in the Qur’an, Sunnah, and academic excellence. We are focused on raising confidence, righteous leaders who walk with purpose and live with integrity.                </p>
                 <ul className='flex items-center justify-between'>
                   {servicesIcons.map((item, index) => (
                     <li
@@ -98,9 +99,9 @@ const Services = () => {
               </div>
               <div className='relative h-[20rem] bg-n-8 rounded-xl md:h-[25rem] overflow-hidden'>
                 <img
-                  src='https://dl.dropboxusercontent.com/scl/fi/ps31gtjgyblmrhaobv2fk/computer.jpeg?rlkey=0u2ozn88mz30g81022odzbgys&st=x7j2sw7k&dl=0'
-                  className='w-full h-full object-cover'
-                  width={520} height={400}
+                  src={islamiclearning}
+                  style={{width:'100%'}}
+                   height={400}
                   alt="Tech Tools"
                 />
               </div>

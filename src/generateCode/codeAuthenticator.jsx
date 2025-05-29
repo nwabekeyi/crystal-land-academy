@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { TextField, Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import myImage from "../images/authenticator-image.jpg";
-import mobileImg from "../images/svg-2.svg";
+import myImage from "../images/student-code-auth.jpeg"
+import mobileImg from "../pages/homePage/assets/crystal-land-log-removebg.png";
 import Navbar from "../pages/homePage/components/Header";
 import Footer from "../pages/homePage/components/Footer";
 import { Button } from "../components/ButtonElement";
@@ -62,15 +62,43 @@ const CodeAuthenticator = () => {
       >
         {/* Image placeholder on the left */}
         <Box
-          sx={{
-            width: { xs: "0%", md: "100%" },
-            height: "100%",
-            display: { xs: "none", md: "block" },
-            backgroundImage: `url(${myImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        ></Box>
+  sx={{
+    width: { xs: "0%", md: "100%" },
+    height: "100%",
+    display: { xs: "none", md: "block" },
+    backgroundImage: `url(${myImage})`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    position: "relative",
+  }}
+>
+  <Box
+    sx={{
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      backgroundColor: "rgba(0, 0, 0, 0.7)",
+      color: "#fff",
+      padding: "40px",
+      borderRadius: "12px",
+      width: "70%",
+      maxWidth: "600px",
+      textAlign: "center",
+    }}
+  >
+    <Typography variant="h4" fontWeight="bold" gutterBottom>
+      Get Started with a Registration Code
+    </Typography>
+    <Typography variant="h6" mt={2}>
+      Contact <strong>+234 812 345 6789</strong> to receive your unique code.
+    </Typography>
+    <Typography variant="body1" mt={1}>
+      Enter the code here to begin your enrollment process.
+    </Typography>
+  </Box>
+</Box>
+
 
         {/* Form Section */}
         <Box
@@ -93,7 +121,7 @@ const CodeAuthenticator = () => {
               fontSize: { xs: "1.2em", md: "2em" },
             }}
           >
-            Welcome to Beks technologies
+            Crystal land academy
           </Typography>
           <Box
             sx={{

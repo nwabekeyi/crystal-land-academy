@@ -36,19 +36,19 @@ const Hero = () => {
                             <img src={curve} className='absolute top-full left-0 w-full xl:-mt-2' width={624} height={28} alt='Curve' />
                         </span>
                     </h1>
-                    <p className='body-1 text-n-2 max-w-3xl mx-auto mb-6 lg:mb-8'>
+                    <p className='body-1 max-w-3xl mx-auto mb-6 lg:mb-8'>
                         A modern learning environment rooted in discipline, respect, and holistic development — where every child is guided to reach their full potential.
                     </p>
 
-                    <Button white onClick={() => navigate('/chatbot')}>
+                    <Button white onClick={() => navigate('/code-authenticator')}>
                         Get Started
                     </Button>
                 </div>
 
                 <div className='relative max-w-[23rem] mx-auto md:max-w-5xl xl:mb-24'>
-                    <div className='relative z-1 p-0.5 rounded-2xl bg-yellow'>
+                    <div className='relative z-1 p-0.5 rounded-2xl bg-gray'>
                         <div className='relative bg-n-8 rounded-[1rem]'>
-                            <div className='h-[1.4rem] bg-green rounded-t-[0.9rem]' />
+                            <div className='h-[1.4rem] bg-purple rounded-t-[0.9rem]' />
                             <div className='aspect-[33/40] rounded-b-[0.9rem] overflow-hidden md:aspect-[688/490] lg:aspect-[1024/490]'>
                                 <div className="relative group h-[auto]">
                                     <div className="absolute top-0 left-0 right-0 bottom-0 bg-black opacity-50 z-10 group-hover:opacity-30 transition-opacity"></div>

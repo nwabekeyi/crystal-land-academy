@@ -13,7 +13,7 @@ import './index.css'
 const App = () => {
   return (
     <>
-      <div className='pt-[4.75rem] lg:pt-[5.25rem] overflow-x-hidden overflow-y-auto bg-[#fff]'>
+      <div className='pt-[4.75rem] lg:pt-[5.25rem] overflow-x-hidden overflow-y-auto bg-[#ccc]'>
         <Header />
         <Hero />
         <Collaboration />

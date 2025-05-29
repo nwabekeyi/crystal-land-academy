@@ -4,7 +4,6 @@ import Loader from './utils/loader'; // Assuming Loader is a spinner or fallback
 // Lazy loading components
 const Home = lazy(() => import('./pages/homePage'));
 const SignInPage = lazy(() => import('./pages/signin'));
-const ChatbotComponent = lazy(() => import('./components/chatbot'));
 const DashboardHome = lazy(() => import('./pages/dashboard'));
 const CodeAuthenticator = lazy(() => import('./generateCode/codeAuthenticator'));
 const OfflineSignUp = lazy(() => import('./pages/offlineSignUp'));
@@ -21,7 +20,6 @@ function MyRoute() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/signin" element={<SignInPage />} />
-          <Route path="/chatbot" element={<ChatbotComponent />} />
           <Route path="/dashboard/*" element={<DashboardHome />} />
           <Route path="/code-authenticator" element={<CodeAuthenticator />} />
           <Route path="/offlineSignup" element={<OfflineSignUp />} />

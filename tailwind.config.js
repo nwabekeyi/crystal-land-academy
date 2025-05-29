@@ -21,6 +21,9 @@ export default {
         },
         green: "#1D3F14",   // Named green
         yellow: "#FFDA3B",  // Named yellow
+        grey: '#c0c0bf',
+        purple: '#AF78FC',
+        blue: '#070B21',
         stroke: {
           1: "#26242C",
         },

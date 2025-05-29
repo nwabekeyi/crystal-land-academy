@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import LoadingButton from '../loadingButton'; // Adjust path as needed
 import useAuth from '../../hooks/useAuth'; // Import useAuth hook
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import bg1 from '../../images/signinBg.jpeg'
 
 const SignIn = () => {
   const { loading, error, login } = useAuth();
@@ -79,7 +80,7 @@ console.log(path)
           justifyContent: 'flex-start',
           alignItems: 'center',
           minHeight: '100vh',
-          backgroundImage: `url(${mode === 'light' ? 'https://dl.dropboxusercontent.com/scl/fi/rb1js15gzgvjv0uqqx1nb/babtech.avif?rlkey=6v5sts1e0ome1pf11sz3d1uj8&st=2lfn1ea0&dl=0' : 'https://dl.dropboxusercontent.com/scl/fi/3xy7u0os5rin8xah74itf/study-group-learning-library-1.jpg?rlkey=3nc77e9tiuhwgorog066pcyry&st=d7pccgkj&dl=0'})`,
+          backgroundImage: `url(${mode === 'light' ? 'https://dl.dropboxusercontent.com/scl/fi/rb1js15gzgvjv0uqqx1nb/babtech.avif?rlkey=6v5sts1e0ome1pf11sz3d1uj8&st=2lfn1ea0&dl=0' : bg1})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundAttachment: 'fixed',
@@ -200,7 +201,7 @@ console.log(path)
           </Box>
 
           <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Typography variant="body2">© Beks technologies {new Date().getFullYear()}</Typography>
+            <Typography variant="body2">© Crystal land academy {new Date().getFullYear()}</Typography>
           </Box>
         </Box>
       </Box>

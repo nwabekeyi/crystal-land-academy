@@ -10,8 +10,9 @@ const About = () => {
     <Section className='overflow-hidden' id='About'>
         <div className='container relative z-2'>
         <Heading 
-               tag="Get the best tech learning experience"
-               title="Bring learning to the comfort of your home"
+              className='text-blue'
+               tag="Get the best  learning experience"
+               title="Our Mission"
                />
             <div className='hidden  relative justify-center mb-[2rem] lg:flex'>
 

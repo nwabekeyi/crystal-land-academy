@@ -6,30 +6,41 @@ import {
     benefitImage2,
     chromecast,
     disc02,
-    discord,
     discordBlack,
     facebook,
-    figma,
-    framer,
     instagram,
     notification2,
     notification3,
     notification4,
-    notion,
-    photoshop,
-    protopie,
-    raindrop,
     recording01,
     recording03,
-    roadmap1,
-    roadmap2,
-    roadmap3,
-    roadmap4,
-    slack,
     sliders04,
     telegram,
     twitter,
   } from "../assets";
+  
+  import {
+    GiPrayerBeads,
+    GiStarFormation
+  } from 'react-icons/gi';
+  
+  import { MdMosque } from "react-icons/md";
+
+  import {
+    FaQuran,
+    FaPray,
+    FaBook,
+    FaHandHoldingHeart,
+    FaUserAlt
+  } from 'react-icons/fa';
+
+  import sciencelab from '../assets/lab_facility.png'
+  import learningAid from '../assets/learning_aid.webp'
+  import creche from '../assets/creche.jpg'
+  import computerlab from '../assets/computer_lab.jpg'
+
+
+
   
   export const navigation = [
     {
@@ -65,9 +76,9 @@ import {
   export const notificationImages = [notification4, notification3, notification2];
 
   export const services = [
-    "Expert instructors",
-    "Mentorship",
-    "Practical-based learning",
+    "Qualified teachers",
+    "Conducive learning environment",
+    "Islamic-rooted learning"
   ];
   
   export const servicesIcons = [
@@ -81,32 +92,31 @@ import {
   export const roadmap = [
     {
       id: "0",
-      title: "Realtime video classes",
-      text: "Introduce live video classes with real-time interactions, allowing users to attend classes and interact with instructors and peers via video, making learning more immersive and engaging.",
-      imageUrl: 'https://dl.dropboxusercontent.com/scl/fi/udg917pepoem3b3urts2r/live-online-class.jpg?rlkey=4o0nh2ddb15e6mppiftg239vh&st=mdagi0v8&dl=0',
+      title: "Creche",
+      text: "A warm and nurturing environment designed to support early childhood development through play, care, and foundational learning.",
+      imageUrl: creche,
       colorful: true,
     },
     {
       id: "1",
-      title: "In-app messaging",
-      text: "Implement an in-app messaging system to facilitate real-time communication between users and the chatbot, enhancing the user experience with quicker responses and better engagement.",
-      imageUrl: 'https://dl.dropboxusercontent.com/scl/fi/gbglcpcj0qxfcbjmho89u/01-2.webp?rlkey=wv8afoaw28ir0hop7xkyo2j12&st=183cdna7&dl=0',
+      title: "Science laboratory",
+      text: "A hands-on learning space where students explore scientific concepts through experiments and practical activities.",
+      imageUrl: sciencelab,
     },
     {
       id: "2",
-      title: "Personalized dashboard",
-      text: "Offer users a customizable dashboard where they can modify the layout, themes, and features to match their preferences, enhancing the personalization of the chatbot experience.",
+      title: "Visual and vocal learning aids",
+      text: "Innovative tools and resources that enhance understanding through visual cues and auditory guidance, catering to diverse learning styles.",
       date: "May 2023",
-      imageUrl: 'https://dl.dropboxusercontent.com/scl/fi/99qdvg3xzwcigtclqmqju/high-school-student-dashboard-template-thumb.webp?rlkey=77muj4zklp8v5c7ctk8tskovf&st=z3p65flc&dl=0',
+      imageUrl: learningAid,
     },
     {
       id: "3",
-      title: "Peer connection",
-      text: "Enable users to connect with peers within the app, allowing them to share insights, advice, and experiences, and build a community around the chatbot platform.",
-      imageUrl: "https://dl.dropboxusercontent.com/scl/fi/37rvc2rl7kagpv4jlwzjq/social-media-online-connection-feature.jpg?rlkey=63l4ls7fehjfdrgg5vwbo6hiu&st=4rc399f8&dl=0",
+      title: "Computer facilities",
+      text: "Modern computer labs equipped to build digital literacy, support coding skills, and encourage tech-based learning.",
+      imageUrl: computerlab,
     },
   ];
-  
   
   export const collabText =
 "Proving a structured approach to creating a high-quality Islamic school that combines modern education with islamic values "
@@ -130,79 +140,80 @@ import {
   export const collabApps = [
     {
       id: "0",
-      title: "Figma",
-      icon: figma,
-      width: 26,
-      height: 36,
+      title: "Qur'an",
+      icon: FaQuran,
+      width: 34,
+      height: 34,
     },
     {
       id: "1",
-      title: "Notion",
-      icon: notion,
-      width: 34,
+      title: "Mosque",
+      icon: MdMosque,
+      width: 36,
       height: 36,
     },
     {
       id: "2",
-      title: "Discord",
-      icon: discord,
-      width: 36,
-      height: 28,
+      title: "Prayer",
+      icon: FaPray,
+      width: 32,
+      height: 32,
     },
     {
       id: "3",
-      title: "Slack",
-      icon: slack,
+      title: "Islamic Book",
+      icon: FaBook,
       width: 34,
-      height: 35,
+      height: 34,
     },
     {
       id: "4",
-      title: "Photoshop",
-      icon: photoshop,
+      title: "Charity",
+      icon: FaHandHoldingHeart,
       width: 34,
       height: 34,
     },
     {
       id: "5",
-      title: "Protopie",
-      icon: protopie,
-      width: 34,
-      height: 34,
+      title: "Modesty",
+      icon: FaUserAlt,
+      width: 32,
+      height: 32,
     },
     {
       id: "6",
-      title: "Framer",
-      icon: framer,
-      width: 26,
-      height: 34,
+      title: "Tasbeeh",
+      icon: GiPrayerBeads,
+      width: 30,
+      height: 30,
     },
     {
       id: "7",
-      title: "Raindrop",
-      icon: raindrop,
-      width: 38,
-      height: 32,
+      title: "Ummah",
+      icon: GiStarFormation, // symbolic
+      width: 34,
+      height: 34,
     },
   ];
+  
   
   export const about = [
     {
       id: "0",
       title: "Excellence",
-      description: "We are committed to providing a top-tier education that fosters academic excellence and prepares students for success in technology.",
+      description: "Provide quality education integrated with islamic principles",
       pictureUrl: "https://dl.dropboxusercontent.com/scl/fi/nc5lyu0qrs8wuss68iu5b/istockphoto-838386124-612x612.jpg?rlkey=8lotlyti5j9v7r781e867rozb&st=l70imi5l&dl=0",  // Replace with the actual path to the image
     },
     {
       id: "1",
-      title: "Innovation",
-      description: "We instill a strong sense of integrity, ethics, and honesty in our students, preparing them for responsible and ethical careers in technology.",
+      title: "Faith",
+      description: "Foster a nurturing, faith-based learning environment",
       pictureUrl: "https://dl.dropboxusercontent.com/scl/fi/9nc6j2x5gm6kwex1dqxzy/energy-innovation-concept-light-bulb-black-background-with-light-fair-power-energy-ecology-solution-saving-global-warming-creative-innovation-idea_44868-1375.avif?rlkey=2m300llz5gt20butx8d9qp5e0&st=el7wrxmi&dl=0",  // Replace with the actual path to the image
     },
     {
       id: "2",
-      title: "Integrity",
-      description: "Integrity means delivering honest, transparent services while upholding strong ethical standards, fostering trust with every customer and partner.",
+      title: "Discipline",
+      description: "Build a foundation for lifelong learning and responsible citizenship",
       pictureUrl: "https://dl.dropboxusercontent.com/scl/fi/53nmmrlj09hg9u23ff1pq/QuestionMarks-FAQs.png?rlkey=z0d5dtx8nsul7pxodseaz4qf4&st=1l1k2na3&dl=0",  // Replace with the actual path to the image
     },
   ];

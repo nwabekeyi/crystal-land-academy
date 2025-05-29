@@ -3,12 +3,16 @@ import { collabApps, collabContent, collabText } from '../constants'
 import { brainwaveSymbol, check } from '../assets'
 import Button from './Button'
 import { LeftCurve, RightCurve } from './design/Collaboration'
+import bg from "../assets/muslim_school.jpg"
 
 const Collaboration = () => {
   return (
     <Section crosses>
       {/* Wrapper div with background image and dark overlay */}
-      <div className="relative bg-[url('https://dl.dropboxusercontent.com/scl/fi/5qwvni6b9f4zil5rbvvf8/Crosstown-Selects-01.jpeg?rlkey=ffbdexdd7tpdpy4sbd3mvfrhk&st=els4zffz&dl=0')] bg-cover bg-fixed bg-center min-h-screen before:absolute before:inset-0 before:bg-black before:opacity-80 py-10">
+      <div
+          className="relative bg-cover bg-fixed bg-center min-h-screen py-10 before:absolute before:inset-0 before:bg-black before:opacity-80 before:z-0"
+          style={{ backgroundImage: `url(${bg})` }}
+        >
         <div className='container lg:flex relative z-10'>
           <div className='max-w-[25rem]'>
             <h2 className='h2 mb-4 md:mb-8'> Brighter future for your kids</h2>
@@ -47,22 +51,24 @@ const Collaboration = () => {
               </div>
 
               <ul>
-                {collabApps.map((app, index) => (
-                  <li key={app.id} className={`absolute top-0 left-1/2 h-1/2
-                                              -ml-[1.6rem] origin-bottom rotate-${index * 45 }`}>
-                    <div className={`relative -top-[1.6rem] 
-                                     flex w-[3.2rem]  h-[3.2rem] bg-n-7
-                                     border border-n-1/15 rounded-xl
-                                     -rotate-${index * 45 }`}>
-                      <img src={app.icon} alt={app.title}
-                           className='m-auto'
-                           height={app.height}
-                           width={app.width}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {collabApps.map((app, index) => (
+                <li key={app.id} className={`absolute top-0 left-1/2 h-1/2
+                                            -ml-[1.6rem] origin-bottom rotate-${index * 45 }`}>
+                  <div className={`relative -top-[1.6rem] 
+                                  flex w-[3.2rem]  h-[3.2rem] bg-n-7
+                                  border border-n-1/15 rounded-xl
+                                  -rotate-${index * 45 }`}>
+                    {/* Render icon component here */}
+                    <app.icon
+                      className='m-auto'
+                      style={{ height: app.height, width: app.width }}
+                      aria-label={app.title}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+
 
               <LeftCurve />
               <RightCurve />

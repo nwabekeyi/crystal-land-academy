@@ -39,7 +39,7 @@ const Roadmap = () => {
   return (
     <Section className='overflow-hidden' id='roadmap'>
         <div className='container md:pb-10'>
-            <Heading title='Our learning app features' tag='Ready to get started' />
+            <Heading className='text-blue' title='Our learning facilities' tag='Ready to get started' />
            
             <div className="relative grid gap-6 md:grid-cols-2 md:gap-4 md:pb-[7rem]">
                  {roadmap.map((item, index) => {
