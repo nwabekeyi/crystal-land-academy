@@ -7,7 +7,7 @@ import LoadingButton from '../loadingButton'; // Adjust path as needed
 import useAuth from '../../hooks/useAuth'; // Import useAuth hook
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import bg1 from '../../images/signinBg.jpeg'
-
+import bg2 from '../../assets/login_muslim_image.png'
 const SignIn = () => {
   const { loading, error, login } = useAuth();
   const [email, setEmail] = useState('');
@@ -77,10 +77,10 @@ console.log(path)
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'flex-start',
+          justifyContent: 'end',
           alignItems: 'center',
           minHeight: '100vh',
-          backgroundImage: `url(${mode === 'light' ? 'https://dl.dropboxusercontent.com/scl/fi/rb1js15gzgvjv0uqqx1nb/babtech.avif?rlkey=6v5sts1e0ome1pf11sz3d1uj8&st=2lfn1ea0&dl=0' : bg1})`,
+          backgroundImage: `url(${mode === 'light' ? bg1 : bg2})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundAttachment: 'fixed',
