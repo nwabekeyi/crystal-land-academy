@@ -67,7 +67,7 @@ const Header = () => {
                                        left-0 right-0 bottom-0
                                        bg-n-8/50 backdrop-blur-md lg:static lg:flex 
                                        lg:bg-transparent lg:backdrop-blur-none`}>
-                            <div className='relative z-2 flex flex-col items-center justify-center m-auto lg:flex-row'>
+                            <div className='relative z-2 flex flex-col items-center justify-center m-auto lg:flex-row bg-blue lg:bg-[transparent]'>
                                 {navigation.map((item) => (
                                     <a key={item.id} href={item.url}
                                        onClick={() => handleClick(item.url)}

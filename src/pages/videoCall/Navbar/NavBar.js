@@ -21,7 +21,7 @@ const NavBar = () => {
                 }}
             >
                 <VideocamRoundedIcon style={{ fontSize: "36px" }} />
-                <Typography variant="h4">Beks coding club</Typography>
+                <Typography variant="h4">Crystal land Academy</Typography>
                 <Box display="flex">
                     <Time />
                 </Box>

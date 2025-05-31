@@ -40,7 +40,7 @@ const Receipt = ({ receipt }) => {
       }}
     >
       <Typography variant="h6" align="center" gutterBottom>
-        Beks Technology
+        Crystal land academy
       </Typography>
       <Typography variant="subtitle2" align="center" gutterBottom>
         Payment Receipt
