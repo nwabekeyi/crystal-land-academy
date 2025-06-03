@@ -72,7 +72,7 @@ const Admin = () => {
         <ResponsiveContainer sm={6} md={3}>
           <DashboardDataBox>
             <Typography variant="h5" fontWeight="600" textAlign='center'>
-              Instructors
+              Teachers
             </Typography>
             <Box display="flex" flexDirection="column" alignItems="center" mt="25px">
               <SchoolIcon sx={{ fontSize: '70px', color: colors.blueAccent[200] }} />
@@ -190,7 +190,7 @@ const Admin = () => {
             overflowY: 'auto'
           }}>
               <Typography variant="h5" fontWeight="600" gutterBottom>
-                Courses Stats
+                Subject Stats
               </Typography>
 
               {sortedProgramStats.map(({ program, studentCount, totalAmount }) => (
@@ -228,7 +228,7 @@ const Admin = () => {
                   overflowY: 'auto'
                 }}>
               <Typography variant="h5" fontWeight="600" gutterBottom>
-                Top Instructors
+                Top Teachers
               </Typography>
 
               {topInstructors.map((instructor) => (
@@ -266,29 +266,10 @@ const Admin = () => {
                   overflowY: 'auto'
                 }}>
               <Typography variant="h5" fontWeight="600" gutterBottom>
-                Cohorts
+                Classes
               </Typography>
 
-              {mockCohorts.map((cohort, index) => (
-                <Box key={index}>
-                  <Box
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="flex-start"
-                    p="15px"
-                    mb="10px"
-                    sx={{ backgroundColor: conBg, borderRadius: '10px' }}
-
-                  >
-                    <Typography variant="h6" fontWeight="600">
-                      {cohort.name}
-                    </Typography>
-                    <Typography variant="body1">Course: {cohort.courseName}</Typography>
-                    <Typography variant="body1">Number of Students: {cohort.numStudents}</Typography>
-                    <Typography variant="body1">Progress: {cohort.progress}%</Typography>
-                  </Box>
-                </Box>
-              ))}
+             
             </DashboardDataBox>
           </ResponsiveContainer>
 

@@ -1,18 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { CssBaseline, Box, FormControl, IconButton, Link, TextField, Typography, Stack } from '@mui/material';
-import { DarkModeRounded as DarkModeRoundedIcon, LightModeRounded as LightModeRoundedIcon, ArrowBack as ArrowBackIcon, BadgeRounded as BadgeRoundedIcon } from '@mui/icons-material';
+import {
+  CssBaseline,
+  Box,
+  FormControl,
+  IconButton,
+  Link,
+  TextField,
+  Typography,
+  Stack,
+  InputLabel,
+  MenuItem,
+  Select,
+} from '@mui/material';
+import {
+  DarkModeRounded as DarkModeRoundedIcon,
+  LightModeRounded as LightModeRoundedIcon,
+  ArrowBack as ArrowBackIcon,
+  BadgeRounded as BadgeRoundedIcon,
+} from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import LoadingButton from '../loadingButton'; // Adjust path as needed
-import useAuth from '../../hooks/useAuth'; // Import useAuth hook
+import LoadingButton from '../loadingButton';
+import useAuth from '../../hooks/useAuth';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import bg1 from '../../images/signinBg.jpeg'
-import bg2 from '../../assets/login_muslim_image.png'
+import bg1 from '../../images/signinBg.jpeg';
+import bg2 from '../../assets/login_muslim_image.png';
+
 const SignIn = () => {
   const { loading, error, login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false); // State for loading button
+  const [role, setRole] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const path = useLocation().pathname;
   const currentUser = useSelector((state) => state.users.user);
@@ -25,14 +44,15 @@ const SignIn = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!email || !password) {
-      alert("Please enter both email and password");
+
+    if (!email || !password || !role) {
+      alert('Please enter email, password, and select a role.');
       return;
     }
 
-    setIsSubmitting(true); // Set loading state for submit button
+    setIsSubmitting(true);
     try {
-      await login(email, password);
+      await login(email, password, role);
     } catch (err) {
       console.error('Error during login:', err);
     } finally {
@@ -40,37 +60,24 @@ const SignIn = () => {
     }
   };
 
-  // Custom dark and light theme
-  const [mode, setMode] = useState('dark'); // Change 'light' to 'dark'
+  const [mode, setMode] = useState('dark');
   const theme = createTheme({
     palette: {
       mode: mode,
       ...(mode === 'light'
         ? {
-            background: {
-              default: '#f5f5f5',
-            },
-            primary: {
-              main: '#1976d2', // Blue
-            },
-            text: {
-              primary: '#000000',
-            },
+            background: { default: '#f5f5f5' },
+            primary: { main: '#1976d2' },
+            text: { primary: '#000000' },
           }
         : {
-            background: {
-              default: '#121212',
-            },
-            primary: {
-              main: '#90caf9', // Light blue for dark mode
-            },
-            text: {
-              primary: '#ffffff',
-            },
+            background: { default: '#121212' },
+            primary: { main: '#90caf9' },
+            text: { primary: '#ffffff' },
           }),
     },
   });
-console.log(path)
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -87,7 +94,6 @@ console.log(path)
           position: 'relative',
         }}
       >
-        {/* Dark Overlay */}
         <Box
           sx={{
             position: 'absolute',
@@ -95,61 +101,67 @@ console.log(path)
             left: 0,
             width: '100%',
             height: '100%',
-            background: `rgba(0, 0, 0, 0.6)`, // Dark overlay for light mode
-            opacity: mode === 'light' ? 0.4 : 0.2, // Only apply overlay in light mode
+            background: `rgba(0, 0, 0, 0.6)`,
+            opacity: mode === 'light' ? 0.4 : 0.2,
           }}
         />
-
         <Box
           sx={{
-            width: { xs: '100%', md: '40%' }, // Adjust the width for responsiveness
+            width: { xs: '100%', md: '40%' },
             height: '100vh',
             backdropFilter: 'blur(12px)',
-            backgroundColor: mode === 'light' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(18, 18, 18, 0.8)', // Adjusted for light/dark mode
+            backgroundColor:
+              mode === 'light'
+                ? 'rgba(255, 255, 255, 0.2)'
+                : 'rgba(18, 18, 18, 0.8)',
             p: 4,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            zIndex: 1, // Ensure content is on top of the overlay
+            zIndex: 1,
           }}
         >
           <Box
             sx={{
-              width: '100%', // Full width
+              width: '100%',
               display: 'flex',
-              justifyContent: 'space-between', // Distribute space between the icons
-              alignItems: 'center', // Align the icons vertically in the center
-              mb: 2, // Add margin bottom to separate from the form
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 2,
             }}
           >
-            {/* Back button */}
-            <IconButton
-              onClick={() => navigate(-1)} // Navigate to the previous page
-              color="primary"
-            >
-              <ArrowBackIcon sx={{ color: '#fff' }}/>
+            <IconButton onClick={() => navigate(-1)} color="primary">
+              <ArrowBackIcon sx={{ color: '#fff' }} />
             </IconButton>
 
-            {/* Dark/Light Mode Toggle */}
             <IconButton
-              onClick={() => setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'))}
+              onClick={() =>
+                setMode((prevMode) =>
+                  prevMode === 'light' ? 'dark' : 'light'
+                )
+              }
             >
-              {mode === 'light' ? <DarkModeRoundedIcon sx={{ color: '#fff' }}/> : <LightModeRoundedIcon />}
+              {mode === 'light' ? (
+                <DarkModeRoundedIcon sx={{ color: '#fff' }} />
+              ) : (
+                <LightModeRoundedIcon />
+              )}
             </IconButton>
-          </Box >
+          </Box>
 
-          {
-            path === '/dashboard' && 
-            <Box sx={{ display: 'flex', justifyContent: 'center'}}>
-               <Typography variant="h6">You are not logged in, Kindly Login.</Typography>
+          {path === '/dashboard' && (
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Typography variant="h6">
+                You are not logged in, Kindly Login.
+              </Typography>
             </Box>
-          }
+          )}
 
           <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <IconButton size="small" color="primary">
-                  <BadgeRoundedIcon sx={{ color: '#fff' }}/>
+                  <BadgeRoundedIcon sx={{ color: '#fff' }} />
                 </IconButton>
                 <Typography variant="h6">Crystal Land Academy</Typography>
               </Box>
@@ -161,6 +173,21 @@ console.log(path)
 
             <form onSubmit={handleSubmit}>
               <Stack spacing={2}>
+                <FormControl fullWidth>
+                  <InputLabel id="role-label">Sign in as</InputLabel>
+                  <Select
+                    labelId="role-label"
+                    value={role}
+                    label="Sign in as"
+                    onChange={(e) => setRole(e.target.value)}
+                    required
+                  >
+                    <MenuItem value="student">Student</MenuItem>
+                    <MenuItem value="teacher">Teacher</MenuItem>
+                    <MenuItem value="admin">Admin</MenuItem>
+                  </Select>
+                </FormControl>
+
                 <FormControl fullWidth>
                   <TextField
                     label="Email"
@@ -201,7 +228,9 @@ console.log(path)
           </Box>
 
           <Box sx={{ textAlign: 'center', mt: 3 }}>
-            <Typography variant="body2">© Crystal land academy {new Date().getFullYear()}</Typography>
+            <Typography variant="body2">
+              © Crystal Land Academy {new Date().getFullYear()}
+            </Typography>
           </Box>
         </Box>
       </Box>

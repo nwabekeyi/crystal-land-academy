@@ -44,7 +44,6 @@ function DashboardHome() {
   const user = useSelector((state) => state.users.user);
   const userRole = user ? user.role : "not logged in";
   const { emit, isConnected, listen } = useWebSocket();
-  const location = useLocation();
 
   useEffect(() => {
     // Check if we've already reloaded in this session to prevent infinite loops
@@ -54,10 +53,6 @@ function DashboardHome() {
       const referrer = document.referrer;
       const referrerPath = referrer ? referrer.split("/") : [];
       const isFromDashboard = referrerPath.some((part) => part === "dashboard");
-
-      console.log("Referrer:", referrer);
-      console.log("Referrer Path:", referrerPath);
-      console.log("Is from dashboard:", isFromDashboard);
 
       // Reload if the referrer does NOT contain "dashboard" and is not empty
       if (!isFromDashboard && referrer !== "") {

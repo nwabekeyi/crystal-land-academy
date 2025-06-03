@@ -8,7 +8,6 @@ import { combineReducers } from 'redux';
 // import logger from 'redux-logger'; // Import redux-logger
 import adminDataReducer from './slices/adminDataSlice';
 import messageReducer from './slices/messageSlice';
-import streamReducer from './slices/videoCallSlice';
 import apiCallCheckReducer from './slices/apiCallCheck';
 import notificationReducer from './slices/notificationSlice';
 import studentReducer from './slices/studentdataSlice';
@@ -28,7 +27,6 @@ const rootReducer = combineReducers({
   ui: uiReducer,
   adminData: adminDataReducer,
   message: messageReducer,
-  stream: streamReducer,
   apiCallCheck: apiCallCheckReducer,
   notifications: notificationReducer,
   student: studentReducer,
