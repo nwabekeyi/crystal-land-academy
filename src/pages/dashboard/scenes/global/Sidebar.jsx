@@ -141,7 +141,7 @@ const Sidebar = () => {
     switch (user?.role) {
       case "student":
         return studentMenuItems;
-      case "instructor":
+      case "teacher":
         return instructorMenuItems;
       case "admin":
         return adminMenuItems;

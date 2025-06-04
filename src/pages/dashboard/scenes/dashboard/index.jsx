@@ -55,7 +55,7 @@ const Component = ({home}) => {
           )}
 
           {/* student feedbacks button */}
-          {user.role === ('student' || 'admin' || 'instructor') && (
+          {user.role === ('student' || 'admin' || 'teacher') && (
             <Box
               sx={{
                 display: 'flex',
@@ -79,7 +79,7 @@ const Component = ({home}) => {
             </Box>
           )}
 
-          {user.role === 'instructor' && (
+          {user.role === 'teacher' && (
             <Box>
               <Rating sx={{ fontSize: { xs: '1em', sm: '1.2em' } }} value={user.rating} readOnly precision={0.1} />
               <Typography variant="h6" sx={{ fontSize: { xs: '0.8em', sm: '1em' } }}>
@@ -95,7 +95,7 @@ const Component = ({home}) => {
         <Admin user={user} />
       ) : user.role === 'student' ? (
         <Student user={user} />
-      ) : user.role === 'instructor' ? (
+      ) : user.role === 'teacher' ? (
         <Instructor user={user} />
       ) : null}
     </Box>

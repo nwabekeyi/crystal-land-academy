@@ -12,7 +12,7 @@ console.log(userRole);
   // Render based on user role
   return (
     <div>
-      {userRole === 'instructor' ? <Instructors /> : <Admin />}
+      {userRole === 'teacher' ? <Instructors /> : <Admin />}
     </div>
   );
 };

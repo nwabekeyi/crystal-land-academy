@@ -27,7 +27,7 @@ const useAuth = () => {
           loginEndpoint = endpoints.LOGIN.ADMIN;
           break;
         case 'teacher':
-        case 'instructor':
+        case 'teacher':
           loginEndpoint = endpoints.LOGIN.TEACHER;
           break;
         case 'student':
@@ -51,8 +51,16 @@ const useAuth = () => {
       }
 
       const data = await res.json();
-      dispatch(setUser(data.data.user));
+      if(role.toLowerCase() === 'student'){
+        dispatch(setUser(data.data.student));
+      console.log('Logged in:', data.data.student);
+      }else if(role.toLowerCase() === 'teacher'){
+        dispatch(setUser(data.data.teacher));
+      console.log('Logged in:', data.data.teacher)
+    }else{
+        dispatch(setUser(data.data.user));
       console.log('Logged in:', data.data.user);
+      }
 
     } catch (err) {
       dispatch(setError(err.message));

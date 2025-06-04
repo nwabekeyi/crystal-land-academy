@@ -107,7 +107,7 @@ const IDCard = ({ idCardRef }) => {
             {firstName} {lastName}
           </Typography>
           <Typography variant="body2" textAlign="center" color="#1F3A93" mb={3}>
-            {role === 'student' ? 'Student' : role === 'instructor' ? 'Instructor' : ''}
+            {role === 'student' ? 'Student' : role === 'teacher' ? 'Teacher' : ''}
           </Typography>
 
           {/* User Details */}

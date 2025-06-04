@@ -87,7 +87,7 @@ const StudentProfile = () => {
             </Typography>
 
             {/* Rating Section - Only Visible to Instructors */}
-            {loggedInUserRole === "instructor" && (
+            {loggedInUserRole === "teacher" && (
               <Box sx={{ marginTop: 4 }}>
                 <Typography variant="h6" fontWeight="400" fontSize="13px">
                   Rating
