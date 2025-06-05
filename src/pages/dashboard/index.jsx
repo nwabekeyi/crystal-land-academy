@@ -43,25 +43,27 @@ function DashboardHome() {
   const colors = tokens(theme.palette.mode);
   const user = useSelector((state) => state.users.user);
   const userRole = user ? user.role : "not logged in";
-  const { emit, isConnected, listen } = useWebSocket();
 
   useEffect(() => {
     // Check if we've already reloaded in this session to prevent infinite loops
-    const hasReloaded = sessionStorage.getItem("hasReloaded");
+    // const hasReloaded = sessionStorage.getItem("hasReloaded");
 
-    if (!hasReloaded) {
+    // if (!hasReloaded) {
       const referrer = document.referrer;
       const referrerPath = referrer ? referrer.split("/") : [];
       const isFromDashboard = referrerPath.some((part) => part === "dashboard");
 
+      console.log(referrerPath);
+      console.log(isFromDashboard);
+      console.log(referrer)
       // Reload if the referrer does NOT contain "dashboard" and is not empty
-      if (!isFromDashboard && referrer !== "") {
+      if (!isFromDashboard && referrer == "") {
         sessionStorage.setItem("hasReloaded", "true"); // Mark as reloaded
         window.location.reload();
       } else {
         // Mark as loaded even if no reload is needed to prevent re-checking
         sessionStorage.setItem("hasReloaded", "true");
-      }
+      // }
     }
   }, []); // Runs only once on mount
 
