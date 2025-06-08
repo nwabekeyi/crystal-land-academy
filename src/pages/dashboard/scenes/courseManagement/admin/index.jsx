@@ -145,8 +145,8 @@ const Admin = () => {
     <Grid container>
       <Grid item xs={12}>
         <Header
-          title='Course Management'
-          subtitle= 'Manage Courses'
+          title='Class Management'
+          subtitle= 'Manage Classes'
         />
       </Grid>
 

@@ -33,7 +33,6 @@ const Curriculum = lazy(() => import("./scenes/curriculum"));
 const StudentPayment = lazy(() => import("./scenes/studentPayment"));
 const InstructorReviews = lazy(() => import("./scenes/instructorReviews"));
 const StudentManagement = lazy(() => import("./scenes/studentManagement/studentManagement"));
-const OfflineStudentTable = lazy(() => import("./scenes/offlineStudent/offlineStudent"));
 const StudentInstructors = lazy(() => import("./scenes/studentInstructors"));
 const ChatApp = lazy(() => import("../messaging"));
 
@@ -69,7 +68,7 @@ function DashboardHome() {
 
   const renderRoutesBasedOnRole = (role) => {
     switch (role) {
-      case "superadmin":
+      case "admin":
         return (
           <>
             <Route path="/messenger" element={<ChatApp />} />
@@ -84,7 +83,6 @@ function DashboardHome() {
             <Route path="/courseManagement" element={<CourseManagement />} />
             <Route path="/feedbacks" element={<Feedbacks />} />
             <Route path="/support" element={<Support />} />
-            <Route path="/offlineStudents" element={<OfflineStudentTable />} />
           </>
         );
       case "student":
