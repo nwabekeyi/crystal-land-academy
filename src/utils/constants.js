@@ -31,6 +31,7 @@ const MARK_ATTENDANCE = import.meta.env.VITE_MARK_ATTENDANCE;
 const MARK_TIMETABLE = import.meta.env.VITE_MARK_TIMETABLEDONE;
 const CREATE_TEACHER = import.meta.env.VITE_MARK_TIMETABLEDONE;
 const CREATE_STUDENT = import.meta.env.VITE_MARK_TIMETABLEDONE;
+const ACADEMIC_YEAR = import.meta.env.VITE_ACADEMIC_YEARS;
 
 const endpoints = {
   LOGIN: {
@@ -66,6 +67,9 @@ const endpoints = {
   MARK_TIMETABLE: `${BASE_URL}${MARK_TIMETABLE}`,
   CREATE_TEACHER: `${BASE_URL}${CREATE_TEACHER}`,
   CREATE_STUDENT: `${BASE_URL}${CREATE_STUDENT}`,
+  ACADEMIC_YEARS: `${BASE_URL}${ACADEMIC_YEAR}`,
+  CURRENT_ACADEMIC_YEAR: `${BASE_URL}${ACADEMIC_YEAR}/current`,
+
 };
 
 export { endpoints };

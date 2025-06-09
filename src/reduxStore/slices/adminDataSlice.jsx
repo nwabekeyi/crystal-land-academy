@@ -1,11 +1,12 @@
+// src/reduxStore/slices/adminDataSlice.jsx
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  usersData: {
-  },
+  usersData: {},
   error: null,
   connected: false,
-  allCourses: []
+  academicYears: [],
+  currentAcademicYear: null, // Added currentAcademicYear state
 };
 
 const adminDataSlice = createSlice({
@@ -21,14 +22,14 @@ const adminDataSlice = createSlice({
     setConnectionStatus: (state, action) => {
       state.connected = action.payload;
     },
-    setAllCourses: (state, action) => {
-      state.courses = action.payload;
+    setAcademicYears: (state, action) => {
+      state.academicYears = action.payload;
     },
-
-    // Add deleteUser function
+    setCurrentAcademicYear: (state, action) => {
+      state.currentAcademicYear = action.payload;
+    },
     deleteUser: (state, action) => {
       const { userId, role } = action.payload;
-
       if (state.usersData[role]) {
         const updatedArray = state.usersData[role].filter(user => user.id !== userId);
         state.usersData[role] = updatedArray;
@@ -36,14 +37,10 @@ const adminDataSlice = createSlice({
         state.error = `Role ${role} not found.`;
       }
     },
-
-    // Add updateUser function
     updateUser: (state, action) => {
       const { userId, updatedData, role } = action.payload;
-
       if (state.usersData[role]) {
         const userIndex = state.usersData[role].findIndex(user => user.id === userId);
-        
         if (userIndex !== -1) {
           state.usersData[role][userIndex] = {
             ...state.usersData[role][userIndex],
@@ -56,35 +53,44 @@ const adminDataSlice = createSlice({
         state.error = `Role ${role} not found.`;
       }
     },
-
-   // Add addUser function
-addUser: (state, action) => {
-  const newUser = action.payload;
-
-  switch (newUser.role) {
-    case 'student':
-      state.usersData.students.push(newUser);
-      break;
-    case 'instructor':
-      state.usersData.instructors.push(newUser);
-      break;
-    case 'admin':
-      state.usersData.admins.push(newUser);
-      break;
-    case 'superadmin':
-      state.usersData.superAdmins.push(newUser);
-      break;
-    default:
-      state.error = `Role ${newUser.role} not found.`;
-      break;
-  }
-}
-
+    addUser: (state, action) => {
+      const newUser = action.payload;
+      switch (newUser.role) {
+        case 'student':
+          state.usersData.students = state.usersData.students || [];
+          state.usersData.students.push(newUser);
+          break;
+        case 'instructor':
+          state.usersData.instructors = state.usersData.instructors || [];
+          state.usersData.instructors.push(newUser);
+          break;
+        case 'admin':
+          state.usersData.admins = state.usersData.admins || [];
+          state.usersData.admins.push(newUser);
+          break;
+        case 'superadmin':
+          state.usersData.superAdmins = state.usersData.superAdmins || [];
+          state.usersData.superAdmins.push(newUser);
+          break;
+        default:
+          state.error = `Role ${newUser.role} not found.`;
+          break;
+      }
+    }
   },
 });
 
-export const { setUsersData, setAllCourses, setError, setConnectionStatus, deleteUser, updateUser, addUser } = adminDataSlice.actions;
+export const { 
+  setUsersData, 
+  setError, 
+  setConnectionStatus, 
+  setAcademicYears, 
+  setCurrentAcademicYear, 
+  deleteUser, 
+  updateUser, 
+  addUser 
+} = adminDataSlice.actions;
 
-export const selectadminDataState = (state) => state.adminData;
+export const selectAdminDataState = (state) => state.adminData;
 
 export default adminDataSlice.reducer;

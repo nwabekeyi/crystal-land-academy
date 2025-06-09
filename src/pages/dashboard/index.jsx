@@ -22,7 +22,7 @@ const Line = lazy(() => import("./scenes/line"));
 const Pie = lazy(() => import("./scenes/pie"));
 const Enquiries = lazy(() => import("./scenes/enquiries"));
 const UserManagement = lazy(() => import("./scenes/userManagement"));
-const CourseManagement = lazy(() => import("./scenes/courseManagement"));
+const CourseManagement = lazy(() => import("./scenes/academicYear"));
 const Feedbacks = lazy(() => import("./scenes/feebacks"));
 const Support = lazy(() => import("./scenes/support"));
 const TimeTable = lazy(() => import("./scenes/timeTable"));

@@ -8,7 +8,7 @@ import {
   Paper,
   IconButton
 } from '@mui/material';
-import useCourses from './useCourses';
+import useCourses from './useAcademicYear';
 import useApi from '../../../../../hooks/useApi';
 import { useState, useEffect } from 'react';
 import { endpoints } from '../../../../../utils/constants';
