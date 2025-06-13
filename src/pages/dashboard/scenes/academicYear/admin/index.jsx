@@ -5,11 +5,14 @@ import { tokens } from "../../../theme";
 import Header from "../../../components/Header";
 import TableComponent from "../../../../../components/table";
 import useAcademicYears from "./useAcademicYears";
+import {AddAcademicYearModal} from "./academicYearModals"; // Adjusted import to match previous file
+import ActionButton from "../../../components/actionButton"; // Imported ActionButton
 
 const Admin = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const { academicYears, currentYear, loading, error } = useAcademicYears();
+  const { academicYears, currentYear, loading, error, formValues, handleChange, handleCreateAcademicYear } = useAcademicYears();
+  const [openForm, setOpenForm] = useState(false);
 
   // Sorting and pagination state
   const [sortBy, setSortBy] = useState("name");
@@ -79,23 +82,42 @@ const Admin = () => {
                 p: 2,
                 backgroundColor: colors.primary[400],
                 borderRadius: 1,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              <Typography variant="h5" color={colors.grey[100]}>
-                Current Academic Year
-              </Typography>
-              {currentYear ? (
-                <Typography variant="body1" color={colors.grey[100]}>
-                  {currentYear.name} (
-                  {new Date(currentYear.fromYear).toLocaleDateString()} -{" "}
-                  {new Date(currentYear.toYear).toLocaleDateString()})
+              <Box>
+                <Typography variant="h5" color={colors.grey[100]}>
+                  Current Academic Year
                 </Typography>
-              ) : (
-                <Typography variant="body1" color={colors.redAccent[500]}>
-                  No current academic year set.
-                </Typography>
-              )}
+                {currentYear ? (
+                  <Typography variant="body1" color={colors.grey[100]}>
+                    {currentYear.name} (
+                    {new Date(currentYear.fromYear).toLocaleDateString()} -{" "}
+                    {new Date(currentYear.toYear).toLocaleDateString()})
+                  </Typography>
+                ) : (
+                  <Typography variant="body1" color={colors.redAccent[500]}>
+                    No current academic year set.
+                  </Typography>
+                )}
+              </Box>
+              <ActionButton
+                onClick={() => setOpenForm(true)}
+                content="Add Academic Year"
+              />
             </Box>
+
+            {/* Academic Year Form Modal */}
+            <AddAcademicYearModal
+              open={openForm}
+              onClose={() => setOpenForm(false)}
+              formValues={formValues}
+              handleChange={handleChange}
+              handleCreateAcademicYear={handleCreateAcademicYear}
+              error={error}
+            />
 
             {/* Academic Years Table */}
             <TableComponent

@@ -1,9 +1,10 @@
-// hooks/useSignUp.js
 import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import useApi from "../../hooks/useApi";
 import { endpoints } from "../../utils/constants";
 import { updateUser, addUser } from "../../reduxStore/slices/adminDataSlice";
+
+const validateObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id); // Simple regex for ObjectId validation
 
 const useSignUp = ({ role, selectedUser }) => {
   const [error, setError] = useState("");
@@ -16,8 +17,17 @@ const useSignUp = ({ role, selectedUser }) => {
   const dispatch = useDispatch();
 
   const users = useSelector((state) => state.adminData.usersData);
-  const currentUser = users.user || {}; // Logged-in user
+  const currentUser = users.user || {};
   const teachers = users.teachers || [];
+
+  // Log selectedUser for debugging
+  useEffect(() => {
+    console.log("selectedUser:", selectedUser);
+    if (selectedUser && !validateObjectId(selectedUser)) {
+      console.warn("Invalid selectedUser ID format:", selectedUser);
+      setError("Invalid user ID format");
+    }
+  }, [selectedUser]);
 
   // Fetch subjects and academic years for dropdowns
   useEffect(() => {
@@ -27,10 +37,11 @@ const useSignUp = ({ role, selectedUser }) => {
           callApi("/api/subjects", "GET"),
           callApi("/api/academic-years", "GET"),
         ]);
-        setSubjects(subjectsRes.data?.map((s) => ({ id: s._id, name: s.name })) || []);
+        setSubjects(subjectsRes.data?.map((s) => ({ id: s._id, name: s.data.name })) || []);
         setAcademicYears(yearsRes.data?.map((y) => ({ id: y._id, name: y.name })) || []);
       } catch (err) {
         console.error("Error fetching options:", err);
+        setError("Failed to load dropdown options");
       }
     };
     fetchOptions();
@@ -42,8 +53,6 @@ const useSignUp = ({ role, selectedUser }) => {
       { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
       { label: "Middle Name", name: "middleName", type: "text", required: false },
       { label: "Email", name: "email", type: "email", required: !selectedUser },
-      { label: "Password", name: "password", type: "password", required: !selectedUser },
-      { label: "Confirm Password", name: "confirmPassword", type: "password", required: !selectedUser },
       { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
       { label: "Gender", name: "gender", type: "select", required: !selectedUser, options: ["Male", "Female", "Other"] },
       { label: "NIN", name: "NIN", type: "text", required: false },
@@ -53,7 +62,6 @@ const useSignUp = ({ role, selectedUser }) => {
       { label: "Class Section", name: "currentClassLevel.section", type: "select", required: !selectedUser, options: ["Primary", "Secondary"] },
       { label: "Class Name", name: "currentClassLevel.className", type: "text", required: !selectedUser },
       { label: "Subclass", name: "currentClassLevel.subclass", type: "text", required: !selectedUser },
-      { label: "Academic Year", name: "currentClassLevel.academicYear", type: "text", required: !selectedUser },
       { label: "Boarding Status", name: "boardingStatus", type: "select", required: !selectedUser, options: ["Boarder", "Day Student"] },
       { label: "Boarding Hall", name: "boardingDetails.hall", type: "text", required: false },
       { label: "Room Number", name: "boardingDetails.roomNumber", type: "text", required: false },
@@ -71,8 +79,6 @@ const useSignUp = ({ role, selectedUser }) => {
       { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
       { label: "Middle Name", name: "middleName", type: "text", required: false },
       { label: "Email", name: "email", type: "email", required: !selectedUser },
-      { label: "Password", name: "password", type: "password", required: !selectedUser },
-      { label: "Confirm Password", name: "confirmPassword", type: "password", required: !selectedUser },
       { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
       { label: "Gender", name: "gender", type: "select", required: !selectedUser, options: ["Male", "Female", "Other"] },
       { label: "NIN", name: "NIN", type: "text", required: !selectedUser },
@@ -87,7 +93,7 @@ const useSignUp = ({ role, selectedUser }) => {
       { label: "Bank Name", name: "bankAccountDetails.bank", type: "text", required: !selectedUser },
       { label: "Teaching Section", name: "teachingAssignments[0].section", type: "select", required: false, options: ["Primary", "Secondary"] },
       { label: "Teaching Class Name", name: "teachingAssignments[0].className", type: "text", required: false },
-      { label: "Teaching Subclasses", name: "teachingAssignments[0].subclasses", type: "text", required: false }, // Comma-separated
+      { label: "Teaching Subclasses", name: "teachingAssignments[0].subclasses", type: "text", required: false },
       { label: "Teaching Academic Year", name: "teachingAssignments[0].academicYear", type: "select", required: false, options: academicYears.map((y) => y.name) },
       { label: "LinkedIn Profile", name: "linkedInProfile", type: "text", required: false },
     ].filter(Boolean),
@@ -96,8 +102,6 @@ const useSignUp = ({ role, selectedUser }) => {
       { label: "First Name", name: "firstName", type: "text", required: !selectedUser },
       { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
       { label: "Email", name: "email", type: "email", required: !selectedUser },
-      { label: "Password", name: "password", type: "password", required: !selectedUser },
-      { label: "Confirm Password", name: "confirmPassword", type: "password", required: !selectedUser },
       { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
     ].filter(Boolean),
   };
@@ -119,13 +123,16 @@ const useSignUp = ({ role, selectedUser }) => {
       }
     });
 
-    if (selectedUser && users) {
+    if (selectedUser && users && validateObjectId(selectedUser)) {
+      console.log("Fetching user data for:", selectedUser);
       const user =
         role === "student"
-          ? users.students.find((u) => u._id === selectedUser)
+          ? users.students?.find((u) => u._id === selectedUser)
           : role === "teacher"
-          ? users.teachers.find((u) => u._id === selectedUser)
-          : users.admins.find((u) => u._id === selectedUser);
+          ? users.teachers?.find((u) => u._id === selectedUser)
+          : users.admins?.find((u) => u._id === selectedUser);
+
+      console.log("Found user:", user);
 
       if (user) {
         Object.keys(initialData).forEach((key) => {
@@ -134,7 +141,6 @@ const useSignUp = ({ role, selectedUser }) => {
               section: user[key].section || "",
               className: user[key].className || "",
               subclass: user[key].subclass || "",
-              academicYear: user[key].academicYear || "",
             };
           } else if (key === "boardingDetails" && user[key]) {
             initialData[key] = {
@@ -172,6 +178,8 @@ const useSignUp = ({ role, selectedUser }) => {
             initialData[key] = user[key] || initialData[key];
           }
         });
+      } else {
+        console.warn("User not found for ID:", selectedUser);
       }
     }
 
@@ -220,18 +228,18 @@ const useSignUp = ({ role, selectedUser }) => {
     setLoading(true);
     setError("");
 
+    // Validate selectedUser for updates
+    if (selectedUser && !validateObjectId(selectedUser)) {
+      setError("Invalid user ID format");
+      setLoading(false);
+      return;
+    }
+
     // Remove required attributes for updates
     if (selectedUser) {
       formRef.current.querySelectorAll("[required]").forEach((field) => {
         field.removeAttribute("required");
       });
-    }
-
-    // Validate password for new users
-    if (!selectedUser && formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
     }
 
     // Validate profile picture for new users
@@ -253,35 +261,32 @@ const useSignUp = ({ role, selectedUser }) => {
 
       // Append form fields
       Object.keys(formData).forEach((key) => {
-        if (key !== "confirmPassword") {
-          if (key === "currentClassLevel" && formData[key]) {
-            formDataToSubmit.append("currentClassLevel[section]", formData[key].section || "");
-            formDataToSubmit.append("currentClassLevel[className]", formData[key].className || "");
-            formDataToSubmit.append("currentClassLevel[subclass]", formData[key].subclass || "");
-            formDataToSubmit.append("currentClassLevel[academicYear]", formData[key].academicYear || "");
-          } else if (key === "boardingDetails" && formData[key] && formData.boardingStatus === "Boarder") {
-            formDataToSubmit.append("boardingDetails[hall]", formData[key].hall || "");
-            formDataToSubmit.append("boardingDetails[roomNumber]", formData[key].roomNumber || "");
-            formDataToSubmit.append("boardingDetails[bedNumber]", formData[key].bedNumber || "");
-            formDataToSubmit.append("boardingDetails[houseMaster]", formData[key].houseMaster || "");
-          } else if (key === "guardians" && formData[key]?.length) {
-            formDataToSubmit.append("guardians[0][name]", formData[key][0].name || "");
-            formDataToSubmit.append("guardians[0][relationship]", formData[key][0].relationship || "");
-            formDataToSubmit.append("guardians[0][phone]", formData[key][0].phone || "");
-            formDataToSubmit.append("guardians[0][email]", formData[key][0].email || "");
-            formDataToSubmit.append("guardians[0][address]", formData[key][0].address || "");
-          } else if (key === "bankAccountDetails" && formData[key]) {
-            formDataToSubmit.append("bankAccountDetails[accountName]", formData[key].accountName || "");
-            formDataToSubmit.append("bankAccountDetails[accountNumber]", formData[key].accountNumber || "");
-            formDataToSubmit.append("bankAccountDetails[bank]", formData[key].bank || "");
-          } else if (key === "teachingAssignments" && formData[key]?.length && formData[key][0].section) {
-            formDataToSubmit.append("teachingAssignments[0][section]", formData[key][0].section || "");
-            formDataToSubmit.append("teachingAssignments[0][className]", formData[key][0].className || "");
-            formDataToSubmit.append("teachingAssignments[0][subclasses]", formData[key][0].subclasses || "");
-            formDataToSubmit.append("teachingAssignments[0][academicYear]", formData[key][0].academicYear || "");
-          } else if (!selectedUser || (formData[key] && formData[key] !== "")) {
-            formDataToSubmit.append(key, formData[key]);
-          }
+        if (key === "currentClassLevel" && formData[key]) {
+          formDataToSubmit.append("currentClassLevel[section]", formData[key].section || "");
+          formDataToSubmit.append("currentClassLevel[className]", formData[key].className || "");
+          formDataToSubmit.append("currentClassLevel[subclass]", formData[key].subclass || "");
+        } else if (key === "boardingDetails" && formData[key] && formData.boardingStatus === "Boarder") {
+          formDataToSubmit.append("boardingDetails[hall]", formData[key].hall || "");
+          formDataToSubmit.append("boardingDetails[roomNumber]", formData[key].roomNumber || "");
+          formDataToSubmit.append("boardingDetails[bedNumber]", formData[key].bedNumber || "");
+          formDataToSubmit.append("boardingDetails[houseMaster]", formData[key].houseMaster || "");
+        } else if (key === "guardians" && formData[key]?.length) {
+          formDataToSubmit.append("guardians[0][name]", formData[key][0].name || "");
+          formDataToSubmit.append("guardians[0][relationship]", formData[key][0].relationship || "");
+          formDataToSubmit.append("guardians[0][phone]", formData[key][0].phone || "");
+          formDataToSubmit.append("guardians[0][email]", formData[key][0].email || "");
+          formDataToSubmit.append("guardians[0][address]", formData[key][0].address || "");
+        } else if (key === "bankAccountDetails" && formData[key]) {
+          formDataToSubmit.append("bankAccountDetails[accountName]", formData[key].accountName || "");
+          formDataToSubmit.append("bankAccountDetails[accountNumber]", formData[key].accountNumber || "");
+          formDataToSubmit.append("bankAccountDetails[bank]", formData[key].bank || "");
+        } else if (key === "teachingAssignments" && formData[key]?.length && formData[key][0].section) {
+          formDataToSubmit.append("teachingAssignments[0][section]", formData[key][0].section || "");
+          formDataToSubmit.append("teachingAssignments[0][className]", formData[key][0].className || "");
+          formDataToSubmit.append("teachingAssignments[0][subclasses]", formData[key][0].subclasses || "");
+          formDataToSubmit.append("teachingAssignments[0][academicYear]", formData[key][0].academicYear || "");
+        } else if (!selectedUser || (formData[key] && formData[key] !== "")) {
+          formDataToSubmit.append(key, formData[key]);
         }
       });
 
@@ -292,10 +297,10 @@ const useSignUp = ({ role, selectedUser }) => {
 
       // Determine endpoint
       let endpoint;
-      if (selectedUser) {
+      if (selectedUser && validateObjectId(selectedUser)) {
         endpoint = role === "student" ? `/api/students/${selectedUser}/update/admin` : `/api/teachers/teacher/${selectedUser}/update`;
       } else {
-        endpoint = role === "student" ? endpoints.CREATE_STUDENT : endpoints.CREATE_TEACHER;
+        endpoint = role === "student" ? endpoints.CREATE_STUDENT : role === "teacher" ? endpoints.CREATE_TEACHER : endpoints.CREATE_ADMIN;
       }
 
       const response = await callApi(endpoint, selectedUser ? "PATCH" : "POST", formDataToSubmit, {
@@ -308,13 +313,13 @@ const useSignUp = ({ role, selectedUser }) => {
         setFormData(getInitialFormData(role));
         setProfilePicture(null);
       } else {
-        setModalMessage(response?.message || "An error occurred");
+        setModalMessage(response?.data?.message || "An error occurred");
       }
 
       setModalOpen(true);
     } catch (error) {
       console.error("Error submitting form:", error);
-      setError(error.response?.data?.message || "An error occurred while submitting the form.");
+      setError(error.response?.data?.message || "Failed to submit the form. Please try again.");
     } finally {
       setLoading(false);
     }

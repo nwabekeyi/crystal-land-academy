@@ -2,6 +2,7 @@ import { Box, Typography, useTheme } from '@mui/material';
 import { tokens } from '../../../theme';
 import GroupsIcon from '@mui/icons-material/Groups';
 import SchoolIcon from '@mui/icons-material/School';
+import PersonAddIcon from '@mui/icons-material/PersonAdd'; // Added for New Students
 import useAdminData from './useAdminData';
 import { useState, useEffect } from 'react';
 import Loader from '../../../../../utils/loader';
@@ -13,15 +14,22 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [students, setStudents] = useState(0);
   const [instructors, setInstructors] = useState(0);
-  const { usersData, loading: dataLoading, error } = useAdminData();
+  const [newStudents, setNewStudents] = useState(0); // Added for New Students
+  const { 
+    usersData, 
+    loading: dataLoading,
+    currentAcademicYear
+  } = useAdminData();
+  console.log(currentAcademicYear)
 
   useEffect(() => {
-    if (usersData) {
+    if (usersData && (currentAcademicYear || currentAcademicYear === null)) {
       setLoading(false);
       setInstructors(usersData.instructors?.length || 0);
       setStudents(usersData.students?.length || 0);
+      setNewStudents(currentAcademicYear?.students?.length || 0); // Set New Students count
     }
-  }, [usersData]);
+  }, [usersData, currentAcademicYear]);
 
   const statStyle = { mt: '15px', fontWeight: 'bold' };
 
@@ -59,21 +67,25 @@ const Admin = () => {
               <Box display="flex" flexDirection="column" alignItems="center" mt="25px">
                 <SchoolIcon sx={{ fontSize: '70px', color: colors.blueAccent[200] }} />
                 <Typography variant="h4" color={colors.blueAccent[200]} sx={statStyle}>
-                  {`${instructors} instructors`}
+                  {`${instructors} teachers`}
                 </Typography>
-                <Typography>Total instructors</Typography>
+                <Typography>Total teachers</Typography>
               </Box>
             </DashboardDataBox>
           </ResponsiveContainer>
 
-          {/* New Students - Blank */}
+          {/* New Students */}
           <ResponsiveContainer sm={6} md={3}>
             <DashboardDataBox>
               <Typography variant="h5" fontWeight="600" textAlign="center">
                 New Students
               </Typography>
               <Box display="flex" flexDirection="column" alignItems="center" mt="25px">
-                <Typography variant="body1"> </Typography>
+                <PersonAddIcon sx={{ fontSize: '70px', color: colors.blueAccent[200] }} />
+                <Typography variant="h4" color={colors.blueAccent[200]} sx={statStyle}>
+                  {`${newStudents} students`}
+                </Typography>
+                <Typography>New students this academic year</Typography>
               </Box>
             </DashboardDataBox>
           </ResponsiveContainer>

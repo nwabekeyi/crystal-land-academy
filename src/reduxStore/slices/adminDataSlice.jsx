@@ -1,4 +1,3 @@
-// src/reduxStore/slices/adminDataSlice.jsx
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
@@ -6,7 +5,7 @@ const initialState = {
   error: null,
   connected: false,
   academicYears: [],
-  currentAcademicYear: null, // Added currentAcademicYear state
+  currentAcademicYear: null,
 };
 
 const adminDataSlice = createSlice({
@@ -44,7 +43,7 @@ const adminDataSlice = createSlice({
         if (userIndex !== -1) {
           state.usersData[role][userIndex] = {
             ...state.usersData[role][userIndex],
-            ...updatedData
+            ...updatedData,
           };
         } else {
           state.error = `User with ID ${userId} not found in ${role}.`;
@@ -76,20 +75,31 @@ const adminDataSlice = createSlice({
           state.error = `Role ${newUser.role} not found.`;
           break;
       }
-    }
+    },
   },
 });
 
-export const { 
-  setUsersData, 
-  setError, 
-  setConnectionStatus, 
-  setAcademicYears, 
-  setCurrentAcademicYear, 
-  deleteUser, 
-  updateUser, 
-  addUser 
+export const {
+  setUsersData,
+  setError,
+  setConnectionStatus,
+  setAcademicYears,
+  setCurrentAcademicYear,
+  deleteUser,
+  updateUser,
+  addUser,
 } = adminDataSlice.actions;
+
+// Thunk to find and set the current academic year
+export const setCurrentAcademicYearFromList = () => (dispatch, getState) => {
+  const { academicYears } = getState().adminData;
+  const currentYear = academicYears.find(year => year.isCurrent === true);
+  if (currentYear) {
+    dispatch(setCurrentAcademicYear(currentYear));
+  } else {
+    dispatch(setError('No current academic year found.'));
+  }
+};
 
 export const selectAdminDataState = (state) => state.adminData;
 

@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { Box, Typography, Tabs, Tab } from "@mui/material";
+import { Box, Tabs, Tab } from '@mui/material';
 import Dropdown from '../../../../components/dropdown';
-import { SignUpStudent, SignUpInstructor, SignUpAdmin } from '../../../signUp';
+import { SignUpStudent, SignUpTeacher, SignUpAdmin } from '../../../signUp';
 import Header from '../../components/Header';
-import TableComponent from "../../../../components/table";
+import TableComponent from '../../../../components/table';
 import useUserManagement from './useUserManagement';
 import ScrollDialog from '../../components/scrollDialog';
 import withDashboardWrapper from '../../../../components/dasboardPagesContainer';
@@ -14,7 +14,8 @@ const UserManagement = () => {
     selectedUser,
     editDialogOpen,
     studentData,
-    instructorData,
+    teacherData,
+    adminData,
     selectedRole,
     setSelectedRole,
     sortBy,
@@ -36,7 +37,7 @@ const UserManagement = () => {
     setViewUserDetails,
     openDeleteModal,
     setOpenDeleteModal,
-    rerender
+    rerender,
   } = useUserManagement();
 
   useEffect(() => {
@@ -47,31 +48,32 @@ const UserManagement = () => {
 
   return (
     <Box>
-      <Header title="User Management" subtitle="Manage users" />
+      <Header title='User Management' subtitle='Manage users' />
 
       <Dropdown
-        label="Add Users"
+        label='Add Users'
         options={[
-          { value: "student", label: "Student" },
-          { value: "instructor", label: "Teacher" },
-          { value: "admin", label: "Admin" },
+          { value: 'student', label: 'Student' },
+          { value: 'teacher', label: 'Teacher' },
+          { value: 'admin', label: 'Admin' },
         ]}
         onSelect={handleRoleSelect}
       />
 
-      <Box>
+      <Box mt={2}>
         <Tabs value={tabIndex} onChange={handleTabChange}>
-          <Tab label="Students" />
-          <Tab label="Teachers" />
+          <Tab label='Students' />
+          <Tab label='Teachers' />
+          <Tab label='Admins' />
         </Tabs>
       </Box>
 
       {/* Tab Content for Students */}
       {tabIndex === 0 && (
-        <Box m="20px 0 0 0" height="75vh">
+        <Box m='20px 0 0 0' height='75vh'>
           <TableComponent
             columns={columns}
-            tableHeader="User Management"
+            tableHeader='Student Management'
             data={studentData}
             sortBy={sortBy}
             sortDirection={sortDirection}
@@ -81,19 +83,19 @@ const UserManagement = () => {
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
             onRowClick={() => setSelectedRole('student')}
-            hiddenColumnsSmallScreen={['phoneNumber', 'registeredDate', 'userId']}
-            hiddenColumnsTabScreen={['registeredDate', 'program', 'userId']}
+            hiddenColumnsSmallScreen={['email', 'createdAt']}
+            hiddenColumnsTabScreen={['createdAt', 'details']}
           />
         </Box>
       )}
 
       {/* Tab Content for Teachers */}
       {tabIndex === 1 && (
-        <Box m="20px 0 0 0" height="75vh">
+        <Box m='20px 0 0 0' height='75vh'>
           <TableComponent
             columns={columns}
-            tableHeader="User Management"
-            data={instructorData}
+            tableHeader='Teacher Management'
+            data={teacherData}
             sortBy={sortBy}
             sortDirection={sortDirection}
             onSortChange={handleSortChange}
@@ -101,42 +103,68 @@ const UserManagement = () => {
             rowsPerPage={rowsPerPage}
             onPageChange={handlePageChange}
             onRowsPerPageChange={handleRowsPerPageChange}
-            onRowClick={() => setSelectedRole('instructor')}
-            hiddenColumnsSmallScreen={['phoneNumber', 'registeredDate', 'userId']}
-            hiddenColumnsTabScreen={['registeredDate', 'userId']}
+            onRowClick={() => setSelectedRole('teacher')}
+            hiddenColumnsSmallScreen={['email', 'createdAt']}
+            hiddenColumnsTabScreen={['createdAt', 'details']}
+          />
+        </Box>
+      )}
+
+      {/* Tab Content for Admins */}
+      {tabIndex === 2 && (
+        <Box m='20px 0 0 0' height='75vh'>
+          <TableComponent
+            columns={columns}
+            tableHeader='Admin Management'
+            data={adminData}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            onSortChange={handleSortChange}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            onRowClick={() => setSelectedRole('admin')}
+            hiddenColumnsSmallScreen={['email', 'createdAt']}
+            hiddenColumnsTabScreen={['createdAt', 'details']}
           />
         </Box>
       )}
 
       {/* User Details View */}
-      {viewUserDetails && (
+      {viewUserDetails && selectedUser && (
         <ScrollDialog
-          buttonLabel="View User Details"
-          dialogTitle="User Details"
+          buttonLabel='View User Details'
+          dialogTitle='User Details'
           dialogContent={
             <>
-              <Typography>User ID: {selectedUser.userId}</Typography>
-              <Typography>Name: {`${selectedUser.firstName} ${selectedUser.lastName}`}</Typography>
+              <Typography>ID: {selectedUser.id}</Typography>
+              <Typography>Name: {`${selectedUser.name}`}</Typography>
               <Typography>Email: {selectedUser.email}</Typography>
-              <Typography>Phone Number: {selectedUser.phoneNumber}</Typography>
+              {selectedUser.role === 'student' && (
+                <>
+                  <Typography>Class: {selectedUser.classLevel}</Typography>
+                  <Typography>Boarding Status: {selectedUser.boardingStatus}</Typography>
+                </>
+              )}
+              {selectedUser.role === 'teacher' && (
+                <Typography>Subject: {selectedUser.subject}</Typography>
+              )}
               <Typography>Role: {selectedUser.role}</Typography>
-              <Typography>Program: {selectedUser.program}</Typography>
-              <Typography>Registered Date: {selectedUser.createdAt || "N/A"}</Typography>
+              <Typography>Registered Date: {selectedUser.createdAt}</Typography>
             </>
           }
-          scrollType="paper"
-          actionText1="Close"
-          actionText2="Edit"
+          scrollType='paper'
+          actionText1='Close'
+          actionText2='Edit'
           open={viewUserDetails}
           onClose={() => setViewUserDetails(false)}
+          onAction2={() => handleEdit(selectedUser)}
         />
       )}
 
       {/* Delete Modal */}
-      <DeleteModal 
-        open={openDeleteModal} 
-        onClose={() => setOpenDeleteModal(false)}
-      />
+      <DeleteModal open={openDeleteModal} onClose={() => setOpenDeleteModal(false)} />
 
       {/* Edit User Form */}
       <EditFormModal
@@ -149,20 +177,20 @@ const UserManagement = () => {
 
       {/* Sign Up User Dialog */}
       <ScrollDialog
-        buttonLabel="Sign Up"
-        dialogTitle="Sign Up User"
+        buttonLabel='Sign Up'
+        dialogTitle='Sign Up User'
         dialogContent={
-          selectedRole === "student" ? (
+          selectedRole === 'student' ? (
             <SignUpStudent />
-          ) : selectedRole === "instructor" ? (
-            <SignUpInstructor />
-          ) : (
+          ) : selectedRole === 'teacher' ? (
+            <SignUpTeacher />
+          ) : selectedRole === 'admin' ? (
             <SignUpAdmin />
-          )
+          ) : null
         }
-        scrollType="body"
-        actionText1="Cancel"
-        actionText2="Confirm"
+        scrollType='body'
+        actionText1='Cancel'
+        actionText2='Confirm'
         open={signUpDialogOpen}
         onClose={() => setSignUpDialogOpen(false)}
       />
