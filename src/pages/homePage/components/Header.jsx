@@ -6,7 +6,7 @@ import { HamburgerMenu } from '../components/design/Header';
 import { useState, useEffect } from 'react';
 import Button from './Button';
 import MenuSvg from '../assets/svg/MenuSvg';
-import logo from '../assets/crystal-land-log.jpg'; // Adjusted import
+import logo from '../assets/crystal-land-log-removebg.png'; // Adjusted import
 
 const Header = () => {
     const location = useLocation();

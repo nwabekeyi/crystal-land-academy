@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import useApi from '../../../../hooks/useApi';
+import { endpoints } from '../../../../utils/constants'; // Import endpoints
 
 export const useEnquiries = () => {
   const [enquiries, setEnquiries] = useState([]);
@@ -7,61 +8,59 @@ export const useEnquiries = () => {
   const [error, setError] = useState(null);
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
 
-  // Create separate instances of useApi for each API operation
   const { callApi: fetchEnquiriesApi, loading: fetchingEnquiries } = useApi();
   const { callApi: markAsReadApi, loading: markingAsRead } = useApi();
   const { callApi: removeEnquiryApi, loading: removingEnquiry } = useApi();
 
   // Fetch all enquiries
   const fetchEnquiries = async () => {
+    console.log('fetchEnquiries called'); // Debug log
     setError(null);
     try {
-      const data = await fetchEnquiriesApi(
-        `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_ENQUIRY_ENDPOINT}`,
-        'GET'
-      );
-      if (data) {
-        setEnquiries(Array.isArray(data) ? data : []);
+      const url = `${endpoints.ENQUIRIES}`;
+      console.log('API URL:', url); // Debug log
+      const data = await fetchEnquiriesApi(url, 'GET');
+      console.log('Fetched enquiries:', data); // Debug log
 
-        const unreadEnquiries = data.filter(enquiry => !enquiry.read)
-        return unreadEnquiries.length
-      };
-
+      // Handle the response format
+      if (data && Array.isArray(data.data)) {
+        setEnquiries(data.data); // Use `data.data` based on the server response
+      } else {
+        setEnquiries([]); // Default to an empty array if the response is unexpected
+      }
     } catch (err) {
       console.error('Error fetching enquiries:', err);
-      setError('Failed to fetch enquiries');
+      setError('Failed to fetch enquiries. Please try again later.');
     }
   };
 
   // Mark an enquiry as read
   const markAsRead = async (id) => {
     try {
-      const updatedEnquiry = await markAsReadApi(
-        `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_ENQUIRY_ENDPOINT}/${id}`,
-        'PATCH'
-      );
+      const url = `${endpoints.ENQUIRIES}/${id}`;
+      console.log('Marking as read:', url); // Debug log
+      const updatedEnquiry = await markAsReadApi(url, 'PATCH');
       setEnquiries((prev) =>
         prev.map((enquiry) =>
-          enquiry._id === id ? { ...enquiry, read: updatedEnquiry.read } : enquiry
+          enquiry._id === id ? { ...enquiry, status: updatedEnquiry.status } : enquiry
         )
       );
     } catch (err) {
       console.error('Error updating enquiry:', err);
-      setError('Failed to update enquiry');
+      setError('Failed to mark enquiry as read. Please try again later.');
     }
   };
 
   // Remove an enquiry
   const removeEnquiry = async (id) => {
     try {
-      await removeEnquiryApi(
-        `${import.meta.env.VITE_API_BASE_URL}${import.meta.env.VITE_ENQUIRY_ENDPOINT}/${id}`,
-        'DELETE'
-      );
+      const url = `${endpoints.ENQUIRIES}/${id}`;
+      console.log('Removing enquiry:', url); // Debug log
+      await removeEnquiryApi(url, 'DELETE');
       setEnquiries((prev) => prev.filter((enquiry) => enquiry._id !== id));
     } catch (err) {
       console.error('Error deleting enquiry:', err);
-      setError('Failed to delete enquiry');
+      setError('Failed to delete enquiry. Please try again later.');
     }
   };
 
@@ -73,21 +72,23 @@ export const useEnquiries = () => {
   // Open modal for selected enquiry
   const openModal = (enquiry) => {
     setSelectedEnquiry(enquiry);
-    if (enquiry.read !== true) {
+    if (enquiry.status === 'unread') {
       markAsRead(enquiry._id); // Mark as read only if it's not already read
     }
     setConfirmDeleteModal(true);
   };
 
+  // Close modal
   const closeModal = () => {
     setSelectedEnquiry(null);
     setConfirmDeleteModal(false);
   };
+  console.log('Enquiries:', enquiries); // Debug log
 
   return {
     enquiries,
     selectedEnquiry,
-    loading: fetchingEnquiries || markingAsRead || removingEnquiry, // Combine all loading states
+    loading: fetchingEnquiries || markingAsRead || removingEnquiry,
     error,
     fetchEnquiries,
     markAsRead,
@@ -96,4 +97,4 @@ export const useEnquiries = () => {
     closeModal,
     confirmDeleteModal,
   };
-};
+}

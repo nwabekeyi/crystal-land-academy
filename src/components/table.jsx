@@ -30,7 +30,7 @@ const TableComponent = ({
   rowsPerPage,
   onPageChange,
   onRowsPerPageChange,
-  onRowClick,
+  onRowClick= () => {},
   hiddenColumnsSmallScreen = [],
   hiddenColumnsTabScreen = [], // New prop for hiding columns on tab screens
 }) => {

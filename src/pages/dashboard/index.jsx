@@ -69,7 +69,7 @@ function DashboardHome() {
 
   const renderRoutesBasedOnRole = (role) => {
     switch (role) {
-      case "superadmin":
+      case "admin":
         return (
           <>
             <Route path="/messenger" element={<ChatApp />} />
