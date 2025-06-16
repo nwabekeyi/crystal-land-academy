@@ -8,6 +8,7 @@ const Enquiry = () => {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    email: '',
     message: '',
   });
   const [loading, setLoading] = useState(false); // For loading state
@@ -35,12 +36,15 @@ const Enquiry = () => {
   };
 
   const validateForm = () => {
-    const { name, phone, message } = formData;
-    if (!name || !phone || !message) {
+    const { name, phone, email, message } = formData;
+    if (!name || !phone || !email || !message) {
       return 'All fields are required.';
     }
     if (!/^\d{10,15}$/.test(phone)) {
       return 'Please enter a valid phone number.';
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      return 'Please enter a valid email address.';
     }
     return null;
   };
@@ -74,7 +78,7 @@ const Enquiry = () => {
       console.log('Enquiry submitted successfully:', data);
 
       // Reset form and close modal
-      setFormData({ name: '', phone: '', message: '' });
+      setFormData({ name: '', phone: '', email: '', message: '' });
       setOpen(false);
     } catch (error) {
       console.error('Error submitting enquiry:', error);
@@ -143,6 +147,14 @@ const Enquiry = () => {
             name="phone"
             type="tel"
             value={formData.phone}
+            onChange={handleInputChange}
+            fullWidth
+          />
+          <TextField
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email}
             onChange={handleInputChange}
             fullWidth
           />

@@ -1,27 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchEnquiries } from '../../../../reduxStore/slices/enquiriesSlice'; // Import the fetchEnquiries action
+import { fetchEnquiries } from '../../../../reduxStore/slices/enquiriesSlice'; 
 import { IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import Modal from '../../components/modal';
-import TableComponent from '../../../../components/table'; // Assuming your reusable table component is here
+import TableComponent from '../../../../components/table';
 import Header from '../../components/Header';
-import useApi from '../../../../hooks/useApi'; // Import the custom API hook
-import { endpoints } from '../../../../utils/constants'; // Import endpoints
+import useApi from '../../../../hooks/useApi'; 
+import { endpoints } from '../../../../utils/constants'; 
 
 const Enquiries = () => {
   const dispatch = useDispatch();
-  const { enquiries, loading, error } = useSelector((state) => state.enquiries); // Access enquiries from Redux store
-
+  const { enquiries, loading, error } = useSelector((state) => state.enquiries); 
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
-  const [page, setPage] = useState(0); // Current page
-  const [rowsPerPage, setRowsPerPage] = useState(10); // Default rows per page
+  const [page, setPage] = useState(0); 
+  const [rowsPerPage, setRowsPerPage] = useState(10); 
 
-  const { callApi: markAsReadApi } = useApi(); // API call for marking as read
-  const { callApi: removeEnquiryApi } = useApi(); // API call for deleting enquiry
+  const { callApi: markAsReadApi } = useApi(); 
+  const { callApi: removeEnquiryApi } = useApi();
 
   // Fetch enquiries when the component mounts
   useEffect(() => {
@@ -34,6 +33,7 @@ const Enquiries = () => {
   const columns = [
     { id: 'name', label: 'Name', minWidth: 100 },
     { id: 'phone', label: 'Phone No.', minWidth: 50 },
+    { id: 'email', label: 'Email', minWidth: 100 }, // Added email column
     { id: 'status', label: 'Status', minWidth: 50 },
     { id: 'actions', label: 'Actions', minWidth: 150, renderCell: (row) => row.actions },
   ];
@@ -43,12 +43,13 @@ const Enquiries = () => {
     _id: enquiry._id, // Ensure unique key for each row
     name: enquiry.name,
     phone: enquiry.phone,
-    status: enquiry.status === 'read' ? 'Read' : 'Unread', // Map status to readable format
+    email: enquiry.email, // Include email in rows
+    status: enquiry.status === 'read' ? 'Read' : 'Unread',
     actions: (
       <>
         {/* View Icon */}
         <IconButton
-          onClick={() => openModal(enquiry)} // Open modal to view enquiry details
+          onClick={() => openModal(enquiry)} 
           aria-label="view"
           style={{ marginRight: '10px' }}
         >
@@ -57,7 +58,7 @@ const Enquiries = () => {
 
         {/* Delete Icon */}
         <IconButton
-          onClick={() => openDeleteModal(enquiry)} // Open delete confirmation modal
+          onClick={() => openDeleteModal(enquiry)} 
           aria-label="delete"
           color="error"
         >
@@ -143,8 +144,15 @@ const Enquiries = () => {
       {selectedEnquiry && !confirmDeleteModal && (
         <Modal open={!!selectedEnquiry} onClose={closeModal} noConfirm title="Enquiry Details">
           <div className="modal-content">
-            <h2>{selectedEnquiry.name}</h2>
-            <p>{selectedEnquiry.message}</p>
+            <h2><strong>Name: </strong>{selectedEnquiry.name}</h2>
+            <p><strong>Number: </strong>{selectedEnquiry.phone}</p>
+            <p>
+              <strong>E-mail: </strong>
+              <a href={`mailto:${selectedEnquiry.email}`} style={{textDecoration: 'underline' }}>
+                {selectedEnquiry.email}
+              </a>
+            </p> {/* Display email as mailto link */}
+            <p><strong>Message: </strong>{selectedEnquiry.message}</p>
             <p>
               <strong>Status: </strong>
               {selectedEnquiry.status === 'read' ? 'Read' : 'Unread'}
@@ -174,12 +182,22 @@ const Enquiries = () => {
               {selectedEnquiry.name}
             </p>
             <p>
+              <strong>Phone: </strong>
+              {selectedEnquiry.phone}
+            </p>
+            <p>
+              <strong>Email: </strong>
+              <a href={`mailto:${selectedEnquiry.email}`} style={{ color: 'blue', textDecoration: 'underline' }}>
+                {selectedEnquiry.email}
+              </a>
+            </p> {/* Display email as mailto link */}
+            <p>
               <strong>Message: </strong>
               {selectedEnquiry.message}
             </p>
             <div style={{ display: 'flex', justifyContent: 'end', marginTop: '20px' }}>
               <IconButton
-                onClick={() => handleDeleteEnquiry(selectedEnquiry._id)} // Trigger delete API call
+                onClick={() => handleDeleteEnquiry(selectedEnquiry._id)} 
                 aria-label="delete"
                 color="error"
               >
