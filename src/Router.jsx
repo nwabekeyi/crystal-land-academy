@@ -11,7 +11,6 @@ const ResetPassword  = lazy(() => import('./pages/resetPassword'));
 const ForgotPasswordPage = lazy(() => import('./pages/forgotPassword'));
 
 
-
 function MyRoute() {
   return (
     <Router>

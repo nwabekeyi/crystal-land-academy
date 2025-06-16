@@ -1,17 +1,30 @@
 // components/Admin.js
 import React, { useState } from "react";
-import { Box, Grid, useTheme, Typography } from "@mui/material";
+import { Box, Grid, useTheme, Typography, IconButton } from "@mui/material";
 import { tokens } from "../../../theme";
 import Header from "../../../components/Header";
 import TableComponent from "../../../../../components/table";
 import useAcademicYears from "./useAcademicYears";
-import {AddAcademicYearModal} from "./academicYearModals"; // Adjusted import to match previous file
-import ActionButton from "../../../components/actionButton"; // Imported ActionButton
+import { AddAcademicYearModal } from "./academicYearModals";
+import ActionButton from "../../../components/actionButton";
+import EditIcon from "@mui/icons-material/Edit";
 
 const Admin = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const { academicYears, currentYear, loading, error, formValues, handleChange, handleCreateAcademicYear } = useAcademicYears();
+  const {
+    setEditMode,
+    setFormValues,
+    academicYears,
+    currentYear,
+    loading,
+    error,
+    formValues,
+    handleChange,
+    handleSubmit,
+    startEdit,
+    editMode,
+  } = useAcademicYears();
   const [openForm, setOpenForm] = useState(false);
 
   // Sorting and pagination state
@@ -28,6 +41,10 @@ const Admin = () => {
     { id: "fromYear", label: "From Year" },
     { id: "toYear", label: "To Year" },
     { id: "isCurrent", label: "Current" },
+    { id: "studentCount", label: "Students" },
+    { id: "teacherCount", label: "Teachers" },
+    { id: "academicTermCount", label: "Academic Terms" },
+    { id: "actions", label: "Actions" },
   ];
 
   // Table rows
@@ -38,7 +55,21 @@ const Admin = () => {
     fromYear: new Date(year.fromYear).toLocaleDateString(),
     toYear: new Date(year.toYear).toLocaleDateString(),
     isCurrent: year.isCurrent ? "Yes" : "No",
+    studentCount: year.students?.length || 0,
+    teacherCount: year.teachers?.length || 0,
+    academicTermCount: year.academicTerms?.length || 0,
+    actions: (
+      <IconButton onClick={() => handleEdit(year)}>
+        <EditIcon />
+      </IconButton>
+    ),
   }));
+
+  // Handle edit button click
+  const handleEdit = (year) => {
+    startEdit(year);
+    setOpenForm(true);
+  };
 
   // Handle sorting
   const handleSortChange = (columnId) => {
@@ -62,6 +93,16 @@ const Admin = () => {
     row.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Sort rows
+  const sortedRows = [...filteredRows].sort((a, b) => {
+    const aValue = a[sortBy];
+    const bValue = b[sortBy];
+    if (sortDirection === "asc") {
+      return aValue > bValue ? 1 : -1;
+    }
+    return aValue < bValue ? 1 : -1;
+  });
+
   return (
     <Grid container>
       <Grid item xs={12}>
@@ -71,8 +112,8 @@ const Admin = () => {
       <Grid item xs={12}>
         {loading ? (
           <Box>Loading...</Box>
-        ) : error ? (
-          <Box sx={{ color: "red" }}>{error}</Box>
+        ) : error.general ? (
+          <Box sx={{ color: "red" }}>{error.general}</Box>
         ) : (
           <>
             {/* Current Academic Year Section */}
@@ -95,7 +136,10 @@ const Admin = () => {
                   <Typography variant="body1" color={colors.grey[100]}>
                     {currentYear.name} (
                     {new Date(currentYear.fromYear).toLocaleDateString()} -{" "}
-                    {new Date(currentYear.toYear).toLocaleDateString()})
+                    {new Date(currentYear.toYear).toLocaleDateString()}) |{" "}
+                    {currentYear.students?.length || 0} Students,{" "}
+                    {currentYear.teachers?.length || 0} Teachers,{" "}
+                    {currentYear.academicTerms?.length || 0} Terms
                   </Typography>
                 ) : (
                   <Typography variant="body1" color={colors.redAccent[500]}>
@@ -104,7 +148,30 @@ const Admin = () => {
                 )}
               </Box>
               <ActionButton
-                onClick={() => setOpenForm(true)}
+                onClick={() => {
+                  setFormValues({
+                    id: "",
+                    name: "",
+                    fromYear: "",
+                    toYear: "",
+                    isCurrent: false,
+                    addAcademicTerm: false,
+                    academicTerm: {
+                      name: "",
+                      description: "",
+                      duration: "3 months",
+                      startDate: "",
+                      endDate: "",
+                      terms: [
+                        { name: "1st Term", description: "", duration: "3 months", startDate: "", endDate: "", isCurrent: false, createdBy: "" },
+                        { name: "2nd Term", description: "", duration: "3 months", startDate: "", endDate: "", isCurrent: false, createdBy: "" },
+                        { name: "3rd Term", description: "", duration: "3 months", startDate: "", endDate: "", isCurrent: false, createdBy: "" },
+                      ],
+                    },
+                  });
+                  setEditMode(false);
+                  setOpenForm(true);
+                }}
                 content="Add Academic Year"
               />
             </Box>
@@ -115,15 +182,16 @@ const Admin = () => {
               onClose={() => setOpenForm(false)}
               formValues={formValues}
               handleChange={handleChange}
-              handleCreateAcademicYear={handleCreateAcademicYear}
+              handleSubmit={handleSubmit}
               error={error}
+              editMode={editMode}
             />
 
             {/* Academic Years Table */}
             <TableComponent
               columns={columns}
               tableHeader="Academic Years"
-              data={filteredRows}
+              data={sortedRows}
               sortBy={sortBy}
               sortDirection={sortDirection}
               onSortChange={handleSortChange}
@@ -131,8 +199,8 @@ const Admin = () => {
               rowsPerPage={rowsPerPage}
               onPageChange={handlePageChange}
               onRowsPerPageChange={handleRowsPerPageChange}
-              hiddenColumnsSmallScreen={["fromYear", "toYear"]}
-              hiddenColumnsTabScreen={["fromYear"]}
+              hiddenColumnsSmallScreen={["fromYear", "toYear", "studentCount", "teacherCount", "academicTermCount", "actions"]}
+              hiddenColumnsTabScreen={["studentCount", "teacherCount", "academicTermCount"]}
             />
           </>
         )}

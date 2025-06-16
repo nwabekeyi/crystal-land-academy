@@ -1,4 +1,4 @@
-import Instructors from "../courseManagement/instructor";
+import Instructors from "../academicYear/instructor";
 import withDashboardWrapper from "../../../../components/dasboardPagesContainer";
 
 const Curriculum = () => {

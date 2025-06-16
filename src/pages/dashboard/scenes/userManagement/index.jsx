@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Box, Tabs, Tab } from '@mui/material';
+import { Box, Tabs, Tab, Typography } from '@mui/material';
 import Dropdown from '../../../../components/dropdown';
 import { SignUpStudent, SignUpTeacher, SignUpAdmin } from '../../../signUp';
 import Header from '../../components/Header';
