@@ -20,10 +20,23 @@ const useApi = () => {
     async (url, method = 'GET', body = null, config = {}) => {
       setLoading(true);
       setError(null);
-      const headers = config.headers || {};
+
+      // Get accessToken from sessionStorage
+      const accessToken = sessionStorage.getItem('accessToken');
+      
+      // Initialize headers, merging with any provided in config
+      const headers = { ...config.headers };
+      
+      // Add Bearer token if accessToken exists
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+
+      // Set Content-Type if body is not FormData
       if (!(body instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
       }
+
       const options = {
         method,
         headers,
@@ -33,13 +46,13 @@ const useApi = () => {
       try {
         const response = await fetch(url, options);
         if (!response.ok) {
-          let errorMessage = await response.json()
-          console.log(errorMessage)
-          if(errorMessage && errorMessage.message){
-            setError( errorMessage.message || 'Something went wrong');
-            console.log(error)
+          let errorMessage = await response.json();
+          console.log(errorMessage);
+          if (errorMessage && errorMessage.message) {
+            setError(errorMessage.message || 'Something went wrong');
+            console.log(error);
           }
-        }else{
+        } else {
           const contentType = response.headers.get('Content-Type');
           let responseData;
           if (contentType && contentType.includes('application/json')) {
@@ -47,11 +60,10 @@ const useApi = () => {
           } else {
             responseData = await response.text(); // Fallback for non-JSON responses
           }
-  
+
           setData(responseData);
           return responseData;
         }
-      
       } catch (err) {
         setError(err.message || 'Something went wrong');
         return null;

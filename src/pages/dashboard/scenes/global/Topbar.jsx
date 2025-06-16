@@ -54,7 +54,7 @@ const Topbar = () => {
       case 'admin': return [
         { name: "Dashboard", to: "/dashboard" },
         { name: "User Management", to: "/dashboard/userManagement"},
-        { name: "Course Management", to: "/dashboard/courseManagement"},
+        { name: "Academic Sessions", to: "/dashboard/courseManagement"},
         { name: "Analytics and Reporting", to: "/dashboard/analytics"},
         { name: "Contacts", to: "/dashboard/contacts" },
         { name: "Support", to: "/dashboard/support"},
@@ -67,7 +67,7 @@ const Topbar = () => {
       default: return [
         { name: "Dashboard", to: "/dashboard"},
         { name: "User Management", to: "/dashboard/userManagement"},
-        { name: "Course Management", to: "/dashboard/courseManagement"},
+        { name: "Academic Sessions", to: "/dashboard/courseManagement"},
         { name: "Financial Management", to: "/dashboard/financialManagement"},
         { name: "Team", to: "/dashboard/team"},
         { name: "Analytics and Reporting", to: "/dashboard/analytics"},

@@ -22,7 +22,7 @@ const Line = lazy(() => import("./scenes/line"));
 const Pie = lazy(() => import("./scenes/pie"));
 const Enquiries = lazy(() => import("./scenes/enquiries"));
 const UserManagement = lazy(() => import("./scenes/userManagement"));
-const CourseManagement = lazy(() => import("./scenes/courseManagement"));
+const CourseManagement = lazy(() => import("./scenes/academicYear"));
 const Feedbacks = lazy(() => import("./scenes/feebacks"));
 const Support = lazy(() => import("./scenes/support"));
 const TimeTable = lazy(() => import("./scenes/timeTable"));
@@ -33,7 +33,6 @@ const Curriculum = lazy(() => import("./scenes/curriculum"));
 const StudentPayment = lazy(() => import("./scenes/studentPayment"));
 const InstructorReviews = lazy(() => import("./scenes/instructorReviews"));
 const StudentManagement = lazy(() => import("./scenes/studentManagement/studentManagement"));
-const OfflineStudentTable = lazy(() => import("./scenes/offlineStudent/offlineStudent"));
 const StudentInstructors = lazy(() => import("./scenes/studentInstructors"));
 const ChatApp = lazy(() => import("../messaging"));
 
@@ -84,7 +83,6 @@ function DashboardHome() {
             <Route path="/courseManagement" element={<CourseManagement />} />
             <Route path="/feedbacks" element={<Feedbacks />} />
             <Route path="/support" element={<Support />} />
-            <Route path="/offlineStudents" element={<OfflineStudentTable />} />
           </>
         );
       case "student":

@@ -1,186 +1,138 @@
 import { useDispatch, useSelector } from 'react-redux';
-import useWebSocket from '../../../../../hooks/useWebSocket';
 import useApi from '../../../../../hooks/useApi';
-import { setUsersData, setAllCourses } from '../../../../../reduxStore/slices/adminDataSlice';
-import { useEffect, useMemo, useState } from 'react';
-import { setFetchedUsers } from '../../../../../reduxStore/slices/apiCallCheck';
+import {
+  setUsersData,
+  setAcademicYears,
+  setCurrentAcademicYear,
+  setError,
+} from '../../../../../reduxStore/slices/adminDataSlice';
+import { useEffect, useState, useCallback } from 'react';
 import { endpoints } from '../../../../../utils/constants';
-import { useEnquiries } from '../../enquiries/useEnquiries';
 
 const useAdminData = () => {
   const [students, setStudents] = useState([]);
   const [instructors, setInstructors] = useState([]);
-  const [programStats, setProgramStats] = useState({});
-  const [outstandingPayments, setOutstandingPayments] = useState({});
-  const [mockCohorts, setMockCohorts] = useState([
-    { name: 'Cohort 1', courseName: 'Backend Web Development', numStudents: 30, progress: 85 },
-    { name: 'Cohort 2', courseName: 'Frontend Web Development', numStudents: 25, progress: 70 },
-    { name: 'Cohort 3', courseName: 'Data Science', numStudents: 40, progress: 50 },
-    { name: 'Cohort 4', courseName: 'Machine Learning', numStudents: 35, progress: 60 },
-    { name: 'Cohort 5', courseName: 'AI and Robotics', numStudents: 45, progress: 90 },
-  ]);
-  const [unreadEnquiries, setUnreadEnquiries] = useState([0]);
-
-  const {fetchEnquiries} = useEnquiries();
-  const fetchedUsers = useSelector((state) => state.apiCallCheck.fetchedUsers);
   const dispatch = useDispatch();
 
-  // Get the useApi hook results
-  const { loading, data, error, callApi } = useApi();
-  const { loading: userLoading, data: usersData, error: usersError, callApi: getUsers } = useApi();
+  // Access academic years and current academic year from Redux
+  const academicYears = useSelector((state) => state.adminData.academicYears) || [];
+  const currentAcademicYear = useSelector((state) => state.adminData.currentAcademicYear);
 
-  // Fetch the courses when component mounts
+  // API hooks
+  const {
+    loading: studentsLoading,
+    data: studentsData,
+    error: studentsError,
+    callApi: getStudents,
+  } = useApi();
+  const {
+    loading: teachersLoading,
+    data: teachersData,
+    error: teachersError,
+    callApi: getTeachers,
+  } = useApi();
+  const {
+    loading: academicYearsLoading,
+    data: academicYearsData,
+    error: academicYearsError,
+    callApi: getAcademicYears,
+  } = useApi();
+  const {
+    loading: currentYearLoading,
+    data: currentYearData,
+    error: currentYearError,
+    callApi: getCurrentYear,
+  } = useApi();
+
+  // Memoized API calls
+  const memoizedGetStudents = useCallback(
+    () => getStudents(endpoints.STUDENTS, 'GET'),
+    [getStudents]
+  );
+  const memoizedGetTeachers = useCallback(
+    () => getTeachers(endpoints.TEACHERS, 'GET'),
+    [getTeachers]
+  );
+  const memoizedGetAcademicYears = useCallback(
+    () => getAcademicYears(endpoints.ACADEMIC_YEARS, 'GET'),
+    [getAcademicYears]
+  );
+  const memoizedGetCurrentYear = useCallback(
+    () => getCurrentYear(endpoints.CURRENT_ACADEMIC_YEAR, 'GET'),
+    [getCurrentYear]
+  );
+
+  // Fetch data on mount
   useEffect(() => {
-    callApi(endpoints.COURSES, 'GET');
-  }, [callApi]);
+    memoizedGetStudents();
+    memoizedGetTeachers();
+    memoizedGetAcademicYears();
+    memoizedGetCurrentYear();
+  }, [
+    memoizedGetStudents,
+    memoizedGetTeachers,
+    memoizedGetAcademicYears,
+    memoizedGetCurrentYear,
+  ]);
 
-  // Fetch enquiries count
-  useEffect(async() => {
-    const count = await fetchEnquiries();
-    if(count){
-      setUnreadEnquiries(count);
+  // Handle students and teachers data
+  useEffect(() => {
+    if (studentsData || teachersData) {
+      const newStudents = studentsData?.data || [];
+      const newInstructors = teachersData?.data || [];
+
+      // Update local state
+      setStudents((prev) =>
+        JSON.stringify(prev) !== JSON.stringify(newStudents) ? newStudents : prev
+      );
+      setInstructors((prev) =>
+        JSON.stringify(prev) !== JSON.stringify(newInstructors)
+          ? newInstructors
+          : prev
+      );
+
+      // Dispatch to Redux
+      dispatch(setUsersData({ students: newStudents, instructors: newInstructors }));
     }
-  }, []);
+  }, [studentsData, teachersData, dispatch]);
 
-
-  // Handle course data
+  // Handle academic years data
   useEffect(() => {
-    if (!loading && data) {
-      console.log('Courses Data received:', data);
-      dispatch(setAllCourses(data.courses));  // Assuming data contains a 'courses' array
+    if (academicYearsData) {
+      const newAcademicYears = academicYearsData?.data || []; // Access data array directly
+      dispatch(setAcademicYears(newAcademicYears));
     }
-  }, [loading, data, dispatch]);
-
-  // Check for fetchedUsers and trigger API call if not fetched
-  useEffect(() => {
-    console.log('Fetching users from API...');
-    getUsers(endpoints.GET_USERS, 'GET'); // Trigger the API call
-  }, [getUsers]);
-
-  // Handle users data after API call resolves
-  useEffect(() => {
-    if (usersData) {
-      console.log('Users Data received:', usersData);
-      setStudents(usersData.students || []);
-      setInstructors(usersData.instructors || []);
-      dispatch(setUsersData(usersData));
-      dispatch(setFetchedUsers());
+    if (academicYearsError) {
+      dispatch(setError(academicYearsError.message || 'Failed to fetch academic years.'));
     }
-  }, [usersData, dispatch]);
+  }, [academicYearsData, academicYearsError, dispatch]);
 
-  // Aggregate data for each program
+  // Handle current academic year data
   useEffect(() => {
-    if (students.length > 0) {
-      const programAggregation = students.reduce((acc, student) => {
-        const { program, amountPaid } = student;
-        if (!acc[program]) {
-          acc[program] = { totalAmount: 0, studentCount: 0 };
-        }
-        acc[program].totalAmount += amountPaid || 0;
-        acc[program].studentCount += 1;
-        return acc;
-      }, {});
-      
-      setProgramStats(programAggregation);
-      console.log('Program Stats:', programAggregation);
+    if (currentYearData) {
+      const newCurrentYear = currentYearData?.data || null; // Access data object directly
+      dispatch(setCurrentAcademicYear(newCurrentYear));
     }
-  }, [students]);
-
-  // Define the action to trigger WebSocket server to fetch users
-  const actionToSend = { action: 'watch users' };
-
-  // Use the centralized useWebSocket hook, passing both URL and actionToSend
-  // useWebSocket(actionToSend);
-
-  // Calculate total revenue using the reduce method
-  const totalRevenue = useMemo(() => {
-    return students.reduce((total, student) => total + (student.amountPaid || 0), 0);
-  }, [students]);
-
-  console.log('Total Revenue:', totalRevenue);
-
-  // Get the top 5 instructors sorted by rating
-  const topInstructors = useMemo(() => {
-    if (!instructors || instructors.length === 0) return [];
-
-    // Filter instructors to ensure they have a valid rating (a non-null, non-undefined rating)
-    const instructorsWithValidRatings = instructors.filter(instructor => instructor.rating != null);
-
-    // If no instructors have valid ratings, return an empty array or handle as needed
-    if (instructorsWithValidRatings.length === 0) return [];
-
-    // Create a shallow copy of the filtered instructors array before sorting
-    const instructorsCopy = [...instructorsWithValidRatings];
-
-    // Sort by rating in descending order
-    return instructorsCopy
-      .sort((a, b) => b.rating - a.rating) // Sort instructors by rating
-      .slice(0, 5) // Select the top 5
-      .map((instructor) => ({
-        profilePictureUrl: instructor.profilePictureUrl,
-        firstName: instructor.firstName,
-        lastName: instructor.lastName,
-        rating: instructor.rating,
-        program: instructor.program,
-      }));
-  }, [instructors]);
-
-  // Log the top instructors for debugging
-  console.log("Top Instructors:", topInstructors);
-
-  // Calculate outstanding payments and their percentage for each course
-  useEffect(() => {
-    // Check if 'data.courses' is an array and 'students' array is populated
-    if (Array.isArray(data?.courses) && students.length > 0) {
-      let totalOutstanding = 0;
-
-      // Iterate over the courses inside data.courses
-      const courseOutstandingDetails = data.courses.map((course) => {
-        // Filter students based on course's program (assuming 'courseName' matches student's 'program')
-        const courseStudents = students.filter((student) => student.program === course.courseName);
-
-        // Calculate the total amount paid for this course
-        const totalAmountPaidForCourse = courseStudents.reduce((sum, student) => sum + student.amountPaid, 0);
-
-        // Calculate the outstanding amount for this course
-        const outstandingAmount = course.cost - totalAmountPaidForCourse;
-
-        // Accumulate the total outstanding amount
-        totalOutstanding += outstandingAmount;
-
-        return {
-          courseName: course.courseName,
-          outstandingAmount,
-          totalAmountPaid: totalAmountPaidForCourse,
-          courseCost: course.cost,
-        };
-      });
-
-      // Calculate the percentage of total outstanding for each course
-      const courseOutstandingWithPercentage = courseOutstandingDetails.map((courseDetail) => ({
-        ...courseDetail,
-        outstandingPercentage: ((courseDetail.outstandingAmount / totalOutstanding) * 100).toFixed(2),
-      }));
-
-      // Update the state with outstanding payments
-      setOutstandingPayments({ totalOutstanding, courseOutstandingWithPercentage });
-
-      // Log the outstanding payments for debugging
-      console.log('Outstanding Payments:', { totalOutstanding, courseOutstandingWithPercentage });
+    if (currentYearError) {
+      dispatch(setError(currentYearError.message || 'Failed to fetch current academic year.'));
     }
-  }, [data, students]);
+  }, [currentYearData, currentYearError, dispatch]);
 
   return {
-    data,
-    loading,
-    error,
-    usersData,
-    totalRevenue,
-    programStats,
-    topInstructors,
-    outstandingPayments,
-    mockCohorts,
-    unreadEnquiries
+    usersData: {
+      students: studentsData?.data || [],
+      instructors: teachersData?.data || [],
+    },
+    academicYears,
+    currentAcademicYear,
+    loading:
+      studentsLoading ||
+      teachersLoading ||
+      academicYearsLoading ||
+      currentYearLoading,
+    error: studentsError || teachersError || academicYearsError || currentYearError,
+    refetchAcademicYears: memoizedGetAcademicYears, // Added for refetching
+    refetchCurrentYear: memoizedGetCurrentYear, // Added for refetching
   };
 };
 

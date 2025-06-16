@@ -92,7 +92,7 @@ const Sidebar = () => {
   const superAdminMenuItems = [
     { title: "Dashboard", to: "/dashboard", icon: <HomeOutlinedIcon /> },
     { title: "User Management", to: "/dashboard/userManagement", icon: <PeopleOutlinedIcon /> },
-    { title: "Course Management", to: "/dashboard/courseManagement", icon: <ReceiptOutlinedIcon /> },
+    { title: "Academic Sessions", to: "/dashboard/courseManagement", icon: <ReceiptOutlinedIcon /> },
     { title: "Financial Management", to: "/dashboard/financialManagement", icon: <ContactsOutlinedIcon /> },
     { title: "Team", to: "/dashboard/team", icon: <PersonOutlinedIcon /> },
     { title: "Analytics and Reporting", to: "/dashboard/analytics", icon: <MapOutlinedIcon /> },
@@ -107,7 +107,7 @@ const Sidebar = () => {
   const adminMenuItems = [
     { title: "Dashboard", to: "/dashboard", icon: <HomeOutlinedIcon /> },
     { title: "User Management", to: "/dashboard/userManagement", icon: <PeopleOutlinedIcon /> },
-    { title: "Course Management", to: "/dashboard/courseManagement", icon: <ReceiptOutlinedIcon /> },
+    { title: "Academic Sessions", to: "/dashboard/courseManagement", icon: <ReceiptOutlinedIcon /> },
     { title: "Analytics and Reporting", to: "/dashboard/analytics", icon: <MapOutlinedIcon /> },
     { title: "Contacts", to: "/dashboard/contacts", icon: <SettingsOutlinedIcon /> },
     { title: "Support", to: "/dashboard/support", icon: <SupportAgentIcon /> },

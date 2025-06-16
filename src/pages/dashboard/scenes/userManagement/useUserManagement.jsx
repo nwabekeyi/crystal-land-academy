@@ -1,35 +1,35 @@
 import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useSelector,  useDispatch } from 'react-redux';
 import EditIcon from '@mui/icons-material/Edit';
-import {IconButton,Typography} from "@mui/material";
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { IconButton, Typography } from '@mui/material';
 import useApi from '../../../../hooks/useApi';
 import { endpoints } from '../../../../utils/constants';
-import { deleteUser } from '../../../../reduxStore/slices/adminDataSlice'; 
+import { deleteUser } from '../../../../reduxStore/slices/adminDataSlice';
 
 const useUserManagement = () => {
-  const students = useSelector((state) => state.adminData.usersData.students);
-  const instructors = useSelector((state) => state.adminData.usersData.instructors);
-  const admins = useSelector((state) => state.adminData.usersData.admins);
+  const dispatch = useDispatch();
+  const usersData = useSelector((state) => state.adminData.usersData || {});
+  const { students = [], teachers = [], admins = [] } = usersData; // Default to empty arrays
 
-  const findUserInStore = (userId) => {
-    let user = {};
-    if(userId.startsWith('instructor')){
-      user = instructors.find(instructor => userId === instructor.instructorId)
-    }else if(userId.startsWith( 'student')){
-      user = students.find(student => userId === student.studentId);
-    }else{
-      user = admins.find(admin => userId === admin.userId)
+  // Debug: Log students data to verify studentId
+  console.log('Teachers data:', teachers);
 
+  const findUserInStore = (id, role) => {
+    if (role === 'student') {
+      return students.find((student) => student.studentId === id);
+    } else if (role === 'teacher') {
+      return teachers.find((teacher) => teacher.teacherId === id);
+    } else if (role === 'admin') {
+      return admins.find((admin) => admin._id === id);
     }
-    return user
+    return null;
   };
 
-
-  const [selectedRole, setSelectedRole] = useState("");
-  const [sortBy, setSortBy] = useState("id");
-  const [sortDirection, setSortDirection] = useState("asc");
+  const [selectedRole, setSelectedRole] = useState('');
+  const [sortBy, setSortBy] = useState('id');
+  const [sortDirection, setSortDirection] = useState('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -37,31 +37,27 @@ const useUserManagement = () => {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [signUpDialogOpen, setSignUpDialogOpen] = useState(false);
-  const [selectedInstructor, setSelectedInstructor] = useState("");
-  const [profileImage, setProfileImage] = useState(null);
-  const [profileImageUrl, setProfileImageUrl] = useState("");
-  const [selectedProgram, setSelectedProgram] = useState("");
   const [tabIndex, setTabIndex] = useState(0);
-  const [offlineStudents, setOfflineStudents] = useState([]);
   const [viewUserDetails, setViewUserDetails] = useState(false);
-  const {callApi: callDeleteApi, loading: deleteLoading, data: deleteData, error: deleteError} = useApi();
-  const {callApi: callUpdateApi, loading: updateLoading, data: updateData, error: updaterror} = useApi();
+  const { callApi: callDeleteApi, loading: deleteLoading, data: deleteData, error: deleteError } = useApi();
+  const { callApi: callUpdateApi, loading: updateLoading, error: updateError } = useApi();
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  const [rerender, setRerender]= useState(false);
-//role selesct
+  const [rerender, setRerender] = useState(false);
+
+  // Role select
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
     setSignUpDialogOpen(true);
   };
+
   useEffect(() => {
     setRerender(!rerender);
   }, [editDialogOpen, signUpDialogOpen]);
 
-
-  //sort table columns change
+  // Sort table columns
   const handleSortChange = (columnId) => {
-    const isAsc = sortBy === columnId && sortDirection === "asc";
-    setSortDirection(isAsc ? "desc" : "asc");
+    const isAsc = sortBy === columnId && sortDirection === 'asc';
+    setSortDirection(isAsc ? 'desc' : 'asc');
     setSortBy(columnId);
   };
 
@@ -74,289 +70,191 @@ const useUserManagement = () => {
     setPage(0);
   };
 
-  //open delete confirmation modal
+  // Open delete confirmation modal
   const handleDeleteOpen = (user) => {
-    const foundUser = findUserInStore(user.userId);
-
-    sessionStorage.setItem('selectedUser', JSON.stringify(foundUser))
-    setEditUserDetailsState(foundUser);
-
-    setOpenDeleteModal(true);
-    console.log(openDeleteModal)
-  };
-
-
-  //open edit user dialog
-  const handleEdit = (user) => {
-    console.log(user)
-    const foundUser = findUserInStore(user.userId);
-
-    sessionStorage.setItem('selectedUser', JSON.stringify(foundUser))
-    setEditUserDetailsState(foundUser);
-
-    setProfileImageUrl(user.profilePictureUrl || "");
-    setEditDialogOpen(true);
-
-    setSelectedProgram(user.program);
-
-    // const filteredInstructors = userData.filter(
-    //   (instructor) =>
-    //     instructor.role === "instructor" &&
-    //     Array.isArray(instructor.programsAssigned) &&
-    //     instructor.programsAssigned.includes(user.program)
-    // );
-
-  };
-
-  const handleProgramChange = (program) => {
-    setSelectedProgram(program);
-  };
-
-  //close confirmation modals
-  const handleConfirmationModalClose = () => {
-    setConfirmModalOpen(false)
-  }
-
-
- const handleDelete = async () => {
-  // Trigger a rerender before any operation
-  const selectedUserInStore = await JSON.parse(sessionStorage.getItem('selectedUser'));
-  if (!selectedUserInStore) return;
-  try {
-      console.log(selectedUserInStore);
-    const body = {
-      userId: selectedUserInStore.userId,
-      role: selectedUserInStore.role,
-      courseName: selectedUserInStore.program,
-      cohortName: selectedUserInStore.cohort,
-    };
-
-    await callDeleteApi(endpoints.USER, "DELETE", body);
-
-    if (deleteData) {
-     // Dispatch the deleteUser action to update the Redux store
-     dispatch(deleteUser(selectedUserInStore.userId, selectedUserInStore.role));
-
-      sessionStorage.removeItem('selectedUser');
-      sessionStorage.setItem('confrimModal', true)
-      setOpenDeleteModal(false);
-      setSelectedUser(null);
-      setRerender(!rerender);
-    } else {
-      sessionStorage.setItem('confrimModal', true);
-      setRerender(!rerender);
-
+    const foundUser = findUserInStore(user.id, user.role);
+    if (foundUser) {
+      sessionStorage.setItem('selectedUser', JSON.stringify({ ...foundUser, role: user.role }));
+      setEditUserDetailsState(foundUser);
+      setOpenDeleteModal(true);
     }
-  } catch (error) {
-    console.error("Error deleting user:", error);
-  }
- 
-};
+  };
+
+  // Open edit user dialog
+  const handleEdit = (user) => {
+    const foundUser = findUserInStore(user.id, user.role);
+    if (foundUser) {
+      sessionStorage.setItem('selectedUser', JSON.stringify({ ...foundUser, role: user.role }));
+      setEditUserDetailsState(foundUser);
+      setEditDialogOpen(true);
+    }
+  };
+
+  // Close confirmation modal
+  const handleConfirmationModalClose = () => {
+    setConfirmModalOpen(false);
+  };
+
+  const handleDelete = async () => {
+    const selectedUserInStore = JSON.parse(sessionStorage.getItem('selectedUser'));
+    if (!selectedUserInStore) return;
+
+    try {
+      const body = {
+        id: selectedUserInStore.studentId || selectedUserInStore.teacherId || selectedUserInStore._id,
+        role: selectedUserInStore.role,
+      };
+
+      await callDeleteApi(endpoints.USER, 'DELETE', body);
+
+      if (deleteData) {
+        dispatch(deleteUser({ id: body.id, role: body.role }));
+        sessionStorage.removeItem('selectedUser');
+        sessionStorage.setItem('confirmModal', 'true');
+        setOpenDeleteModal(false);
+        setSelectedUser(null);
+        setRerender(!rerender);
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      sessionStorage.setItem('confirmModal', 'true');
+      setRerender(!rerender);
+    }
+  };
 
   const columns = [
-    { id: "sn", label: "S/N", width: 90 },
+    { id: 'sn', label: 'S/N', width: 90 },
     {
-      id: "userId",
-      label: "User ID",
+      id: 'id',
+      label: 'ID',
       width: 100,
       renderCell: (row) => (
-        <Typography
-          sx={{
-            width: "100px", // Adjust the width according to your requirement
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-            display: "block",
-          }}
-        >{`${row.userId}`}</Typography>
+        <Typography>
+          {row.role === 'student'
+            ? String(row.id) // Force string to prevent date parsing
+            : row.role === 'teacher'
+            ? String(row.id)
+            : String(row.id)}
+        </Typography>
       ),
     },
-    { id: "name", label: "Name", flex: 1 },
-    { id: "phoneNumber", label: "Phone Number", flex: 1 },
-    { id: "program", label: "Program", width: 150 },
-    { id: "registeredDate", label: "Registered Date", flex: 1 },
+    { id: 'name', label: 'Name', flex: 1 },
+    { id: 'email', label: 'Email', flex: 1 },
     {
-      id: "actions",
-      label: "Actions",
-      width: 200, // Increase the width to fit the new icon
+      id: 'details',
+      label: 'Details',
+      flex: 1,
+      renderCell: (row) =>
+        row.role === 'student'
+          ? `${row.classLevel || 'N/A'} (${row.boardingStatus || 'N/A'})`
+          : row.role === 'teacher'
+          ? row.subject || 'N/A'
+          : 'Admin',
+    },
+    { id: 'createdAt', label: 'Registered Date', flex: 1 },
+    {
+      id: 'actions',
+      label: 'Actions',
+      width: 200,
       renderCell: (row) => (
-            <div className="action-buttons" style={{ display: 'flex' }}>
-              <IconButton
-                onClick={() => {
-                  handleEdit(row);
-                }}
-                sx={{
-                  fontSize: {
-                    xs: '12px',  // Extra small screens (phones)
-                    sm: '12px',  // Small screens (tablets)
-                    md: '18px',  // Medium screens (desktops)
-                    lg: '18px',  // Large screens
-                    xl: '18px',  // Extra large screens
-                  },
-                }}
-              >
-                <EditIcon fontSize="inherit" />
-              </IconButton>
-        
-              <IconButton
-                onClick={() => {
-                  handleDeleteOpen(row);
-                }}
-                sx={{
-                  fontSize: {
-                    xs: '12px',  // Extra small screens (phones)
-                    sm: '12px',  // Small screens (tablets)
-                    md: '18px',  // Medium screens (desktops)
-                    lg: '18px',  // Large screens
-                    xl: '18px',  // Extra large screens
-                  },
-                }}
-              >
-                <DeleteIcon fontSize="inherit" />
-              </IconButton>
-        
-              <IconButton
-                onClick={() => {
-                  setSelectedUser(row);
-                  setViewUserDetails(true);
-                }}
-                sx={{
-                  fontSize: {
-                    xs: '12px',  // Extra small screens (phones)
-                    sm: '12px',  // Small screens (tablets)
-                    md: '18px',  // Medium screens (desktops)
-                    lg: '18px',  // Large screens
-                    xl: '18px',  // Extra large screens
-                  },
-                }}
-              >
-                <VisibilityIcon fontSize="inherit" />
-              </IconButton>
-            </div>
-      
+        <div style={{ display: 'flex' }}>
+          <IconButton onClick={() => handleEdit(row)}>
+            <EditIcon />
+          </IconButton>
+          <IconButton onClick={() => handleDeleteOpen(row)}>
+            <DeleteIcon />
+          </IconButton>
+          <IconButton onClick={() => { setSelectedUser(row); setViewUserDetails(true); }}>
+            <VisibilityIcon />
+          </IconButton>
+        </div>
       ),
     },
   ];
 
-  const studentData = students
-    .map((user, index) => ({
-      id: user.userId,
-      sn: index + 1,
-      userId:
-        user.role === "student"
-          ? `${user.studentId}` || "N/A"
-          : user.role === "instructor"
-          ? user.instructorId || "N/A"
-          : user.userId || "N/A",
-      name: `${user.firstName || "N/A"} ${user.lastName || "N/A"}`,
-      phoneNumber: user.phoneNumber || "N/A",
-      program: user.program || "N/A",
-      registeredDate: user.createdAt || "N/A",
-    }))
-    .sort((a, b) => a.sn - b.sn); // Sorting by S/N in ascending order<
+  const studentData = Array.isArray(students)
+    ? students.map((user, index) => {
+        console.log('Student:', user); // Debug each student object
+        return {
+          id: user.studentId ?? 'N/A',
+          sn: index + 1,
+          role: 'student',
+          name: `${user.firstName || 'N/A'} ${user.lastName || 'N/A'}`,
+          email: user.email || 'N/A',
+          classLevel: user.currentClassLevel
+            ? `${user.currentClassLevel.className} ${user.currentClassLevel.subclass}`
+            : 'N/A',
+          boardingStatus: user.boardingStatus || 'N/A',
+          createdAt: user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A',
+        };
+      }).sort((a, b) => a.sn - b.sn)
+    : [];
 
-    const instructorData = instructors
-    .map((user, index) => ({
-      id: user.userId,
-      sn: index + 1,
-      userId:
-        user.role === "student"
-          ? `${user.studentId}` || "N/A"
-          : user.role === "instructor"
-          ? user.instructorId || "N/A"
-          : user.userId || "N/A",
-      name: `${user.firstName || "N/A"} ${user.lastName || "N/A"}`,
-      phoneNumber: user.phoneNumber || "N/A",
-      program: user.program || "N/A",
-      registeredDate: user.createdAt || "N/A",
-    }))
-    .sort((a, b) => a.sn - b.sn); // Sorting by S/N in ascending order
-  
-  
-  //formattted offline student data
-  // const formattedOfflineStudents = offlineStudents
-  //   .map((user, index) => ({
-  //     id: user.userId,
-  //     sn: index + 1,
-  //     role: user.role,
-  //     userId: user.studentId,
-  //     name: `${user.firstName || "N/A"} ${user.lastName || "N/A"}`,
-  //     phoneNumber: user.phoneNumber || "N/A",
-  //     program: user.program || "N/A",
-  //     registeredDate: user.createdAt || "N/A",
-  //   }))
-  //   .sort((a, b) => a.sn - b.sn); // Sorting by S/N in ascending order
+  const teacherData = Array.isArray(teachers)
+    ? teachers.map((user, index) => ({
+        id: user.teacherId || 'N/A',
+        sn: index + 1,
+        role: 'teacher',
+        name: `${user.firstName || 'N/A'} ${user.lastName || 'N/A'}`,
+        email: user.email || 'N/A',
+        subject: user.subject?.name || 'N/A', // Assuming subject is populated
+        createdAt: user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A',
+      })).sort((a, b) => a.sn - b.sn)
+    : [];
 
-  // const getUniqueProgramsAssigned = () => {
-  //   const assignedPrograms = [];
-  //   userData.forEach((user) => {
-  //     if (user.role === "instructor" && Array.isArray(user.programsAssigned)) {
-  //       assignedPrograms.push(...user.programsAssigned);
-  //     }
-  //   });
-  //   return [...new Set(assignedPrograms)];
-  // };
-
-  // const programsAssignedOptions = getUniqueProgramsAssigned();
+  const adminData = Array.isArray(admins)
+    ? admins.map((user, index) => ({
+        id: user._id || 'N/A',
+        sn: index + 1,
+        role: 'admin',
+        name: `${user.firstName || 'N/A'} ${user.lastName || 'N/A'}`,
+        email: user.email || 'N/A',
+        createdAt: user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A',
+      })).sort((a, b) => a.sn - b.sn)
+    : [];
 
   const handleTabChange = (event, newTabIndex) => {
     setTabIndex(newTabIndex);
+    setPage(0); // Reset page when switching tabs
   };
 
   return {
     studentData,
-    instructorData,
+    teacherData,
+    adminData,
     selectedRole,
     setSelectedRole,
     sortBy,
     sortDirection,
-    setSortBy,
-    setSortDirection,
     page,
-    setPage,
     rowsPerPage,
-    setRowsPerPage,
     selectedUser,
     setSelectedUser,
     editUserDetailsState,
-    setEditUserDetailsState,
     openDeleteModal,
     setOpenDeleteModal,
     editDialogOpen,
     setEditDialogOpen,
     signUpDialogOpen,
     setSignUpDialogOpen,
-    profileImage,
-    setProfileImage,
-    profileImageUrl,
-    setProfileImageUrl,
-    selectedInstructor,
-    setSelectedInstructor,
-    selectedProgram,
-    setSelectedProgram,
-    offlineStudents,
-    setOfflineStudents,
+    viewUserDetails,
+    setViewUserDetails,
+    confirmModalOpen,
+    setConfirmModalOpen,
     handleRoleSelect,
     handleSortChange,
     handlePageChange,
     handleRowsPerPageChange,
     handleEdit,
-    handleProgramChange,
     handleDelete,
-    // programsAssignedOptions,
+    handleConfirmationModalClose,
     columns,
     tabIndex,
     handleTabChange,
-    instructors,
-    viewUserDetails,
-    setViewUserDetails,
-    confirmModalOpen,
-    deleteData,
     loading: deleteLoading || updateLoading,
-    handleConfirmationModalClose,
-    setConfirmModalOpen,
+    deleteError,
+    updateError,
     rerender,
-    deleteError
   };
 };
 

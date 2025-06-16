@@ -27,7 +27,6 @@ const useAuth = () => {
           loginEndpoint = endpoints.LOGIN.ADMIN;
           break;
         case 'teacher':
-        case 'teacher':
           loginEndpoint = endpoints.LOGIN.TEACHER;
           break;
         case 'student':
@@ -46,22 +45,40 @@ const useAuth = () => {
         credentials: 'include',
       });
 
+      const contentType = res.headers.get("content-type");
+
       if (!res.ok) {
-        throw new Error('Login failed: ' + res.statusText);
+        const errorText = contentType?.includes("application/json")
+          ? (await res.json()).message || 'Login failed'
+          : await res.text();
+        throw new Error(`Login failed: ${errorText}`);
+      }
+
+      if (!contentType?.includes("application/json")) {
+        throw new Error("Invalid server response format");
       }
 
       const data = await res.json();
-      if(role.toLowerCase() === 'student'){
-        dispatch(setUser(data.data.student));
-      console.log('Logged in:', data.data.student);
-      }else if(role.toLowerCase() === 'teacher'){
-        dispatch(setUser(data.data.teacher));
-      console.log('Logged in:', data.data.teacher)
-    }else{
-        dispatch(setUser(data.data.user));
-      console.log('Logged in:', data.data.user);
+
+      // Store accessToken in sessionStorage
+      if (data.data.token) {
+        sessionStorage.setItem('accessToken', data.data.token);
+        console.log('Access token stored in sessionStorage');
+      } else {
+        console.warn('No access token found in response');
       }
 
+      // Set user data based on role
+      if (role.toLowerCase() === 'student') {
+        dispatch(setUser(data.data.student));
+        console.log('Logged in:', data.data.student);
+      } else if (role.toLowerCase() === 'teacher') {
+        dispatch(setUser(data.data.teacher));
+        console.log('Logged in:', data.data.teacher);
+      } else {
+        dispatch(setUser(data.data.user));
+        console.log('Logged in:', data.data.user);
+      }
     } catch (err) {
       dispatch(setError(err.message));
     } finally {
@@ -77,10 +94,27 @@ const useAuth = () => {
         credentials: 'include',
       });
 
+      const contentType = res.headers.get("content-type");
+
       if (!res.ok) {
-        throw new Error('Failed to refresh access token');
+        const errorText = contentType?.includes("application/json")
+          ? (await res.json()).message || 'Failed to refresh token'
+          : await res.text();
+        throw new Error(`Failed to refresh access token: ${errorText}`);
       }
 
+      if (!contentType?.includes("application/json")) {
+        throw new Error("Invalid refresh token response format");
+      }
+
+      const data = await res.json();
+
+      if (data.token) {
+        sessionStorage.setItem('accessToken', data.token);
+        console.log('Access token refreshed and stored in sessionStorage');
+      } else {
+        console.warn('No access token found in refresh response');
+      }
     } catch (err) {
       dispatch(setError(err.message));
       console.error(err);
@@ -105,9 +139,10 @@ const useAuth = () => {
       });
 
       dispatch(resetUser());
+      sessionStorage.removeItem('accessToken');
+      console.log('Access token removed from sessionStorage');
       await deleteAllStores('Messages');
       console.log('Messages store deleted after logout.');
-
     } catch (err) {
       dispatch(setError(err.message));
     }

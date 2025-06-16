@@ -1,327 +1,343 @@
 import { useState, useEffect, useRef } from "react";
-import { useSelector, useDispatch} from "react-redux";
-import {setAllCourses} from '../../reduxStore/slices/adminDataSlice'
+import { useSelector, useDispatch } from "react-redux";
 import useApi from "../../hooks/useApi";
 import { endpoints } from "../../utils/constants";
-import { updateUser, addUser} from '../../reduxStore/slices/adminDataSlice'; 
+import { updateUser, addUser } from "../../reduxStore/slices/adminDataSlice";
 
-const useSignUp = ({ offline, role, selectedUser }) => {
+const validateObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id); // Simple regex for ObjectId validation
 
-    const [assignedInstructor, setAssignedInstructor] = useState('');
-    const [courseSelected, setCourseSelected] = useState(null);
-    const [cohortsOptions, setCohortsOptions] = useState([]); // State to store cohort options
-    const [loadingCohorts, setLoadingCohorts] = useState(false); // Loading state for cohorts
-    const [error, setError] = useState('');
-    const { data, error: submitError, callApi } = useApi();
-    const [modalOpen, setModalOpen] = useState(false);
-    const [modalMessage, setModalMessage] = useState('');
-    const { data: courseData, loading: courseLoading, error: courseError, callApi: courseApi } = useApi();
-    const [courses, setCourses] = useState([]);
-    const [loading, setLoading] = useState(false);
+const useSignUp = ({ role, selectedUser }) => {
+  const [error, setError] = useState("");
+  const { data, error: submitError, callApi } = useApi();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [subjects, setSubjects] = useState([]);
+  const [academicYears, setAcademicYears] = useState([]);
+  const dispatch = useDispatch();
 
-    const dispatch = useDispatch();
-    //get courses
+  const users = useSelector((state) => state.adminData.usersData);
+  const currentUser = users.user || {};
+  const teachers = users.teachers || [];
 
-    
-      useEffect(async () => {
-        const getCourses = await courseApi(endpoints.COURSES, 'GET');
+  // Log selectedUser for debugging
+  useEffect(() => {
+    console.log("selectedUser:", selectedUser);
+    if (selectedUser && !validateObjectId(selectedUser)) {
+      console.warn("Invalid selectedUser ID format:", selectedUser);
+      setError("Invalid user ID format");
+    }
+  }, [selectedUser]);
 
-        if (getCourses && getCourses.courses) {
-          console.log('Data received:', data);
-          dispatch(setAllCourses(getCourses.courses));
-          setCourses(getCourses.courses)
-        }
-      }, []); 
-
-
-    const users = useSelector((state) => state.adminData.usersData);
-
-    const instructors = users.instructors || [];
-    const programs = Array.isArray(courses) ? courses.map(course => course.courseName) : [];
-    const roleFields = {
-        student: [
-            { label: 'First Name', name: 'firstName', type: 'text', required: selectedUser ? false : true },
-            { label: 'Last Name', name: 'lastName', type: 'text', required: selectedUser ? false : true },
-            { label: 'Email', name: 'email', type: 'email', required: selectedUser ? false : true },
-            { label: 'Phone Number', name: 'phoneNumber', type: 'tel', required: selectedUser ? false : true },
-            !selectedUser && { label: 'Password', name: 'password', type: 'password', required: selectedUser ? false : true },
-            !selectedUser && { label: 'Confirm Password', name: 'confirmPassword', type: 'password', required: selectedUser ? false : true },
-            { label: 'Profile Picture', name: 'profilePictureUrl', type: 'file', required: selectedUser ? false : true },
-            { label: 'Program', name: 'program', type: 'select', required: selectedUser ? false : true, options: programs },
-            { label: 'Cohort', name: 'cohort', type: 'select', required: selectedUser || offline ? false : true, options: cohortsOptions },
-            { label: 'Emergency Contact Name', name: 'emergencyContactName', type: 'text', required: selectedUser ? false : true },
-            { label: 'Emergency Contact Relationship', name: 'emergencyContactRelationship', type: 'text', required: selectedUser ? false : true },
-            { label: 'Emergency Contact Phone', name: 'emergencyContactPhone', type: 'tel', required: selectedUser ? false : true },
-            !selectedUser && { label: 'Amount Paid', name: 'amountPaid', type: 'number', required: selectedUser ? false : true },
-        ].filter(Boolean),
-    
-        instructor: [
-            { label: 'First Name', name: 'firstName', type: 'text', required: selectedUser ? false : true },
-            { label: 'Last Name', name: 'lastName', type: 'text', required: selectedUser ? false : true },
-            { label: 'Email', name: 'email', type: 'email', required: selectedUser ? false : true },
-            { label: 'Phone Number', name: 'phoneNumber', type: 'tel', required: selectedUser ? false : true },
-            !selectedUser && { label: 'Password', name: 'password', type: 'password', required: selectedUser ? false : true },
-            !selectedUser && { label: 'Confirm Password', name: 'confirmPassword', type: 'password', required: selectedUser ? false : true },
-            { label: 'Profile Picture', name: 'profilePictureUrl', type: 'file', required: selectedUser ? false : true },
-            { label: 'Program', name: 'program', type: 'select', required: selectedUser ? false : true, options: programs },
-            { label: 'Cohort', name: 'cohort', type: 'select', required: selectedUser || offline ? false : true, options: cohortsOptions },
-        ].filter(Boolean),
-    
-        admin: [
-            { label: 'First Name', name: 'firstName', type: 'text', required: selectedUser ? false : true },
-            { label: 'Last Name', name: 'lastName', type: 'text', required: selectedUser ? false : true },
-            { label: 'Email', name: 'email', type: 'email', required: selectedUser ? false : true },
-            { label: 'Phone Number', name: 'phoneNumber', type: 'tel', required: selectedUser ? false : true },
-            !selectedUser && { label: 'Password', name: 'password', type: 'password', required: selectedUser ? false : true },
-            !selectedUser && { label: 'Confirm Password', name: 'confirmPassword', type: 'password', required: selectedUser ? false : true },
-            { label: 'Profile Picture', name: 'profilePictureUrl', type: 'file', required: selectedUser ? false : true },
-        ].filter(Boolean)
+  // Fetch subjects and academic years for dropdowns
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [subjectsRes, yearsRes] = await Promise.all([
+          callApi("/api/subjects", "GET"),
+          callApi("/api/academic-years", "GET"),
+        ]);
+        setSubjects(subjectsRes.data?.map((s) => ({ id: s._id, name: s.data.name })) || []);
+        setAcademicYears(yearsRes.data?.map((y) => ({ id: y._id, name: y.name })) || []);
+      } catch (err) {
+        console.error("Error fetching options:", err);
+        setError("Failed to load dropdown options");
+      }
     };
-    
+    fetchOptions();
+  }, []);
 
-    
+  const roleFields = {
+    student: [
+      { label: "First Name", name: "firstName", type: "text", required: !selectedUser },
+      { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
+      { label: "Middle Name", name: "middleName", type: "text", required: false },
+      { label: "Email", name: "email", type: "email", required: !selectedUser },
+      { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
+      { label: "Gender", name: "gender", type: "select", required: !selectedUser, options: ["Male", "Female", "Other"] },
+      { label: "NIN", name: "NIN", type: "text", required: false },
+      { label: "Tribe", name: "tribe", type: "text", required: false },
+      { label: "Religion", name: "religion", type: "text", required: false },
+      { label: "Formal School", name: "formalSchool", type: "text", required: false },
+      { label: "Class Section", name: "currentClassLevel.section", type: "select", required: !selectedUser, options: ["Primary", "Secondary"] },
+      { label: "Class Name", name: "currentClassLevel.className", type: "text", required: !selectedUser },
+      { label: "Subclass", name: "currentClassLevel.subclass", type: "text", required: !selectedUser },
+      { label: "Boarding Status", name: "boardingStatus", type: "select", required: !selectedUser, options: ["Boarder", "Day Student"] },
+      { label: "Boarding Hall", name: "boardingDetails.hall", type: "text", required: false },
+      { label: "Room Number", name: "boardingDetails.roomNumber", type: "text", required: false },
+      { label: "Bed Number", name: "boardingDetails.bedNumber", type: "text", required: false },
+      { label: "House Master", name: "boardingDetails.houseMaster", type: "text", required: false },
+      { label: "Guardian Name", name: "guardians[0].name", type: "text", required: !selectedUser },
+      { label: "Guardian Relationship", name: "guardians[0].relationship", type: "text", required: !selectedUser },
+      { label: "Guardian Phone", name: "guardians[0].phone", type: "text", required: !selectedUser },
+      { label: "Guardian Email", name: "guardians[0].email", type: "email", required: false },
+      { label: "Guardian Address", name: "guardians[0].address", type: "text", required: false },
+    ].filter(Boolean),
 
-    const getInitialFormData = (role) => {
-        const initialData = {};
+    teacher: [
+      { label: "First Name", name: "firstName", type: "text", required: !selectedUser },
+      { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
+      { label: "Middle Name", name: "middleName", type: "text", required: false },
+      { label: "Email", name: "email", type: "email", required: !selectedUser },
+      { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
+      { label: "Gender", name: "gender", type: "select", required: !selectedUser, options: ["Male", "Female", "Other"] },
+      { label: "NIN", name: "NIN", type: "text", required: !selectedUser },
+      { label: "Address", name: "address", type: "text", required: !selectedUser },
+      { label: "Qualification", name: "qualification", type: "select", required: !selectedUser, options: ["SSCE", "OND", "HND", "BSc", "MBA", "BTech", "MSc", "PhD", "Other"] },
+      { label: "Phone Number", name: "phoneNumber", type: "tel", required: !selectedUser },
+      { label: "Tribe", name: "tribe", type: "text", required: !selectedUser },
+      { label: "Religion", name: "religion", type: "select", required: !selectedUser, options: ["Christianity", "Islam", "Hinduism", "Buddhism", "Atheism", "Other"] },
+      { label: "Subject", name: "subject", type: "select", required: !selectedUser, options: subjects.map((s) => s.name) },
+      { label: "Bank Account Name", name: "bankAccountDetails.accountName", type: "text", required: !selectedUser },
+      { label: "Bank Account Number", name: "bankAccountDetails.accountNumber", type: "text", required: !selectedUser },
+      { label: "Bank Name", name: "bankAccountDetails.bank", type: "text", required: !selectedUser },
+      { label: "Teaching Section", name: "teachingAssignments[0].section", type: "select", required: false, options: ["Primary", "Secondary"] },
+      { label: "Teaching Class Name", name: "teachingAssignments[0].className", type: "text", required: false },
+      { label: "Teaching Subclasses", name: "teachingAssignments[0].subclasses", type: "text", required: false },
+      { label: "Teaching Academic Year", name: "teachingAssignments[0].academicYear", type: "select", required: false, options: academicYears.map((y) => y.name) },
+      { label: "LinkedIn Profile", name: "linkedInProfile", type: "text", required: false },
+    ].filter(Boolean),
 
-        if (roleFields[role]) {
-            roleFields[role].forEach((field) => {
-                initialData[field.name] = (field.name === 'program') ? '' : (field.type === 'number' ? 0 : '');
-            });
+    admin: [
+      { label: "First Name", name: "firstName", type: "text", required: !selectedUser },
+      { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
+      { label: "Email", name: "email", type: "email", required: !selectedUser },
+      { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
+    ].filter(Boolean),
+  };
 
-            if (role === 'student') {
-                initialData.amountPaid = 0;
-            }
+  const getInitialFormData = (role) => {
+    const initialData = {};
+    roleFields[role].forEach((field) => {
+      if (field.name.includes("currentClassLevel") || field.name.includes("boardingDetails") || field.name.includes("guardians") || field.name.includes("bankAccountDetails") || field.name.includes("teachingAssignments")) {
+        const [parent, child, index] = field.name.split(/\.|\[|\]/).filter(Boolean);
+        if (parent === "guardians" || parent === "teachingAssignments") {
+          initialData[parent] = initialData[parent] || [{}];
+          initialData[parent][0][child] = "";
+        } else {
+          initialData[parent] = initialData[parent] || {};
+          initialData[parent][child] = "";
         }
+      } else {
+        initialData[field.name] = field.type === "select" ? "" : "";
+      }
+    });
 
-        if (selectedUser && users) {
-            const user =
-                role === 'student'
-                    ? users.students.find((u) => u.userId === selectedUser)
-                    : role === 'instructor'
-                    ? users.instructors.find((u) => u.userId === selectedUser)
-                    : role === 'admin'
-                    ? users.admins.find((u) => u._id === selectedUser)
-                    : users.superAdmins.find((u) => u._userId === selectedUser);
+    if (selectedUser && users && validateObjectId(selectedUser)) {
+      console.log("Fetching user data for:", selectedUser);
+      const user =
+        role === "student"
+          ? users.students?.find((u) => u._id === selectedUser)
+          : role === "teacher"
+          ? users.teachers?.find((u) => u._id === selectedUser)
+          : users.admins?.find((u) => u._id === selectedUser);
 
-            if (user) {
-                Object.keys(initialData).forEach((key) => {
-                    if (role !== 'student' || key !== 'amountPaid') {
-                        initialData[key] = user[key] || initialData[key];
-                    }
-                });
-            }
-        }
+      console.log("Found user:", user);
 
-        return initialData;
-    };
-    
-
-    const [formData, setFormData] = useState(getInitialFormData(role));
-    const [profilePictureUrl, setProfilePictureUrl] = useState(null);
-    const formRef = useRef(null);
-
-    // Fetch cohorts based on the selected program (course)
-    const fetchCohorts = async (courseId) => {
-        try {
-            setLoadingCohorts(true);
-            const response = await fetch(`${endpoints.COHORT}/${courseId}`);
-            const cohorts = await response.json();
-            setCohortsOptions(cohorts.cohorts.map((cohort) => cohort.cohortName)); // Store cohort names as strings
-        } catch (error) {
-            console.error("Error fetching cohorts:", error);
-        } finally {
-            setLoadingCohorts(false);
-        }
+      if (user) {
+        Object.keys(initialData).forEach((key) => {
+          if (key === "currentClassLevel" && user[key]) {
+            initialData[key] = {
+              section: user[key].section || "",
+              className: user[key].className || "",
+              subclass: user[key].subclass || "",
+            };
+          } else if (key === "boardingDetails" && user[key]) {
+            initialData[key] = {
+              hall: user[key].hall || "",
+              roomNumber: user[key].roomNumber || "",
+              bedNumber: user[key].bedNumber || "",
+              houseMaster: user[key].houseMaster || "",
+            };
+          } else if (key === "guardians" && user[key]?.length) {
+            initialData[key] = [
+              {
+                name: user[key][0].name || "",
+                relationship: user[key][0].relationship || "",
+                phone: user[key][0].phone || "",
+                email: user[key][0].email || "",
+                address: user[key][0].address || "",
+              },
+            ];
+          } else if (key === "bankAccountDetails" && user[key]) {
+            initialData[key] = {
+              accountName: user[key].accountName || "",
+              accountNumber: user[key].accountNumber || "",
+              bank: user[key].bank || "",
+            };
+          } else if (key === "teachingAssignments" && user[key]?.length) {
+            initialData[key] = [
+              {
+                section: user[key][0].section || "",
+                className: user[key][0].className || "",
+                subclasses: user[key][0].subclasses?.join(",") || "",
+                academicYear: user[key][0].academicYear || "",
+              },
+            ];
+          } else {
+            initialData[key] = user[key] || initialData[key];
+          }
+        });
+      } else {
+        console.warn("User not found for ID:", selectedUser);
+      }
     }
 
-    // Set assigned instructor based on the cohort's instructorId, only for students
-    const setInstructor = (cohorts) => {
-        if (role === 'student') {
-            // Find the instructor based on cohort and assign
-            cohorts.forEach(cohort => {
-                const instructor = instructors.find(instructor => instructor._id === cohort.instructor);
-                if (instructor) {
-                    setAssignedInstructor(`${instructor.firstName} ${instructor.lastName}`);
-                }
-            });
-        }
-    };
+    return initialData;
+  };
 
-    useEffect(() => {
+  const [formData, setFormData] = useState(getInitialFormData(role));
+  const [profilePicture, setProfilePicture] = useState(null);
+  const formRef = useRef(null);
+
+  useEffect(() => {
+    setFormData(getInitialFormData(role));
+  }, [role, selectedUser]);
+
+  const handleChange = (e) => {
+    const { name, value, files } = e.target;
+
+    if (name === "profilePicture") {
+      setProfilePicture(files[0]);
+    } else if (name.includes("currentClassLevel") || name.includes("boardingDetails") || name.includes("bankAccountDetails")) {
+      const [parent, child] = name.split(".");
+      setFormData((prevData) => ({
+        ...prevData,
+        [parent]: {
+          ...prevData[parent],
+          [child]: value,
+        },
+      }));
+    } else if (name.includes("guardians") || name.includes("teachingAssignments")) {
+      const [parent, index, child] = name.split(/\.|\[|\]/).filter(Boolean);
+      setFormData((prevData) => {
+        const updatedArray = [...(prevData[parent] || [{}])];
+        updatedArray[0] = { ...updatedArray[0], [child]: value };
+        return { ...prevData, [parent]: updatedArray };
+      });
+    } else {
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    // Validate selectedUser for updates
+    if (selectedUser && !validateObjectId(selectedUser)) {
+      setError("Invalid user ID format");
+      setLoading(false);
+      return;
+    }
+
+    // Remove required attributes for updates
+    if (selectedUser) {
+      formRef.current.querySelectorAll("[required]").forEach((field) => {
+        field.removeAttribute("required");
+      });
+    }
+
+    // Validate profile picture for new users
+    if (!selectedUser && !profilePicture) {
+      setError("Profile picture is required");
+      setLoading(false);
+      return;
+    }
+
+    // Validate boardingDetails for Boarder students
+    if (role === "student" && formData.boardingStatus === "Boarder" && (!formData.boardingDetails?.hall || !formData.boardingDetails?.roomNumber)) {
+      setError("Boarding Hall and Room Number are required for Boarder students");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const formDataToSubmit = new FormData();
+
+      // Append form fields
+      Object.keys(formData).forEach((key) => {
+        if (key === "currentClassLevel" && formData[key]) {
+          formDataToSubmit.append("currentClassLevel[section]", formData[key].section || "");
+          formDataToSubmit.append("currentClassLevel[className]", formData[key].className || "");
+          formDataToSubmit.append("currentClassLevel[subclass]", formData[key].subclass || "");
+        } else if (key === "boardingDetails" && formData[key] && formData.boardingStatus === "Boarder") {
+          formDataToSubmit.append("boardingDetails[hall]", formData[key].hall || "");
+          formDataToSubmit.append("boardingDetails[roomNumber]", formData[key].roomNumber || "");
+          formDataToSubmit.append("boardingDetails[bedNumber]", formData[key].bedNumber || "");
+          formDataToSubmit.append("boardingDetails[houseMaster]", formData[key].houseMaster || "");
+        } else if (key === "guardians" && formData[key]?.length) {
+          formDataToSubmit.append("guardians[0][name]", formData[key][0].name || "");
+          formDataToSubmit.append("guardians[0][relationship]", formData[key][0].relationship || "");
+          formDataToSubmit.append("guardians[0][phone]", formData[key][0].phone || "");
+          formDataToSubmit.append("guardians[0][email]", formData[key][0].email || "");
+          formDataToSubmit.append("guardians[0][address]", formData[key][0].address || "");
+        } else if (key === "bankAccountDetails" && formData[key]) {
+          formDataToSubmit.append("bankAccountDetails[accountName]", formData[key].accountName || "");
+          formDataToSubmit.append("bankAccountDetails[accountNumber]", formData[key].accountNumber || "");
+          formDataToSubmit.append("bankAccountDetails[bank]", formData[key].bank || "");
+        } else if (key === "teachingAssignments" && formData[key]?.length && formData[key][0].section) {
+          formDataToSubmit.append("teachingAssignments[0][section]", formData[key][0].section || "");
+          formDataToSubmit.append("teachingAssignments[0][className]", formData[key][0].className || "");
+          formDataToSubmit.append("teachingAssignments[0][subclasses]", formData[key][0].subclasses || "");
+          formDataToSubmit.append("teachingAssignments[0][academicYear]", formData[key][0].academicYear || "");
+        } else if (!selectedUser || (formData[key] && formData[key] !== "")) {
+          formDataToSubmit.append(key, formData[key]);
+        }
+      });
+
+      // Append profile picture
+      if (profilePicture) {
+        formDataToSubmit.append("profilePicture", profilePicture);
+      }
+
+      // Determine endpoint
+      let endpoint;
+      if (selectedUser && validateObjectId(selectedUser)) {
+        endpoint = role === "student" ? `/api/students/${selectedUser}/update/admin` : `/api/teachers/teacher/${selectedUser}/update`;
+      } else {
+        endpoint = role === "student" ? endpoints.CREATE_STUDENT : role === "teacher" ? endpoints.CREATE_TEACHER : endpoints.CREATE_ADMIN;
+      }
+
+      const response = await callApi(endpoint, selectedUser ? "PATCH" : "POST", formDataToSubmit, {
+        "Content-Type": "multipart/form-data",
+      });
+
+      if (response && response.data) {
+        dispatch(selectedUser ? updateUser({ id: selectedUser, user: response.data, role }) : addUser({ user: response.data, role }));
+        setModalMessage(`${response.data.firstName} ${response.data.lastName} has been successfully ${selectedUser ? "updated" : "registered"}`);
         setFormData(getInitialFormData(role));
-    }, [role, selectedUser]);
+        setProfilePicture(null);
+      } else {
+        setModalMessage(response?.data?.message || "An error occurred");
+      }
 
-    useEffect(() => {
-        // Fetch cohorts if selectedUser exists and program is set
-        if (selectedUser && formData.program) {
-            const selectedCourse = courses.find(course => course.courseName === formData.program);
-            if (selectedCourse) {
-                fetchCohorts(selectedCourse.courseId); // Fetch cohorts based on selected course
-            }
-        }
-    }, [formData.program]); // Only re-run when program changes
-    
+      setModalOpen(true);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      setError(error.response?.data?.message || "Failed to submit the form. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleProgramChange = (e) => {
-        const { value } = e.target;
-        const selectedCourse = courses.find(course => course.courseName === value);
-    
-        if (selectedCourse) {
-            setCourseSelected(selectedCourse);
-            setFormData(prevData => ({
-                ...prevData,
-                program: value
-            }));
-    
-            fetchCohorts(selectedCourse.courseId); // Fetch cohorts for the selected course
-        }
-    };
-    
-    const handleCohortChange = (e) => {
-        const { value } = e.target;
-        setFormData(prevData => ({
-            ...prevData,
-            cohort: value  // Ensure cohort is a string, not an array
-        }));
-
-        console.log(typeof value)
-    };
-
-    const handleChange = (e) => {
-        const { name, value, files } = e.target;
-    
-        if (name === 'profilePictureUrl') {
-            const selectedFile = files[0]; // Store the selected file
-            setProfilePictureUrl(selectedFile);
-        } else {
-            setFormData(prevData => ({
-                ...prevData,
-                [name]: value
-            }));
-        }
-    };
-    const handleSubmit = async (e) => {
-        setLoading(true);
-        e.preventDefault();    
-        // If updating an existing user, remove required fields for all inputs
-        if (selectedUser) {
-            formRef.current.querySelectorAll('[required]').forEach(field => {
-                field.removeAttribute('required');
-            });
-        };
-    
-        setError('');
-        
-        // Skip password validation if updating an existing user (i.e., when selectedUser exists)
-        if (!selectedUser && formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
-            return;
-        }
-        
-        // Ensure a profile picture is selected when creating a new user
-        if (!selectedUser && !profilePictureUrl) {
-            setError('Profile Picture is required');
-            return;
-        }
-        
-        try {
-            // Prepare FormData to handle both text and file data
-            const formDataToSubmit = new FormData();
-    
-            // Add all form fields to FormData, except confirmPassword and profilePicture
-            Object.keys(formData).forEach((key) => {
-                if (key !== 'confirmPassword' && key !== 'profilePictureUrl') {
-                    // Only append non-empty fields if selectedUser is true
-                    if (!selectedUser || (formData[key] && formData[key] !== "")) {
-                        formDataToSubmit.append(key, formData[key]);
-                    }
-                }
-            });
-    
-            // Check if profilePictureUrl is not null before appending it
-            if (profilePictureUrl) {
-                formDataToSubmit.append('profilePictureUrl', profilePictureUrl);
-            }
-    
-            // Append role and assignedInstructor (conditionally for students)
-            formDataToSubmit.append('role', role);
-    
-            // Split the API request based on selectedUser
-            let response;
-            if (selectedUser) {
-                // PATCH request for updating an existing user
-                response = await callApi(
-                    `${endpoints.USER}/${selectedUser}`,
-                    'PATCH',
-                    formDataToSubmit,
-                    {
-                        'Content-Type': 'multipart/form-data', // FormData automatically sets the boundary
-                    }
-                );
-
-                 // Check if the response contains user data, and handle success/failure
-                if (response && response?.user) {
-                    setLoading(false);
-                    dispatch(updateUser(response.user.userId, response.user, response.user.role));
-                    console.log(response)
-                    setModalMessage(`${response.user.firstName} ${response.user.lastName} has been successfully Update`);
-                    setFormData(getInitialFormData(role));  // Clear form on success
-
-                } else {
-                    setLoading(false);
-                    setModalMessage(`${response?.message}`);
-                };
-            } else {
-                // POST request for creating a new user
-                response = await callApi(
-                    endpoints.USER,
-                    'POST',
-                    formDataToSubmit,
-                    {
-                        'Content-Type': 'multipart/form-data', // FormData automatically sets the boundary
-                    }
-                );
-
-                 // Check if the response contains user data, and handle success/failure
-                if (response && response?.user) {
-                    setLoading(false);
-                    console.log(response);
-                    dispatch(addUser(response?.user));
-                    setModalMessage(`${response.user.firstName} ${response.user.lastName} has been successfully registered as ${response.user.role}`);
-                    setFormData(getInitialFormData(role));  // Clear form on success
-                } else {
-                    setLoading(false);
-                    setModalMessage(`${response?.message}`);
-                }
-            }
-    
-            setModalOpen(true); // Show success/error modal
-    
-        } catch (error) {
-            console.error('Error submitting the form:', error);
-            setError('An error occurred while submitting the form. Please try again.');
-        }
-    };
-    
-
-    return {
-        formRef,
-        formData,
-        error,
-        loading,
-        handleChange,
-        handleSubmit,
-        handleProgramChange,
-        handleCohortChange,
-        roleFields,
-        profilePictureUrl,
-        assignedInstructor,
-        cohortsOptions, // Add cohortsOptions to return
-        modalOpen,
-        modalMessage,
-        setModalOpen,
-    };
+  return {
+    formRef,
+    formData,
+    error,
+    loading,
+    handleChange,
+    handleSubmit,
+    roleFields,
+    profilePicture,
+    modalOpen,
+    modalMessage,
+    setModalOpen,
+  };
 };
 
 export default useSignUp;
