@@ -4,7 +4,7 @@ import useApi from "../../hooks/useApi";
 import { endpoints } from "../../utils/constants";
 import { updateUser, addUser } from "../../reduxStore/slices/adminDataSlice";
 
-const validateObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id); // Simple regex for ObjectId validation
+const validateObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id);
 
 const useSignUp = ({ role, selectedUser }) => {
   const [error, setError] = useState("");
@@ -13,14 +13,50 @@ const useSignUp = ({ role, selectedUser }) => {
   const [modalMessage, setModalMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [subjects, setSubjects] = useState([]);
-  const [academicYears, setAcademicYears] = useState([]);
   const dispatch = useDispatch();
 
-  const users = useSelector((state) => state.adminData.usersData);
-  const currentUser = users.user || {};
-  const teachers = users.teachers || [];
+  // Safely access Redux state with fallback
+  const users = useSelector((state) => state.adminData?.usersData || { students: [], teachers: [], admins: [] });
+  const classLevels = useSelector((state) => state.adminData?.classLevels || []);
 
-  // Log selectedUser for debugging
+  // Debug Redux state
+  useEffect(() => {
+    console.log("Redux state - users:", users, "classLevels:", classLevels);
+  }, [users, classLevels]);
+
+  const [classLevelOptions, setClassLevelOptions] = useState({
+    sections: [],
+    classNames: [],
+    subclasses: [],
+  });
+
+  const getClassLevelOptions = (formData = {}, parentKey = "currentClassLevel") => {
+    const sections = [...new Set(classLevels.map((cl) => cl.section))];
+    const getClassNames = (section) =>
+      classLevels
+        .filter((cl) => cl.section === section)
+        .map((cl) => cl.name);
+    const getSubclasses = (section, className) =>
+      classLevels
+        .find((cl) => cl.section === section && cl.name === className)
+        ?.subclasses.map((sc) => sc.letter) || [];
+
+    const selectedSection =
+      parentKey === "currentClassLevel"
+        ? formData.currentClassLevel?.section || sections[0] || ""
+        : formData.teachingAssignments?.[0]?.section || sections[0] || "";
+    const selectedClassName =
+      parentKey === "currentClassLevel"
+        ? formData.currentClassLevel?.className || getClassNames(selectedSection)[0] || ""
+        : formData.teachingAssignments?.[0]?.className || getClassNames(selectedSection)[0] || "";
+
+    return {
+      sections,
+      classNames: getClassNames(selectedSection),
+      subclasses: getSubclasses(selectedSection, selectedClassName),
+    };
+  };
+
   useEffect(() => {
     console.log("selectedUser:", selectedUser);
     if (selectedUser && !validateObjectId(selectedUser)) {
@@ -29,87 +65,37 @@ const useSignUp = ({ role, selectedUser }) => {
     }
   }, [selectedUser]);
 
-  // Fetch subjects and academic years for dropdowns
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const [subjectsRes, yearsRes] = await Promise.all([
-          callApi("/api/subjects", "GET"),
-          callApi("/api/academic-years", "GET"),
-        ]);
+        const subjectsRes = await callApi("/api/subjects", "GET");
         setSubjects(subjectsRes.data?.map((s) => ({ id: s._id, name: s.data.name })) || []);
-        setAcademicYears(yearsRes.data?.map((y) => ({ id: y._id, name: y.name })) || []);
       } catch (err) {
-        console.error("Error fetching options:", err);
-        setError("Failed to load dropdown options");
+        console.error("Error fetching subjects:", err);
+        setError("Failed to load subjects");
       }
     };
     fetchOptions();
-  }, []);
+  }, [callApi]);
 
-  const roleFields = {
-    student: [
-      { label: "First Name", name: "firstName", type: "text", required: !selectedUser },
-      { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
-      { label: "Middle Name", name: "middleName", type: "text", required: false },
-      { label: "Email", name: "email", type: "email", required: !selectedUser },
-      { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
-      { label: "Gender", name: "gender", type: "select", required: !selectedUser, options: ["Male", "Female", "Other"] },
-      { label: "NIN", name: "NIN", type: "text", required: false },
-      { label: "Tribe", name: "tribe", type: "text", required: false },
-      { label: "Religion", name: "religion", type: "text", required: false },
-      { label: "Formal School", name: "formalSchool", type: "text", required: false },
-      { label: "Class Section", name: "currentClassLevel.section", type: "select", required: !selectedUser, options: ["Primary", "Secondary"] },
-      { label: "Class Name", name: "currentClassLevel.className", type: "text", required: !selectedUser },
-      { label: "Subclass", name: "currentClassLevel.subclass", type: "text", required: !selectedUser },
-      { label: "Boarding Status", name: "boardingStatus", type: "select", required: !selectedUser, options: ["Boarder", "Day Student"] },
-      { label: "Boarding Hall", name: "boardingDetails.hall", type: "text", required: false },
-      { label: "Room Number", name: "boardingDetails.roomNumber", type: "text", required: false },
-      { label: "Bed Number", name: "boardingDetails.bedNumber", type: "text", required: false },
-      { label: "House Master", name: "boardingDetails.houseMaster", type: "text", required: false },
-      { label: "Guardian Name", name: "guardians[0].name", type: "text", required: !selectedUser },
-      { label: "Guardian Relationship", name: "guardians[0].relationship", type: "text", required: !selectedUser },
-      { label: "Guardian Phone", name: "guardians[0].phone", type: "text", required: !selectedUser },
-      { label: "Guardian Email", name: "guardians[0].email", type: "email", required: false },
-      { label: "Guardian Address", name: "guardians[0].address", type: "text", required: false },
-    ].filter(Boolean),
-
-    teacher: [
-      { label: "First Name", name: "firstName", type: "text", required: !selectedUser },
-      { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
-      { label: "Middle Name", name: "middleName", type: "text", required: false },
-      { label: "Email", name: "email", type: "email", required: !selectedUser },
-      { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
-      { label: "Gender", name: "gender", type: "select", required: !selectedUser, options: ["Male", "Female", "Other"] },
-      { label: "NIN", name: "NIN", type: "text", required: !selectedUser },
-      { label: "Address", name: "address", type: "text", required: !selectedUser },
-      { label: "Qualification", name: "qualification", type: "select", required: !selectedUser, options: ["SSCE", "OND", "HND", "BSc", "MBA", "BTech", "MSc", "PhD", "Other"] },
-      { label: "Phone Number", name: "phoneNumber", type: "tel", required: !selectedUser },
-      { label: "Tribe", name: "tribe", type: "text", required: !selectedUser },
-      { label: "Religion", name: "religion", type: "select", required: !selectedUser, options: ["Christianity", "Islam", "Hinduism", "Buddhism", "Atheism", "Other"] },
-      { label: "Subject", name: "subject", type: "select", required: !selectedUser, options: subjects.map((s) => s.name) },
-      { label: "Bank Account Name", name: "bankAccountDetails.accountName", type: "text", required: !selectedUser },
-      { label: "Bank Account Number", name: "bankAccountDetails.accountNumber", type: "text", required: !selectedUser },
-      { label: "Bank Name", name: "bankAccountDetails.bank", type: "text", required: !selectedUser },
-      { label: "Teaching Section", name: "teachingAssignments[0].section", type: "select", required: false, options: ["Primary", "Secondary"] },
-      { label: "Teaching Class Name", name: "teachingAssignments[0].className", type: "text", required: false },
-      { label: "Teaching Subclasses", name: "teachingAssignments[0].subclasses", type: "text", required: false },
-      { label: "Teaching Academic Year", name: "teachingAssignments[0].academicYear", type: "select", required: false, options: academicYears.map((y) => y.name) },
-      { label: "LinkedIn Profile", name: "linkedInProfile", type: "text", required: false },
-    ].filter(Boolean),
-
-    admin: [
-      { label: "First Name", name: "firstName", type: "text", required: !selectedUser },
-      { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
-      { label: "Email", name: "email", type: "email", required: !selectedUser },
-      { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
-    ].filter(Boolean),
-  };
+  const [formData, setFormData] = useState({});
+  const [profilePicture, setProfilePicture] = useState(null);
+  const formRef = useRef(null);
 
   const getInitialFormData = (role) => {
     const initialData = {};
+    if (!roleFields[role]) {
+      console.error("Invalid role:", role);
+      return initialData;
+    }
+
     roleFields[role].forEach((field) => {
-      if (field.name.includes("currentClassLevel") || field.name.includes("boardingDetails") || field.name.includes("guardians") || field.name.includes("bankAccountDetails") || field.name.includes("teachingAssignments")) {
+      if (
+        field.name.includes("currentClassLevel") ||
+        field.name.includes("guardians") ||
+        field.name.includes("bankAccountDetails") ||
+        field.name.includes("teachingAssignments")
+      ) {
         const [parent, child, index] = field.name.split(/\.|\[|\]/).filter(Boolean);
         if (parent === "guardians" || parent === "teachingAssignments") {
           initialData[parent] = initialData[parent] || [{}];
@@ -123,8 +109,26 @@ const useSignUp = ({ role, selectedUser }) => {
       }
     });
 
+    if (role === "student") {
+      const { sections, classNames, subclasses } = getClassLevelOptions(initialData, "currentClassLevel");
+      initialData.currentClassLevel = {
+        section: sections[0] || "",
+        className: classNames[0] || "",
+        subclass: subclasses[0] || "",
+      };
+      initialData.boardingStatus = "Day Student";
+    } else if (role === "teacher") {
+      const { sections, classNames, subclasses } = getClassLevelOptions(initialData, "teachingAssignments");
+      initialData.teachingAssignments = [
+        {
+          section: sections[0] || "",
+          className: classNames[0] || "",
+          subclasses: subclasses[0] || "",
+        },
+      ];
+    }
+
     if (selectedUser && users && validateObjectId(selectedUser)) {
-      console.log("Fetching user data for:", selectedUser);
       const user =
         role === "student"
           ? users.students?.find((u) => u._id === selectedUser)
@@ -132,15 +136,13 @@ const useSignUp = ({ role, selectedUser }) => {
           ? users.teachers?.find((u) => u._id === selectedUser)
           : users.admins?.find((u) => u._id === selectedUser);
 
-      console.log("Found user:", user);
-
       if (user) {
         Object.keys(initialData).forEach((key) => {
           if (key === "currentClassLevel" && user[key]) {
             initialData[key] = {
-              section: user[key].section || "",
-              className: user[key].className || "",
-              subclass: user[key].subclass || "",
+              section: user[key].section || initialData.currentClassLevel.section,
+              className: user[key].className || initialData.currentClassLevel.className,
+              subclass: user[key].subclass || initialData.currentClassLevel.subclass,
             };
           } else if (key === "boardingDetails" && user[key]) {
             initialData[key] = {
@@ -168,38 +170,195 @@ const useSignUp = ({ role, selectedUser }) => {
           } else if (key === "teachingAssignments" && user[key]?.length) {
             initialData[key] = [
               {
-                section: user[key][0].section || "",
-                className: user[key][0].className || "",
-                subclasses: user[key][0].subclasses?.join(",") || "",
-                academicYear: user[key][0].academicYear || "",
+                section: user[key][0].section || initialData.teachingAssignments[0].section,
+                className: user[key][0].className || initialData.teachingAssignments[0].className,
+                subclasses: user[key][0].subclasses?.join(",") || initialData.teachingAssignments[0].subclasses,
               },
             ];
           } else {
             initialData[key] = user[key] || initialData[key];
           }
         });
-      } else {
-        console.warn("User not found for ID:", selectedUser);
       }
     }
 
     return initialData;
   };
 
-  const [formData, setFormData] = useState(getInitialFormData(role));
-  const [profilePicture, setProfilePicture] = useState(null);
-  const formRef = useRef(null);
+  useEffect(() => {
+    const initialFormData = getInitialFormData(role);
+    setFormData(initialFormData);
+    setClassLevelOptions(
+      role === "student"
+        ? getClassLevelOptions(initialFormData, "currentClassLevel")
+        : getClassLevelOptions(initialFormData, "teachingAssignments")
+    );
+  }, [role, selectedUser, classLevels]);
 
   useEffect(() => {
-    setFormData(getInitialFormData(role));
-  }, [role, selectedUser]);
+    if (formData) {
+      setClassLevelOptions(
+        role === "student"
+          ? getClassLevelOptions(formData, "currentClassLevel")
+          : getClassLevelOptions(formData, "teachingAssignments")
+      );
+    }
+  }, [formData]);
+
+  const roleFields = {
+    student: [
+      { label: "First Name", name: "firstName", type: "text", required: !selectedUser },
+      { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
+      { label: "Middle Name", name: "middleName", type: "text", required: false },
+      { label: "Email", name: "email", type: "email", required: !selectedUser },
+      { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
+      { label: "Gender", name: "gender", type: "select", required: !selectedUser, options: ["Male", "Female", "Other"] },
+      { label: "NIN", name: "NIN", type: "text", required: false },
+      { label: "Tribe", name: "tribe", type: "text", required: false },
+      { label: "Religion", name: "religion", type: "text", required: false },
+      { label: "Formal School", name: "formalSchool", type: "text", required: false },
+      {
+        label: "Class Section",
+        name: "currentClassLevel.section",
+        type: "select",
+        required: !selectedUser,
+        options: classLevelOptions.sections,
+      },
+      {
+        label: "Class Name",
+        name: "currentClassLevel.className",
+        type: "select",
+        required: !selectedUser,
+        options: classLevelOptions.classNames,
+      },
+      {
+        label: "Subclass",
+        name: "currentClassLevel.subclass",
+        type: "select",
+        required: !selectedUser,
+        options: classLevelOptions.subclasses,
+      },
+      { label: "Boarding Status", name: "boardingStatus", type: "select", required: !selectedUser, options: ["Boarder", "Day Student"] },
+      { label: "Boarding Hall", name: "boardingDetails.hall", type: "text", required: false },
+      { label: "Room Number", name: "boardingDetails.roomNumber", type: "text", required: false },
+      { label: "Bed Number", name: "boardingDetails.bedNumber", type: "text", required: false },
+      { label: "House Master", name: "boardingDetails.houseMaster", type: "text", required: false },
+      { label: "Guardian Name", name: "guardians[0].name", type: "text", required: !selectedUser },
+      { label: "Guardian Relationship", name: "guardians[0].relationship", type: "text", required: !selectedUser },
+      { label: "Guardian Phone", name: "guardians[0].phone", type: "text", required: !selectedUser },
+      { label: "Guardian Email", name: "guardians[0].email", type: "email", required: false },
+      { label: "Guardian Address", name: "guardians[0].address", type: "text", required: false },
+    ].filter(Boolean),
+    teacher: [
+      { label: "First Name", name: "firstName", type: "text", required: !selectedUser },
+      { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
+      { label: "Middle Name", name: "middleName", type: "text", required: false },
+      { label: "Email", name: "email", type: "email", required: !selectedUser },
+      { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
+      { label: "Gender", name: "gender", type: "select", required: !selectedUser, options: ["Male", "Female", "Other"] },
+      { label: "NIN", name: "NIN", type: "text", required: !selectedUser },
+      { label: "Address", name: "address", type: "text", required: !selectedUser },
+      {
+        label: "Qualification",
+        name: "qualification",
+        type: "select",
+        required: !selectedUser,
+        options: ["SSCE", "OND", "HND", "BSc", "MBA", "BTech", "MSc", "PhD", "Other"],
+      },
+      { label: "Phone Number", name: "phoneNumber", type: "tel", required: !selectedUser },
+      { label: "Tribe", name: "tribe", type: "text", required: !selectedUser },
+      {
+        label: "Religion",
+        name: "religion",
+        type: "select",
+        required: !selectedUser,
+        options: ["Christianity", "Islam", "Hinduism", "Buddhism", "Atheism", "Other"],
+      },
+      { label: "Subject", name: "subject", type: "select", required: !selectedUser, options: subjects.map((s) => s.name) },
+      { label: "Bank Account Name", name: "bankAccountDetails.accountName", type: "text", required: !selectedUser },
+      { label: "Bank Account Number", name: "bankAccountDetails.accountNumber", type: "text", required: !selectedUser },
+      { label: "Bank Name", name: "bankAccountDetails.bank", type: "text", required: !selectedUser },
+      {
+        label: "Teaching Section",
+        name: "teachingAssignments[0].section",
+        type: "select",
+        required: !selectedUser,
+        options: classLevelOptions.sections,
+      },
+      {
+        label: "Teaching Class Name",
+        name: "teachingAssignments[0].className",
+        type: "select",
+        required: !selectedUser,
+        options: classLevelOptions.classNames,
+      },
+      {
+        label: "Teaching Subclasses",
+        name: "teachingAssignments[0].subclasses",
+        type: "select",
+        required: !selectedUser,
+        options: classLevelOptions.subclasses,
+      },
+      { label: "LinkedIn Profile", name: "linkedInProfile", type: "text", required: false },
+    ].filter(Boolean),
+    admin: [
+      { label: "First Name", name: "firstName", type: "text", required: !selectedUser },
+      { label: "Last Name", name: "lastName", type: "text", required: !selectedUser },
+      { label: "Email", name: "email", type: "email", required: !selectedUser },
+      { label: "Profile Picture", name: "profilePicture", type: "file", required: !selectedUser },
+    ].filter(Boolean),
+  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
     if (name === "profilePicture") {
       setProfilePicture(files[0]);
-    } else if (name.includes("currentClassLevel") || name.includes("boardingDetails") || name.includes("bankAccountDetails")) {
+    } else if (name.includes("currentClassLevel")) {
+      const [, child] = name.split(".");
+      setFormData((prevData) => {
+        const newClassLevel = { ...prevData.currentClassLevel, [child]: value };
+        if (child === "section") {
+          const { classNames, subclasses } = getClassLevelOptions({ currentClassLevel: newClassLevel }, "currentClassLevel");
+          newClassLevel.className = classNames[0] || "";
+          newClassLevel.subclass = subclasses[0] || "";
+        } else if (child === "className") {
+          const { subclasses } = getClassLevelOptions({ currentClassLevel: newClassLevel }, "currentClassLevel");
+          newClassLevel.subclass = subclasses[0] || "";
+        }
+        return { ...prevData, currentClassLevel: newClassLevel };
+      });
+    } else if (name.includes("teachingAssignments")) {
+      const [, index, child] = name.split(/\.|\[|\]/).filter(Boolean);
+      setFormData((prevData) => {
+        const updatedAssignments = [...(prevData.teachingAssignments || [{}])];
+        updatedAssignments[0] = { ...updatedAssignments[0], [child]: value };
+        if (child === "section") {
+          const { classNames, subclasses } = getClassLevelOptions(
+            { teachingAssignments: [{ ...updatedAssignments[0], section: value }] },
+            "teachingAssignments"
+          );
+          updatedAssignments[0].className = classNames[0] || "";
+          updatedAssignments[0].subclasses = subclasses[0] || "";
+        } else if (child === "className") {
+          const { subclasses } = getClassLevelOptions(
+            { teachingAssignments: [{ ...updatedAssignments[0], className: value }] },
+            "teachingAssignments"
+          );
+          updatedAssignments[0].subclasses = subclasses[0] || "";
+        }
+        return { ...prevData, teachingAssignments: updatedAssignments };
+      });
+    } else if (name.includes("boardingDetails")) {
+      const [, child] = name.split(".");
+      setFormData((prevData) => ({
+        ...prevData,
+        boardingDetails: {
+          ...prevData.boardingDetails,
+          [child]: value,
+        },
+      }));
+    } else if (name.includes("guardians") || name.includes("bankAccountDetails")) {
       const [parent, child] = name.split(".");
       setFormData((prevData) => ({
         ...prevData,
@@ -208,13 +367,12 @@ const useSignUp = ({ role, selectedUser }) => {
           [child]: value,
         },
       }));
-    } else if (name.includes("guardians") || name.includes("teachingAssignments")) {
-      const [parent, index, child] = name.split(/\.|\[|\]/).filter(Boolean);
-      setFormData((prevData) => {
-        const updatedArray = [...(prevData[parent] || [{}])];
-        updatedArray[0] = { ...updatedArray[0], [child]: value };
-        return { ...prevData, [parent]: updatedArray };
-      });
+    } else if (name === "boardingStatus") {
+      setFormData((prevData) => ({
+        ...prevData,
+        boardingStatus: value,
+        boardingDetails: value === "Boarder" ? prevData.boardingDetails || {} : undefined,
+      }));
     } else {
       setFormData((prevData) => ({
         ...prevData,
@@ -242,18 +400,75 @@ const useSignUp = ({ role, selectedUser }) => {
       });
     }
 
-    // Validate profile picture for new users
-    if (!selectedUser && !profilePicture) {
-      setError("Profile picture is required");
-      setLoading(false);
-      return;
-    }
-
-    // Validate boardingDetails for Boarder students
-    if (role === "student" && formData.boardingStatus === "Boarder" && (!formData.boardingDetails?.hall || !formData.boardingDetails?.roomNumber)) {
-      setError("Boarding Hall and Room Number are required for Boarder students");
-      setLoading(false);
-      return;
+    // Validate required fields for new users
+    if (!selectedUser) {
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.gender) {
+        setError("First name, last name, email, and gender are required");
+        setLoading(false);
+        return;
+      }
+      if (role === "student") {
+        if (!formData.currentClassLevel?.section || !formData.currentClassLevel?.className || !formData.currentClassLevel?.subclass) {
+          setError("Class level section, class name, and subclass are required");
+          setLoading(false);
+          return;
+        }
+        if (!formData.guardians?.[0]?.name || !formData.guardians?.[0]?.relationship || !formData.guardians?.[0]?.phone) {
+          setError("Guardian name, relationship, and phone are required");
+          setLoading(false);
+          return;
+        }
+        if (!["Boarder", "Day Student"].includes(formData.boardingStatus)) {
+          setError("Boarding status must be 'Boarder' or 'Day Student'");
+          setLoading(false);
+          return;
+        }
+        if (formData.boardingStatus === "Boarder" && (!formData.boardingDetails?.hall || !formData.boardingDetails?.roomNumber)) {
+          setError("Boarding Hall and Room Number are required for Boarder students");
+          setLoading(false);
+          return;
+        }
+      } else if (role === "teacher") {
+        if (
+          !formData.NIN ||
+          !formData.address ||
+          !formData.qualification ||
+          !formData.phoneNumber ||
+          !formData.tribe ||
+          !formData.religion ||
+          !formData.subject ||
+          !formData.bankAccountDetails?.accountName ||
+          !formData.bankAccountDetails?.accountNumber ||
+          !formData.bankAccountDetails?.bank ||
+          !formData.teachingAssignments?.[0]?.section ||
+          !formData.teachingAssignments?.[0]?.className ||
+          !formData.teachingAssignments?.[0]?.subclasses
+        ) {
+          setError("All required teacher fields must be filled");
+          setLoading(false);
+          return;
+        }
+        if (!/^\d{11}$/.test(formData.NIN)) {
+          setError("NIN must be 11 digits");
+          setLoading(false);
+          return;
+        }
+        if (!/^\d{10}$/.test(formData.bankAccountDetails.accountNumber)) {
+          setError("Bank account number must be 10 digits");
+          setLoading(false);
+          return;
+        }
+        if (!/^[A-Z]$/.test(formData.teachingAssignments[0].subclasses)) {
+          setError("Subclasses must be a single uppercase letter");
+          setLoading(false);
+          return;
+        }
+      }
+      if (!profilePicture) {
+        setError("Profile picture is required");
+        setLoading(false);
+        return;
+      }
     }
 
     try {
@@ -284,8 +499,7 @@ const useSignUp = ({ role, selectedUser }) => {
           formDataToSubmit.append("teachingAssignments[0][section]", formData[key][0].section || "");
           formDataToSubmit.append("teachingAssignments[0][className]", formData[key][0].className || "");
           formDataToSubmit.append("teachingAssignments[0][subclasses]", formData[key][0].subclasses || "");
-          formDataToSubmit.append("teachingAssignments[0][academicYear]", formData[key][0].academicYear || "");
-        } else if (!selectedUser || (formData[key] && formData[key] !== "")) {
+        } else if (!selectedUser || (formData[key] && formData[key] !== "" && key !== "boardingDetails")) {
           formDataToSubmit.append(key, formData[key]);
         }
       });
@@ -293,6 +507,11 @@ const useSignUp = ({ role, selectedUser }) => {
       // Append profile picture
       if (profilePicture) {
         formDataToSubmit.append("profilePicture", profilePicture);
+      }
+
+      // Log FormData for debugging
+      for (let [key, value] of formDataToSubmit.entries()) {
+        console.log(`${key}: ${value}`);
       }
 
       // Determine endpoint

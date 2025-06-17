@@ -6,6 +6,7 @@ const initialState = {
   connected: false,
   academicYears: [],
   currentAcademicYear: null,
+  classLevels: [], // New field for class levels
 };
 
 const adminDataSlice = createSlice({
@@ -26,6 +27,9 @@ const adminDataSlice = createSlice({
     },
     setCurrentAcademicYear: (state, action) => {
       state.currentAcademicYear = action.payload;
+    },
+    setClassLevels: (state, action) => {
+      state.classLevels = action.payload;
     },
     updateAcademicYear: (state, action) => {
       const { id, updatedData } = action.payload;
@@ -105,6 +109,7 @@ export const {
   setConnectionStatus,
   setAcademicYears,
   setCurrentAcademicYear,
+  setClassLevels,
   updateAcademicYear,
   deleteUser,
   updateUser,

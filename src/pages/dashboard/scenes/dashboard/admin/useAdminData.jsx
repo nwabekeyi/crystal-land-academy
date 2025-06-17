@@ -4,6 +4,7 @@ import {
   setUsersData,
   setAcademicYears,
   setCurrentAcademicYear,
+  setClassLevels,
   setError,
 } from '../../../../../reduxStore/slices/adminDataSlice';
 import { useEffect, useState, useCallback } from 'react';
@@ -14,9 +15,10 @@ const useAdminData = () => {
   const [instructors, setInstructors] = useState([]);
   const dispatch = useDispatch();
 
-  // Access academic years and current academic year from Redux
+  // Access data from Redux
   const academicYears = useSelector((state) => state.adminData.academicYears) || [];
   const currentAcademicYear = useSelector((state) => state.adminData.currentAcademicYear);
+  const classLevels = useSelector((state) => state.adminData.classLevels) || [];
 
   // API hooks
   const {
@@ -43,6 +45,12 @@ const useAdminData = () => {
     error: currentYearError,
     callApi: getCurrentYear,
   } = useApi();
+  const {
+    loading: classLevelsLoading,
+    data: classLevelsData,
+    error: classLevelsError,
+    callApi: getClassLevels,
+  } = useApi();
 
   // Memoized API calls
   const memoizedGetStudents = useCallback(
@@ -61,6 +69,10 @@ const useAdminData = () => {
     () => getCurrentYear(endpoints.CURRENT_ACADEMIC_YEAR, 'GET'),
     [getCurrentYear]
   );
+  const memoizedGetClassLevels = useCallback(
+    () => getClassLevels(endpoints.CLASS_LEVEL, 'GET'),
+    [getClassLevels]
+  );
 
   // Fetch data on mount
   useEffect(() => {
@@ -68,11 +80,13 @@ const useAdminData = () => {
     memoizedGetTeachers();
     memoizedGetAcademicYears();
     memoizedGetCurrentYear();
+    memoizedGetClassLevels();
   }, [
     memoizedGetStudents,
     memoizedGetTeachers,
     memoizedGetAcademicYears,
     memoizedGetCurrentYear,
+    memoizedGetClassLevels,
   ]);
 
   // Handle students and teachers data
@@ -99,7 +113,7 @@ const useAdminData = () => {
   // Handle academic years data
   useEffect(() => {
     if (academicYearsData) {
-      const newAcademicYears = academicYearsData?.data || []; // Access data array directly
+      const newAcademicYears = academicYearsData?.data || [];
       dispatch(setAcademicYears(newAcademicYears));
     }
     if (academicYearsError) {
@@ -110,13 +124,24 @@ const useAdminData = () => {
   // Handle current academic year data
   useEffect(() => {
     if (currentYearData) {
-      const newCurrentYear = currentYearData?.data || null; // Access data object directly
+      const newCurrentYear = currentYearData?.data || null;
       dispatch(setCurrentAcademicYear(newCurrentYear));
     }
     if (currentYearError) {
       dispatch(setError(currentYearError.message || 'Failed to fetch current academic year.'));
     }
   }, [currentYearData, currentYearError, dispatch]);
+
+  // Handle class levels data
+  useEffect(() => {
+    if (classLevelsData) {
+      const newClassLevels = classLevelsData?.data || [];
+      dispatch(setClassLevels(newClassLevels));
+    }
+    if (classLevelsError) {
+      dispatch(setError(classLevelsError.message || 'Failed to fetch class levels.'));
+    }
+  }, [classLevelsData, classLevelsError, dispatch]);
 
   return {
     usersData: {
@@ -125,14 +150,17 @@ const useAdminData = () => {
     },
     academicYears,
     currentAcademicYear,
+    classLevels,
     loading:
       studentsLoading ||
       teachersLoading ||
       academicYearsLoading ||
-      currentYearLoading,
-    error: studentsError || teachersError || academicYearsError || currentYearError,
-    refetchAcademicYears: memoizedGetAcademicYears, // Added for refetching
-    refetchCurrentYear: memoizedGetCurrentYear, // Added for refetching
+      currentYearLoading ||
+      classLevelsLoading,
+    error: studentsError || teachersError || academicYearsError || currentYearError || classLevelsError,
+    refetchAcademicYears: memoizedGetAcademicYears,
+    refetchCurrentYear: memoizedGetCurrentYear,
+    refetchClassLevels: memoizedGetClassLevels,
   };
 };
 
