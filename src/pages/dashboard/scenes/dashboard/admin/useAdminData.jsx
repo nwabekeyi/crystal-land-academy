@@ -15,6 +15,7 @@ const useAdminData = () => {
   // Local state for students and teachers
   const [students, setStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
+  const [unreadEnquiriesCount, setUnreadEnquiriesCount] = useState(0);
   const dispatch = useDispatch();
 
   // Access data from Redux
@@ -51,6 +52,19 @@ const useAdminData = () => {
     error: currentYearError,
     callApi: getCurrentYear,
   } = useApi();
+
+  // Fetch unread enquiries
+  const fetchUnreadEnquiries = useCallback(async () => {
+    try {
+      const response = await fetch(`${endpoints.ENQUIRIES}?status=unread`);
+      if (!response.ok) throw new Error('Failed to fetch unread enquiries');
+      const data = await response.json();
+      const enquiries = data.data || [];
+      setUnreadEnquiriesCount(enquiries.length);
+    } catch (error) {
+      console.error('Error fetching unread enquiries:', error);
+    }
+  }, []);
   const {
     loading: classLevelsLoading,
     data: classLevelsData,
@@ -108,12 +122,12 @@ const useAdminData = () => {
     [getSubjects]
   );
 
-  // Fetch data on mount
   useEffect(() => {
     memoizedGetStudents();
     memoizedGetTeachers();
     memoizedGetAcademicYears();
     memoizedGetCurrentYear();
+    fetchUnreadEnquiries();
     memoizedGetClassLevels();
     memoizedGetSubjects();
   }, [
@@ -121,27 +135,23 @@ const useAdminData = () => {
     memoizedGetTeachers,
     memoizedGetAcademicYears,
     memoizedGetCurrentYear,
+    fetchUnreadEnquiries,
     memoizedGetClassLevels,
     memoizedGetSubjects,
   ]);
 
-  // Handle students and teachers data
   useEffect(() => {
     if (studentsData || teachersData) {
       console.log('Students Data:', studentsData);
       console.log('Teachers Data:', teachersData);
       const newStudents = studentsData?.data || [];
       const newTeachers = teachersData?.data || [];
-
-      // Update local state
       setStudents((prev) =>
         JSON.stringify(prev) !== JSON.stringify(newStudents) ? newStudents : prev
       );
       setTeachers((prev) =>
         JSON.stringify(prev) !== JSON.stringify(newTeachers) ? newTeachers : prev
       );
-
-      // Dispatch to Redux
       dispatch(setUsersData({ students: newStudents, teachers: newTeachers }));
     }
     if (studentsError) {
@@ -154,7 +164,6 @@ const useAdminData = () => {
     }
   }, [studentsData, teachersData, studentsError, teachersError, dispatch]);
 
-  // Handle academic years data
   useEffect(() => {
     if (academicYearsData) {
       console.log('Academic Years Data:', academicYearsData);
@@ -167,7 +176,6 @@ const useAdminData = () => {
     }
   }, [academicYearsData, academicYearsError, dispatch]);
 
-  // Handle current academic year data
   useEffect(() => {
     if (currentYearData) {
       console.log('Current Academic Year Data:', currentYearData);
@@ -230,6 +238,7 @@ const useAdminData = () => {
     },
     academicYears,
     currentAcademicYear,
+    unreadEnquiriesCount,
     classLevels,
     subjects,
     loading:
