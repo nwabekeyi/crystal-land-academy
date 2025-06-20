@@ -12,23 +12,30 @@ const useSignUp = ({ role, selectedUser }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [subjects, setSubjects] = useState([]);
   const dispatch = useDispatch();
 
-  // Safely access Redux state with fallback
+  // Access Redux state
   const users = useSelector((state) => state.adminData?.usersData || { students: [], teachers: [], admins: [] });
   const classLevels = useSelector((state) => state.adminData?.classLevels || []);
+  const subjects = useSelector((state) => state.adminData?.subjects || []);
 
-  // Debug Redux state
+  console.log(classLevels);
   useEffect(() => {
-    console.log("Redux state - users:", users, "classLevels:", classLevels);
-  }, [users, classLevels]);
+    console.log("Redux state - users:", users, "classLevels:", classLevels, "subjects:", subjects);
+  }, [users, classLevels, subjects]);
 
   const [classLevelOptions, setClassLevelOptions] = useState({
     sections: [],
     classNames: [],
     subclasses: [],
   });
+
+  // Map subjects to { value: _id, label: name } for select options
+  const [subjectOptions, setSubjectOptions] = useState([]);
+
+  useEffect(() => {
+    setSubjectOptions(subjects.map((s) => ({ value: s._id, label: s.name })));
+  }, [subjects]);
 
   const getClassLevelOptions = (formData = {}, parentKey = "currentClassLevel") => {
     const sections = [...new Set(classLevels.map((cl) => cl.section))];
@@ -64,19 +71,6 @@ const useSignUp = ({ role, selectedUser }) => {
       setError("Invalid user ID format");
     }
   }, [selectedUser]);
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        const subjectsRes = await callApi("/api/subjects", "GET");
-        setSubjects(subjectsRes.data?.map((s) => ({ id: s._id, name: s.data.name })) || []);
-      } catch (err) {
-        console.error("Error fetching subjects:", err);
-        setError("Failed to load subjects");
-      }
-    };
-    fetchOptions();
-  }, [callApi]);
 
   const [formData, setFormData] = useState({});
   const [profilePicture, setProfilePicture] = useState(null);
@@ -123,7 +117,8 @@ const useSignUp = ({ role, selectedUser }) => {
         {
           section: sections[0] || "",
           className: classNames[0] || "",
-          subclasses: subclasses[0] || "",
+          subclasses: [subclasses[0]] || [""], // Backend expects an array
+          subject: subjects[0]?._id || "", // Initialize with first subject _id
         },
       ];
     }
@@ -172,7 +167,8 @@ const useSignUp = ({ role, selectedUser }) => {
               {
                 section: user[key][0].section || initialData.teachingAssignments[0].section,
                 className: user[key][0].className || initialData.teachingAssignments[0].className,
-                subclasses: user[key][0].subclasses?.join(",") || initialData.teachingAssignments[0].subclasses,
+                subclasses: user[key][0].subclasses || initialData.teachingAssignments[0].subclasses,
+                subject: user[key][0].subject?._id || initialData.teachingAssignments[0].subject, // Use subject _id
               },
             ];
           } else {
@@ -193,7 +189,7 @@ const useSignUp = ({ role, selectedUser }) => {
         ? getClassLevelOptions(initialFormData, "currentClassLevel")
         : getClassLevelOptions(initialFormData, "teachingAssignments")
     );
-  }, [role, selectedUser, classLevels]);
+  }, [role, selectedUser, classLevels, subjects]);
 
   useEffect(() => {
     if (formData) {
@@ -274,10 +270,6 @@ const useSignUp = ({ role, selectedUser }) => {
         required: !selectedUser,
         options: ["Christianity", "Islam", "Hinduism", "Buddhism", "Atheism", "Other"],
       },
-      { label: "Subject", name: "subject", type: "select", required: !selectedUser, options: subjects.map((s) => s.name) },
-      { label: "Bank Account Name", name: "bankAccountDetails.accountName", type: "text", required: !selectedUser },
-      { label: "Bank Account Number", name: "bankAccountDetails.accountNumber", type: "text", required: !selectedUser },
-      { label: "Bank Name", name: "bankAccountDetails.bank", type: "text", required: !selectedUser },
       {
         label: "Teaching Section",
         name: "teachingAssignments[0].section",
@@ -299,6 +291,16 @@ const useSignUp = ({ role, selectedUser }) => {
         required: !selectedUser,
         options: classLevelOptions.subclasses,
       },
+      {
+        label: "Subject",
+        name: "teachingAssignments[0].subject",
+        type: "select",
+        required: !selectedUser,
+        options: subjectOptions.map((s) => s.label), // Display names in UI
+      },
+      { label: "Bank Account Name", name: "bankAccountDetails.accountName", type: "text", required: !selectedUser },
+      { label: "Bank Account Number", name: "bankAccountDetails.accountNumber", type: "text", required: !selectedUser },
+      { label: "Bank Name", name: "bankAccountDetails.bank", type: "text", required: !selectedUser },
       { label: "LinkedIn Profile", name: "linkedInProfile", type: "text", required: false },
     ].filter(Boolean),
     admin: [
@@ -332,20 +334,27 @@ const useSignUp = ({ role, selectedUser }) => {
       const [, index, child] = name.split(/\.|\[|\]/).filter(Boolean);
       setFormData((prevData) => {
         const updatedAssignments = [...(prevData.teachingAssignments || [{}])];
-        updatedAssignments[0] = { ...updatedAssignments[0], [child]: value };
+        if (child === "subclasses") {
+          updatedAssignments[0] = { ...updatedAssignments[0], [child]: [value] }; // Store as array
+        } else if (child === "subject") {
+          const selectedSubject = subjectOptions.find((s) => s.label === value);
+          updatedAssignments[0] = { ...updatedAssignments[0], [child]: selectedSubject?.value || "" }; // Store subject _id
+        } else {
+          updatedAssignments[0] = { ...updatedAssignments[0], [child]: value };
+        }
         if (child === "section") {
           const { classNames, subclasses } = getClassLevelOptions(
             { teachingAssignments: [{ ...updatedAssignments[0], section: value }] },
             "teachingAssignments"
           );
           updatedAssignments[0].className = classNames[0] || "";
-          updatedAssignments[0].subclasses = subclasses[0] || "";
+          updatedAssignments[0].subclasses = [subclasses[0]] || [""];
         } else if (child === "className") {
           const { subclasses } = getClassLevelOptions(
             { teachingAssignments: [{ ...updatedAssignments[0], className: value }] },
             "teachingAssignments"
           );
-          updatedAssignments[0].subclasses = subclasses[0] || "";
+          updatedAssignments[0].subclasses = [subclasses[0]] || [""];
         }
         return { ...prevData, teachingAssignments: updatedAssignments };
       });
@@ -358,12 +367,20 @@ const useSignUp = ({ role, selectedUser }) => {
           [child]: value,
         },
       }));
-    } else if (name.includes("guardians") || name.includes("bankAccountDetails")) {
-      const [parent, child] = name.split(".");
+    } else if (name.includes("guardians")) {
+      // Fix: Properly handle guardians[0].field
+      const [, index, child] = name.split(/\.|\[|\]/).filter(Boolean); // e.g., "guardians[0].name" -> ["guardians", "0", "name"]
+      setFormData((prevData) => {
+        const updatedGuardians = [...(prevData.guardians || [{}])];
+        updatedGuardians[0] = { ...updatedGuardians[0], [child]: value };
+        return { ...prevData, guardians: updatedGuardians };
+      });
+    } else if (name.includes("bankAccountDetails")) {
+      const [, child] = name.split(".");
       setFormData((prevData) => ({
         ...prevData,
-        [parent]: {
-          ...prevData[parent],
+        bankAccountDetails: {
+          ...prevData.bankAccountDetails,
           [child]: value,
         },
       }));
@@ -386,21 +403,18 @@ const useSignUp = ({ role, selectedUser }) => {
     setLoading(true);
     setError("");
 
-    // Validate selectedUser for updates
     if (selectedUser && !validateObjectId(selectedUser)) {
       setError("Invalid user ID format");
       setLoading(false);
       return;
     }
 
-    // Remove required attributes for updates
     if (selectedUser) {
       formRef.current.querySelectorAll("[required]").forEach((field) => {
         field.removeAttribute("required");
       });
     }
 
-    // Validate required fields for new users
     if (!selectedUser) {
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.gender) {
         setError("First name, last name, email, and gender are required");
@@ -436,13 +450,13 @@ const useSignUp = ({ role, selectedUser }) => {
           !formData.phoneNumber ||
           !formData.tribe ||
           !formData.religion ||
-          !formData.subject ||
+          !formData.teachingAssignments?.[0]?.subject ||
           !formData.bankAccountDetails?.accountName ||
           !formData.bankAccountDetails?.accountNumber ||
           !formData.bankAccountDetails?.bank ||
           !formData.teachingAssignments?.[0]?.section ||
           !formData.teachingAssignments?.[0]?.className ||
-          !formData.teachingAssignments?.[0]?.subclasses
+          !formData.teachingAssignments?.[0]?.subclasses?.length
         ) {
           setError("All required teacher fields must be filled");
           setLoading(false);
@@ -458,8 +472,13 @@ const useSignUp = ({ role, selectedUser }) => {
           setLoading(false);
           return;
         }
-        if (!/^[A-Z]$/.test(formData.teachingAssignments[0].subclasses)) {
-          setError("Subclasses must be a single uppercase letter");
+        if (!formData.teachingAssignments[0].subclasses.every((sub) => /^[A-Z]$/.test(sub))) {
+          setError("Subclasses must be single uppercase letters");
+          setLoading(false);
+          return;
+        }
+        if (!validateObjectId(formData.teachingAssignments[0].subject)) {
+          setError("Invalid subject ID");
           setLoading(false);
           return;
         }
@@ -474,7 +493,6 @@ const useSignUp = ({ role, selectedUser }) => {
     try {
       const formDataToSubmit = new FormData();
 
-      // Append form fields
       Object.keys(formData).forEach((key) => {
         if (key === "currentClassLevel" && formData[key]) {
           formDataToSubmit.append("currentClassLevel[section]", formData[key].section || "");
@@ -498,23 +516,21 @@ const useSignUp = ({ role, selectedUser }) => {
         } else if (key === "teachingAssignments" && formData[key]?.length && formData[key][0].section) {
           formDataToSubmit.append("teachingAssignments[0][section]", formData[key][0].section || "");
           formDataToSubmit.append("teachingAssignments[0][className]", formData[key][0].className || "");
-          formDataToSubmit.append("teachingAssignments[0][subclasses]", formData[key][0].subclasses || "");
+          formDataToSubmit.append("teachingAssignments[0][subclasses]", JSON.stringify(formData[key][0].subclasses || [])); // Send as JSON array
+          formDataToSubmit.append("subject", formData[key][0].subject || ""); // Send subject _id directly
         } else if (!selectedUser || (formData[key] && formData[key] !== "" && key !== "boardingDetails")) {
           formDataToSubmit.append(key, formData[key]);
         }
       });
 
-      // Append profile picture
       if (profilePicture) {
         formDataToSubmit.append("profilePicture", profilePicture);
       }
 
-      // Log FormData for debugging
       for (let [key, value] of formDataToSubmit.entries()) {
         console.log(`${key}: ${value}`);
       }
 
-      // Determine endpoint
       let endpoint;
       if (selectedUser && validateObjectId(selectedUser)) {
         endpoint = role === "student" ? `/api/students/${selectedUser}/update/admin` : `/api/teachers/teacher/${selectedUser}/update`;

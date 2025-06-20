@@ -51,7 +51,7 @@ const Admin = () => {
   useEffect(() => {
     if (usersData && (currentAcademicYear || currentAcademicYear === null)) {
       setLoading(false);
-      setInstructors(usersData.instructors?.length || 0);
+      setInstructors(usersData.teachers?.length || 0);
       setStudents(usersData.students?.length || 0);
       setNewStudents(currentAcademicYear?.students?.length || 0); // Set New Students count
     }
