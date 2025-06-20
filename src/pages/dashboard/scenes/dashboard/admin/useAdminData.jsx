@@ -4,6 +4,7 @@ import {
   setUsersData,
   setAcademicYears,
   setCurrentAcademicYear,
+  setClassLevels,
   setError,
 } from '../../../../../reduxStore/slices/adminDataSlice';
 import { useEffect, useState, useCallback } from 'react';
@@ -15,8 +16,10 @@ const useAdminData = () => {
   const [unreadEnquiriesCount, setUnreadEnquiriesCount] = useState(0);
   const dispatch = useDispatch();
 
+  // Access data from Redux
   const academicYears = useSelector((state) => state.adminData.academicYears) || [];
   const currentAcademicYear = useSelector((state) => state.adminData.currentAcademicYear);
+  const classLevels = useSelector((state) => state.adminData.classLevels) || [];
 
   // API hooks
   const {
@@ -56,6 +59,12 @@ const useAdminData = () => {
       console.error('Error fetching unread enquiries:', error);
     }
   }, []);
+  const {
+    loading: classLevelsLoading,
+    data: classLevelsData,
+    error: classLevelsError,
+    callApi: getClassLevels,
+  } = useApi();
 
   // Memoized API calls
   const memoizedGetStudents = useCallback(
@@ -74,6 +83,10 @@ const useAdminData = () => {
     () => getCurrentYear(endpoints.CURRENT_ACADEMIC_YEAR, 'GET'),
     [getCurrentYear]
   );
+  const memoizedGetClassLevels = useCallback(
+    () => getClassLevels(endpoints.CLASS_LEVEL, 'GET'),
+    [getClassLevels]
+  );
 
   useEffect(() => {
     memoizedGetStudents();
@@ -81,12 +94,14 @@ const useAdminData = () => {
     memoizedGetAcademicYears();
     memoizedGetCurrentYear();
     fetchUnreadEnquiries();
+    memoizedGetClassLevels();
   }, [
     memoizedGetStudents,
     memoizedGetTeachers,
     memoizedGetAcademicYears,
     memoizedGetCurrentYear,
     fetchUnreadEnquiries,
+    memoizedGetClassLevels,
   ]);
 
   useEffect(() => {
@@ -125,6 +140,17 @@ const useAdminData = () => {
     }
   }, [currentYearData, currentYearError, dispatch]);
 
+  // Handle class levels data
+  useEffect(() => {
+    if (classLevelsData) {
+      const newClassLevels = classLevelsData?.data || [];
+      dispatch(setClassLevels(newClassLevels));
+    }
+    if (classLevelsError) {
+      dispatch(setError(classLevelsError.message || 'Failed to fetch class levels.'));
+    }
+  }, [classLevelsData, classLevelsError, dispatch]);
+
   return {
     usersData: {
       students: studentsData?.data || [],
@@ -133,14 +159,17 @@ const useAdminData = () => {
     academicYears,
     currentAcademicYear,
     unreadEnquiriesCount,
+    classLevels,
     loading:
       studentsLoading ||
       teachersLoading ||
       academicYearsLoading ||
-      currentYearLoading,
-    error: studentsError || teachersError || academicYearsError || currentYearError,
+      currentYearLoading ||
+      classLevelsLoading,
+    error: studentsError || teachersError || academicYearsError || currentYearError || classLevelsError,
     refetchAcademicYears: memoizedGetAcademicYears,
     refetchCurrentYear: memoizedGetCurrentYear,
+    refetchClassLevels: memoizedGetClassLevels,
   };
 };
 

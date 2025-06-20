@@ -31,6 +31,7 @@ const Enquiries = () => {
 
   // Define table columns for enquiries
   const columns = [
+    { id: 'sn', label: 'S/N', minWidth: 50 }, // Added S/N column
     { id: 'name', label: 'Name', minWidth: 100 },
     { id: 'phone', label: 'Phone No.', minWidth: 50 },
     { id: 'email', label: 'Email', minWidth: 100 }, // Added email column
@@ -39,7 +40,8 @@ const Enquiries = () => {
   ];
 
   // Create rows from the enquiries data
-  const rows = enquiries.map((enquiry) => ({
+  const rows = enquiries.map((enquiry, index) => ({
+    sn: index + 1, // Generate serial number based on index
     _id: enquiry._id, // Ensure unique key for each row
     name: enquiry.name,
     phone: enquiry.phone,

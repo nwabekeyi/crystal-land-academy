@@ -30,6 +30,9 @@ const MARK_TIMETABLE = import.meta.env.VITE_MARK_TIMETABLEDONE;
 const CREATE_TEACHER = import.meta.env.VITE_CREATE_TEACHER;
 const CREATE_STUDENT = import.meta.env.VITE_CREATE_STUDENT;
 const ACADEMIC_YEAR = import.meta.env.VITE_ACADEMIC_YEARS;
+const ACADEMIC_TERM = import.meta.env.VITE_ACADEMIC_TERM;
+const CLASS_LEVEL = import.meta.env.VITE_ACADEMIC_CLASSES;
+
 
 const endpoints = {
   LOGIN: {
@@ -65,6 +68,8 @@ const endpoints = {
   CREATE_STUDENT: `${BASE_URL}${CREATE_STUDENT}`,
   ACADEMIC_YEARS: `${BASE_URL}${ACADEMIC_YEAR}`,
   CURRENT_ACADEMIC_YEAR: `${BASE_URL}${ACADEMIC_YEAR}/current`,
+  ACADEMIC_TERM: `${BASE_URL}${ACADEMIC_TERM}`,
+  CLASS_LEVEL: `${BASE_URL}${CLASS_LEVEL}`,
 
 };
 

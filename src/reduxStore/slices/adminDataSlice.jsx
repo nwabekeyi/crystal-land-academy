@@ -6,6 +6,7 @@ const initialState = {
   connected: false,
   academicYears: [],
   currentAcademicYear: null,
+  classLevels: [], // New field for class levels
 };
 
 const adminDataSlice = createSlice({
@@ -26,6 +27,29 @@ const adminDataSlice = createSlice({
     },
     setCurrentAcademicYear: (state, action) => {
       state.currentAcademicYear = action.payload;
+    },
+    setClassLevels: (state, action) => {
+      state.classLevels = action.payload;
+    },
+    updateAcademicYear: (state, action) => {
+      const { id, updatedData } = action.payload;
+      const index = state.academicYears.findIndex(year => year._id === id);
+      if (index !== -1) {
+        state.academicYears[index] = {
+          ...state.academicYears[index],
+          ...updatedData,
+        };
+        // Update currentAcademicYear if the updated year is current
+        if (updatedData.isCurrent) {
+          state.currentAcademicYear = state.academicYears[index];
+          // Optionally unset isCurrent for other years in state
+          state.academicYears = state.academicYears.map(year =>
+            year._id !== id ? { ...year, isCurrent: false } : year
+          );
+        }
+      } else {
+        state.error = `Academic year with ID ${id} not found.`;
+      }
     },
     deleteUser: (state, action) => {
       const { userId, role } = action.payload;
@@ -85,6 +109,8 @@ export const {
   setConnectionStatus,
   setAcademicYears,
   setCurrentAcademicYear,
+  setClassLevels,
+  updateAcademicYear,
   deleteUser,
   updateUser,
   addUser,

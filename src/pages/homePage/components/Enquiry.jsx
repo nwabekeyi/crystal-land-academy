@@ -5,6 +5,7 @@ import Modal from '../../dashboard/components/modal'; // Adjust the import path 
 
 const Enquiry = () => {
   const [open, setOpen] = useState(false);
+  const [successModal, setSuccessModal] = useState(false); // State for success modal
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -25,6 +26,10 @@ const Enquiry = () => {
   const handleClose = () => {
     setOpen(false);
     setError(null); // Clear any errors when closing the modal
+  };
+
+  const handleSuccessModalClose = () => {
+    setSuccessModal(false); // Close success modal
   };
 
   const handleInputChange = (e) => {
@@ -80,6 +85,7 @@ const Enquiry = () => {
       // Reset form and close modal
       setFormData({ name: '', phone: '', email: '', message: '' });
       setOpen(false);
+      setSuccessModal(true); // Open success modal
     } catch (error) {
       console.error('Error submitting enquiry:', error);
       setError(error.message);
@@ -122,7 +128,7 @@ const Enquiry = () => {
       <Modal
         open={open}
         onClose={handleClose}
-        title="Enquiry Form"
+        title="Submit Enquiry"
         onConfirm={handleSubmit}
         confirmMessage={loading ? 'Submitting...' : 'Submit'}
       >
@@ -172,6 +178,35 @@ const Enquiry = () => {
               {error}
             </Box>
           )}
+        </Box>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        open={successModal}
+        onClose={handleSuccessModalClose}
+        title="Success"
+        noConfirm
+        sx={{ px:4}}
+      >
+        <Box sx={{  mt: 2 }}>
+          <h2>Enquiry Submitted Successfully!</h2>
+          <p>Thank you for reaching out. We will get back to you shortly.</p>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <button
+              onClick={handleSuccessModalClose}
+              style={{
+                backgroundColor: '#0E0C30',
+                color: 'white',
+                padding: '10px 20px',
+                borderRadius: '5px',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Close
+            </button>
+          </Box>
         </Box>
       </Modal>
     </>

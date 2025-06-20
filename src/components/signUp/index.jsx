@@ -22,17 +22,23 @@ const SignUpForm = ({ role, selectedUser }) => {
   } = useSignUp({ role, selectedUser });
 
   // Log for debugging
-  console.log("SignUpForm - role:", role, "selectedUser:", selectedUser);
+  console.log("SignUpForm - role:", role, "selectedUser:", selectedUser, "formData:", formData);
 
   const handleCloseModal = () => {
     setModalOpen(false);
   };
 
+  // Show loading or error if formData is not initialized
   if (loading) {
     return <Loader />;
   }
 
+  if (!formData || Object.keys(formData).length === 0) {
+    return <Alert severity="error">Form data is not initialized. Please try again or check Redux configuration.</Alert>;
+  }
+
   const getFieldValue = (name) => {
+    if (!formData) return "";
     if (name.includes(".")) {
       const parts = name.split(/\.|\[|\]/).filter(Boolean);
       let value = formData;
