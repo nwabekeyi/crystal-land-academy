@@ -13,38 +13,88 @@ import {
   Typography,
   useTheme,
   TextField,
-  IconButton, // Import IconButton
+  IconButton,
 } from "@mui/material";
-import { tokens } from "../../../theme";
-import Modal from "../../../components/modal";
-import { List as ListIcon, Close as CloseIcon } from "@mui/icons-material"; // Import icons
-import './calendar.css'
-const Calendar = () => {
+import { tokens } from "../../theme";
+import Modal from "../../components/modal";
+import { List as ListIcon, Close as CloseIcon } from "@mui/icons-material";
+import './calendar.css';
+
+const SchoolActivities = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [events, setEvents] = useState([]); // State for events
-  const [addCurriculumOpen, setAddCurriculumOpen] = useState(false); // Modal open state
-  const [newEventTitle, setNewEventTitle] = useState(""); // Event title state
-  const [selectedDate, setSelectedDate] = useState(null); // Selected date for the event
-  const [showEvents, setShowEvents] = useState(false); // State to toggle visibility of events
+
+  // Dummy school activity data
+  const dummyEvents = [
+    {
+      id: "1",
+      title: "Math Midterm Exam",
+      start: "2025-07-10T09:00:00",
+      end: "2025-07-10T11:00:00",
+      allDay: false,
+    },
+    {
+      id: "2",
+      title: "School Sports Day",
+      start: "2025-07-15",
+      allDay: true,
+    },
+    {
+      id: "3",
+      title: "Science Club Meeting",
+      start: "2025-07-20T15:00:00",
+      end: "2025-07-20T16:30:00",
+      allDay: false,
+    },
+    {
+      id: "4",
+      title: "Parent-Teacher Conference",
+      start: "2025-07-25T10:00:00",
+      end: "2025-07-25T15:00:00",
+      allDay: false,
+    },
+    {
+      id: "5",
+      title: "School Holiday - Summer Break",
+      start: "2025-08-01",
+      end: "2025-08-15",
+      allDay: true,
+    },
+    {
+      id: "6",
+      title: "Drama Club Rehearsal",
+      start: "2025-07-22T16:00:00",
+      end: "2025-07-22T18:00:00",
+      allDay: false,
+    },
+  ];
+
+  const [events, setEvents] = useState(dummyEvents); // Initialize with dummy data
+  const [addCurriculumOpen, setAddCurriculumOpen] = useState(false);
+  const [newEventTitle, setNewEventTitle] = useState("");
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [showEvents, setShowEvents] = useState(false);
 
   // Load events from localStorage when the component mounts
   useEffect(() => {
     const storedEvents = JSON.parse(localStorage.getItem("events")) || [];
-    setEvents(storedEvents);
+    if (storedEvents.length > 0) {
+      setEvents([...dummyEvents, ...storedEvents]); // Merge dummy data with stored events
+    }
   }, []);
 
-  // Save events to localStorage whenever the events state changes
+  // Save only user-added events to localStorage (exclude dummy events)
   useEffect(() => {
-    if (events.length > 0) {
-      localStorage.setItem("events", JSON.stringify(events));
+    const userAddedEvents = events.filter(event => !dummyEvents.some(dummy => dummy.id === event.id));
+    if (userAddedEvents.length > 0) {
+      localStorage.setItem("events", JSON.stringify(userAddedEvents));
     }
   }, [events]);
 
   // Open modal when a date is clicked
   const handleDateClick = (selected) => {
     setSelectedDate(selected);
-    setAddCurriculumOpen(true); // Open the modal
+    setAddCurriculumOpen(true);
   };
 
   // Add event to localStorage
@@ -58,18 +108,17 @@ const Calendar = () => {
         allDay: selectedDate.allDay,
       };
 
-      // Add the new event to the state and localStorage
       const updatedEvents = [...events, newEvent];
       setEvents(updatedEvents);
-      setAddCurriculumOpen(false); // Close modal after adding event
-      setNewEventTitle(""); // Reset title input
+      setAddCurriculumOpen(false);
+      setNewEventTitle("");
     }
   };
 
   // Close the modal without saving
   const closeAddCurriculumModal = () => {
     setAddCurriculumOpen(false);
-    setNewEventTitle(""); // Reset title input when modal is closed
+    setNewEventTitle("");
   };
 
   // Handle event deletion
@@ -82,13 +131,13 @@ const Calendar = () => {
       const updatedEvents = events.filter(
         (event) => event.id !== selected.event.id
       );
-      setEvents(updatedEvents); // Update state and localStorage
+      setEvents(updatedEvents);
     }
   };
 
   // Toggle events visibility
   const toggleEventList = () => {
-    setShowEvents((prev) => !prev); // Toggle the visibility of the events
+    setShowEvents((prev) => !prev);
   };
 
   return (
@@ -102,47 +151,45 @@ const Calendar = () => {
           borderRadius="4px"
           sx={{
             width: '100%',
-            height: "75vh", // Set the desired height for the sidebar
-            overflowY: "auto", // Make the event list scrollable if it overflows
-            overflowX: "hidden", // Prevent horizontal overflow
+            height: "75vh",
+            overflowY: "auto",
+            overflowX: "hidden",
             display: "flex",
-            flexDirection: "column", // Align items vertically
+            flexDirection: "column",
           }}
         >
           {/* IconButton to toggle visibility of event list */}
           <Box display="flex" alignItems="center" marginBottom="10px">
             <IconButton
-              onClick={toggleEventList} // Toggle visibility of events
+              onClick={toggleEventList}
               sx={{
-                backgroundColor: colors.blueAccent[500], // Button background color
+                backgroundColor: colors.blueAccent[500],
                 "&:hover": {
-                  backgroundColor: colors.blueAccent[700], // Button hover color
+                  backgroundColor: colors.blueAccent[700],
                 },
-                padding: "10px", // Add padding to the button
-                borderRadius: "50%", // Circular button shape
+                padding: "10px",
+                borderRadius: "50%",
               }}
             >
-              {showEvents ? <CloseIcon /> : <ListIcon />} {/* Toggle between List and Close icon */}
+              {showEvents ? <CloseIcon /> : <ListIcon />}
             </IconButton>
-
-            {/* Text label next to the IconButton */}
             <Typography variant="h6" sx={{ marginLeft: "10px", fontWeight:'800'}}>
               {showEvents ? "Hide Events" : "Show Events"}
             </Typography>
           </Box>
 
-          {/* Events Title (only shown when events are visible) */}
+          {/* Events Title */}
           {showEvents && (
             <Typography variant="h4" sx={{ marginBottom: "10px" }}>
               Events
             </Typography>
           )}
 
-          {/* Event list (visible based on showEvents state) */}
-          {showEvents && ( // Render events only if showEvents is true
+          {/* Event list */}
+          {showEvents && (
             <List>
               {events.length === 0 ? (
-                <Typography>No events available</Typography> // Fallback message when no events
+                <Typography>No events available</Typography>
               ) : (
                 events.map((event) => (
                   <ListItem
@@ -151,9 +198,9 @@ const Calendar = () => {
                       backgroundColor: colors.blueAccent[500],
                       margin: "10px 0",
                       borderRadius: "2px",
-                      overflow: "hidden", // Prevent text overflow
-                      textOverflow: "ellipsis", // Add ellipsis if text overflows
-                      whiteSpace: "nowrap", // Prevent wrapping for longer text
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     <ListItemText
@@ -199,8 +246,7 @@ const Calendar = () => {
             dayMaxEvents={true}
             select={handleDateClick}
             eventClick={handleEventClick}
-            events={events} // Use events from state (loaded from localStorage)
-            
+            events={events}
           />
         </Box>
       </Box>
@@ -226,4 +272,4 @@ const Calendar = () => {
   );
 };
 
-export default Calendar;
+export default SchoolActivities;

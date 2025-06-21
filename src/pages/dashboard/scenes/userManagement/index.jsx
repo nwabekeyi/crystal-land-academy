@@ -1,15 +1,18 @@
 import React, { useEffect } from 'react';
-import { Box, Tabs, Tab, Typography } from '@mui/material';
+import { Box, Tabs, Tab, Typography, useTheme } from '@mui/material';
+import { tokens } from '../../theme'; // Adjust path as needed
 import Dropdown from '../../../../components/dropdown';
 import { SignUpStudent, SignUpTeacher, SignUpAdmin } from '../../../signUp';
 import Header from '../../components/Header';
 import TableComponent from '../../../../components/table';
-import useUserManagement from './useUserManagement';
+import useUserManagement from './useUserManagement'; // Adjust path as needed
 import ScrollDialog from '../../components/scrollDialog';
 import withDashboardWrapper from '../../../../components/dasboardPagesContainer';
 import { DeleteModal, EditFormModal } from './modals';
 
 const UserManagement = () => {
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
   const {
     selectedUser,
     editDialogOpen,
@@ -44,7 +47,8 @@ const UserManagement = () => {
     if (selectedUser) {
       setViewUserDetails(true);
     }
-  }, [selectedUser]);
+  }, [selectedUser, setViewUserDetails]);
+
 
   return (
     <Box>
@@ -61,10 +65,62 @@ const UserManagement = () => {
       />
 
       <Box mt={2}>
-        <Tabs value={tabIndex} onChange={handleTabChange}>
-          <Tab label='Students' />
-          <Tab label='Teachers' />
-          <Tab label='Admins' />
+        <Tabs
+          value={tabIndex}
+          onChange={handleTabChange}
+          aria-label="user role tabs"
+          sx={{
+            backgroundColor: colors.primary[400],
+            '& .MuiTabs-indicator': {
+              backgroundColor: colors.blueAccent[700],
+            },
+          }}
+        >
+          <Tab
+            label='Students'
+            sx={{
+              color: 'white !important',
+              textTransform: 'none',
+              fontWeight: 'bold',
+              '&.Mui-selected': {
+                color: 'white !important',
+                boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.3)',
+                backgroundColor: colors.blueAccent[700],
+              },
+              boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
+              backgroundColor: colors.primary[400],
+            }}
+          />
+          <Tab
+            label='Teachers'
+            sx={{
+              color: 'white !important',
+              textTransform: 'none',
+              fontWeight: 'bold',
+              '&.Mui-selected': {
+                color: 'white !important',
+                boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.3)',
+                backgroundColor: colors.blueAccent[700],
+              },
+              boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
+              backgroundColor: colors.primary[400],
+            }}
+          />
+          <Tab
+            label='Admins'
+            sx={{
+              color: 'white !important',
+              textTransform: 'none',
+              fontWeight: 'bold',
+              '&.Mui-selected': {
+                color: 'white !important',
+                boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.3)',
+                backgroundColor: colors.blueAccent[700],
+              },
+              boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
+              backgroundColor: colors.primary[400],
+            }}
+          />
         </Tabs>
       </Box>
 
@@ -172,7 +228,6 @@ const UserManagement = () => {
         editDialogOpen={editDialogOpen}
         setEditDialogOpen={setEditDialogOpen}
         handleEdit={handleEdit}
-        rerender={rerender}
       />
 
       {/* Sign Up User Dialog */}

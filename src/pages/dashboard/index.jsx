@@ -24,7 +24,7 @@ const Enquiries = lazy(() => import("./scenes/enquiries"));
 const UserManagement = lazy(() => import("./scenes/userManagement"));
 const CourseManagement = lazy(() => import("./scenes/academicYear"));
 const Feedbacks = lazy(() => import("./scenes/feebacks"));
-const Support = lazy(() => import("./scenes/support"));
+const ClassManagement = lazy(() => import("./scenes/classManagement"));
 const TimeTable = lazy(() => import("./scenes/timeTable"));
 const Assignment = lazy(() => import("./scenes/assignments"));
 const LearningPlan = lazy(() => import("./scenes/learningPlan"));
@@ -82,7 +82,7 @@ function DashboardHome() {
             <Route path="/userManagement" element={<UserManagement />} />
             <Route path="/courseManagement" element={<CourseManagement />} />
             <Route path="/feedbacks" element={<Feedbacks />} />
-            <Route path="/support" element={<Support />} />
+            <Route path="/classManagement" element={<ClassManagement />} />
           </>
         );
       case "student":
