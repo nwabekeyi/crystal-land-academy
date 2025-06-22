@@ -1,61 +1,101 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Divider, useTheme } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Typography, useTheme } from '@mui/material';
 import { tokens } from '../../theme';
 import TableComponent from '../../../../components/table';
-import { useSelector } from 'react-redux';
-import { endpoints } from '../../../../utils/constants';
-import Loader from "../../../../utils/loader";
-import useApi from '../../../../hooks/useApi'; // Assuming you have a useApi hook
 import Header from '../../components/Header';
 
+// Dummy timetable data
+const dummyTimeTable = [
+  {
+    id: 1,
+    date: '2025-06-02',
+    location: 'Room 101',
+    time: '08:00 - 09:00',
+    topic: 'Mathematics: Algebra Basics',
+    attended: 'Yes',
+  },
+  {
+    id: 2,
+    date: '2025-06-02',
+    location: 'Room 102',
+    time: '09:15 - 10:15',
+    topic: 'English: Literature Analysis',
+    attended: 'No',
+  },
+  {
+    id: 3,
+    date: '2025-06-03',
+    location: 'Lab 1',
+    time: '10:30 - 11:30',
+    topic: 'Science: Chemistry Experiments',
+    attended: 'Yes',
+  },
+  {
+    id: 4,
+    date: '2025-06-04',
+    location: 'Room 103',
+    time: '08:00 - 09:00',
+    topic: 'History: World War II',
+    attended: 'No',
+  },
+  {
+    id: 5,
+    date: '2025-06-05',
+    location: 'Room 101',
+    time: '09:15 - 10:15',
+    topic: 'Physical Education: Fitness Training',
+    attended: 'Yes',
+  },
+];
 
 const TimeTable = () => {
-  const [timeTable, setTimeTable] = useState([]);
+  const theme = useTheme();
+  const colors = tokens(theme.palette.mode);
+  const [timeTable] = useState(dummyTimeTable); // Use dummy data directly
   const [sortBy, setSortBy] = useState('date');
   const [sortDirection, setSortDirection] = useState('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  
-  const userDetails = useSelector((state) => state.users.user);
-  const cohortName = userDetails?.cohort; // Check if userDetails exist
-  const postUrl = cohortName ? `${endpoints.TIMETABLE}/${cohortName}` : null;
-  
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
-  
-  const { loading, data, callApi } = useApi();
-
-  // Use effect to fetch schedules
-  useEffect(() => {
-    if (postUrl) {
-      callApi(postUrl, 'GET');
-    }
-  }, [postUrl, callApi]);
-
-  // Update timetable when data is available
-  useEffect(() => {
-    if (data) {
-      setTimeTable(data);
-    }
-  }, [data]);
-
-   // Function to check if attendance is already marked for the student
-   const isAttendanceMarked = (schedule) => {
-    return schedule?.attendance?.includes(userDetails.userId); // Check if studentId is in the attendance array
-  };
 
   // Map timeTable data to the format required by the table
-  const schedules = timeTable.map((schedule) => ({
+  const schedules = timeTable.map((schedule, index) => ({
     ...schedule,
-    attended: isAttendanceMarked(schedule) ? 'Yes' : 'No', // Use 'attended' field based on 'done'
+    sn: index + 1, // Add serial number for display
+    date: schedule.date ? new Date(schedule.date).toLocaleDateString() : 'N/A',
   }));
 
   const columns = [
-    { id: 'date', label: 'Date' },
-    { id: 'location', label: 'Location' },
-    { id: 'time', label: 'Time' },
-    { id: 'topic', label: 'Topic' },
-    { id: 'attended', label: 'Attended' }, // Consistent lowercase 'attended' field
+    { id: 'sn', label: 'S/N', flex: 0.5 },
+    {
+      id: 'date',
+      label: 'Date',
+      flex: 1,
+      renderCell: (row) => <Typography>{row.date || 'N/A'}</Typography>,
+    },
+    {
+      id: 'location',
+      label: 'Location',
+      flex: 1,
+      renderCell: (row) => <Typography>{String(row.location || 'N/A')}</Typography>,
+    },
+    {
+      id: 'time',
+      label: 'Time',
+      flex: 1,
+      renderCell: (row) => <Typography>{String(row.time || 'N/A')}</Typography>,
+    },
+    {
+      id: 'topic',
+      label: 'Topic',
+      flex: 2,
+      renderCell: (row) => <Typography>{String(row.topic || 'N/A')}</Typography>,
+    },
+    {
+      id: 'attended',
+      label: 'Attended',
+      flex: 1,
+      renderCell: (row) => <Typography>{String(row.attended || 'N/A')}</Typography>,
+    },
   ];
 
   const handleSortChange = (columnId) => {
@@ -64,40 +104,39 @@ const TimeTable = () => {
     setSortBy(columnId);
   };
 
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (event, newPage) => {
     setPage(newPage);
   };
 
   const handleRowsPerPageChange = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   const handleRowClick = (row) => {
-    console.log(row);
+    console.log('Row clicked:', row);
+  };
+
+  const tableProps = {
+    columns,
+    tableHeader: 'Schedule',
+    data: schedules,
+    sortBy,
+    sortDirection,
+    onSortChange: handleSortChange,
+    page,
+    rowsPerPage,
+    onPageChange: handlePageChange,
+    onRowsPerPageChange: handleRowsPerPageChange,
+    onRowClick: handleRowClick,
   };
 
   return (
     <Box py="20px">
       <Header title="TIME TABLE" subtitle="Overview of Schedule" />
-      {loading ? (
-        <Loader />
-      ) : (
-        <Box>
-          <TableComponent
-            columns={columns}
-            tableHeader={`Schedule`}
-            data={schedules} // Use the schedules from the timeTable
-            sortBy={sortBy}
-            sortDirection={sortDirection}
-            onSortChange={handleSortChange}
-            page={page}
-            rowsPerPage={rowsPerPage}
-            onPageChange={handlePageChange}
-            onRowsPerPageChange={handleRowsPerPageChange}
-            onRowClick={handleRowClick}
-          />
-        </Box>
-      )}
+      <Box>
+        <TableComponent {...tableProps} />
+      </Box>
     </Box>
   );
 };

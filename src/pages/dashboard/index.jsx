@@ -10,7 +10,6 @@ import FloatingMessageIcon from "./components/floatingMessageIcon";
 import { tokens } from "./theme";
 import SignIn from "../../components/Signin";
 import Loader from "../../utils/loader";
-import useWebSocket from "../../hooks/useWebSocket";
 
 // Lazy load the components
 const Dashboard = lazy(() => import("./scenes/dashboard"));
@@ -35,6 +34,8 @@ const InstructorReviews = lazy(() => import("./scenes/instructorReviews"));
 const StudentManagement = lazy(() => import("./scenes/studentManagement/studentManagement"));
 const StudentInstructors = lazy(() => import("./scenes/studentInstructors"));
 const ChatApp = lazy(() => import("../messaging"));
+const AnalyticsAndreporting = lazy(() => import("./scenes/analyticsAndreporting"));
+
 
 function DashboardHome() {
   const [theme, colorMode] = useMode();
@@ -83,6 +84,7 @@ function DashboardHome() {
             <Route path="/courseManagement" element={<CourseManagement />} />
             <Route path="/feedbacks" element={<Feedbacks />} />
             <Route path="/classManagement" element={<ClassManagement />} />
+            <Route path="/analytics" element={<AnalyticsAndreporting />} />
           </>
         );
       case "student":

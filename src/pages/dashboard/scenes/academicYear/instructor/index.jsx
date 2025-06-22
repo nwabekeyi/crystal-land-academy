@@ -18,7 +18,7 @@ const Instructors = () => {
   return (
     <Box >
       <Header
-        title={courseName || "Course Name"} // Fallback to default text if courseName is undefined
+        title={courseName || "Primary 2"} // Fallback to default text if courseName is undefined
         subtitle={`${courseDuration || 0} months`} // Fallback for courseDuration
       />
 

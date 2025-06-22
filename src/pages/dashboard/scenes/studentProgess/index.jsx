@@ -1,17 +1,31 @@
-import React from "react";
-import { Box, Typography, useTheme, LinearProgress } from "@mui/material";
-import Header from "../../components/Header";
-import { tokens } from "../../theme";
-import useStudentData from "../dashboard/student/useStudentData"; // Import your custom hook
-import withDashboardWrapper from "../../../../components/dasboardPagesContainer";
+import React from 'react';
+import { Box, Typography, LinearProgress } from '@mui/material';
+import Header from '../../components/Header';
+import { tokens } from '../../theme';
+import { useTheme } from '@mui/material';
+import withDashboardWrapper from '../../../../components/dasboardPagesContainer';
+
+// Dummy student progress data
+const dummyStudentProgress = {
+  completedCourses: [
+    { id: 1, topic: 'Algebra: Linear Equations' },
+    { id: 2, topic: 'English: Grammar Basics' },
+    { id: 3, topic: 'Science: Chemical Reactions' },
+  ],
+  remainingCourses: [
+    { id: 4, topic: 'History: World War II' },
+    { id: 5, topic: 'Physical Education: Fitness Training' },
+    { id: 6, topic: 'Mathematics: Geometry' },
+    { id: 7, topic: 'English: Literature Analysis' },
+  ],
+  progressPercentage: 42.86, // 3 completed / (3 completed + 4 remaining) * 100
+};
 
 const StudentProgress = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const { completedCourses, remainingCourses, progressPercentage } = dummyStudentProgress;
 
-  // Get the student progress data from the custom hook
-  const { completedCourses, remainingCourses, progressPercentage } = useStudentData();
-  console.log({ completedCourses, remainingCourses, progressPercentage })
   return (
     <Box>
       <Header title="Student Progress" subtitle="Track Your Learning Progress" />
@@ -32,11 +46,11 @@ const StudentProgress = () => {
             variant="determinate"
             value={progressPercentage}
             sx={{
-              height: "10px",
-              borderRadius: "5px",
-              mt: "10px",
+              height: '10px',
+              borderRadius: '5px',
+              mt: '10px',
               backgroundColor: colors.primary[300],
-              "& .MuiLinearProgress-bar": { backgroundColor: colors.greenAccent[500] },
+              '& .MuiLinearProgress-bar': { backgroundColor: colors.greenAccent[500] },
             }}
           />
           <Typography variant="h6" mt="10px">
