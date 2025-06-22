@@ -1,268 +1,252 @@
-import React, { useState, useEffect } from 'react';
-import { Box, TextField } from '@mui/material';
-import { useTheme } from '@mui/material';
-import Header from '../../components/Header';
-import Modal from '../../components/modal';
-import TableComponent from '../../../../components/table';
+import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  useTheme,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 import { tokens } from '../../theme';
-import useApi from '../../../../hooks/useApi';
-import { useSelector } from 'react-redux';
-import { endpoints } from '../../../../utils/constants';
-import ConfirmationModal from '../../components/confirmationModal';
-import CustomIconButton from '../../components/customIconButton';
-import EditIcon from '@mui/icons-material/Edit';
-import ActionButton from '../../components/actionButton';
- import { AttendanceModal } from './Modals';
- import DeleteIcon from '@mui/icons-material/Delete';
- import VisibilityIcon from '@mui/icons-material/Visibility';
+import TableComponent from '../../../../components/table';
+import Header from '../../components/Header';
+import { startOfWeek, getWeek, parseISO } from 'date-fns';
 
+// Dummy timetable data with student attendance
+const dummyTimeTable = [
+  {
+    id: 1,
+    session: '2024-2025',
+    term: 'First Term',
+    date: '2024-09-02', // Week 1
+    location: 'Room 101',
+    time: '08:00 - 09:00',
+    topic: 'Mathematics: Algebra Basics',
+    students: [
+      { studentId: 'stu_1', name: 'John Doe', attendance: 'Yes' },
+      { studentId: 'stu_2', name: 'Jane Smith', attendance: 'No' },
+    ],
+  },
+  {
+    id: 2,
+    session: '2024-2025',
+    term: 'First Term',
+    date: '2024-09-02', // Week 1
+    location: 'Room 102',
+    time: '09:15 - 10:15',
+    topic: 'English: Literature Analysis',
+    students: [
+      { studentId: 'stu_1', name: 'John Doe', attendance: 'No' },
+      { studentId: 'stu_2', name: 'Jane Smith', attendance: 'Yes' },
+    ],
+  },
+  {
+    id: 3,
+    session: '2024-2025',
+    term: 'First Term',
+    date: '2024-09-09', // Week 2
+    location: 'Lab 1',
+    time: '10:30 - 11:30',
+    topic: 'Science: Chemistry Experiments',
+    students: [
+      { studentId: 'stu_1', name: 'John Doe', attendance: 'Yes' },
+      { studentId: 'stu_2', name: 'Jane Smith', attendance: 'Yes' },
+    ],
+  },
+  {
+    id: 4,
+    session: '2024-2025',
+    term: 'Second Term',
+    date: '2025-01-06', // Week 1
+    location: 'Room 103',
+    time: '08:00 - 09:00',
+    topic: 'History: World War II',
+    students: [
+      { studentId: 'stu_1', name: 'John Doe', attendance: 'No' },
+      { studentId: 'stu_2', name: 'Jane Smith', attendance: 'No' },
+    ],
+  },
+];
+
+// Dummy student list for adding schedules
+const dummyStudents = [
+  { studentId: 'stu_1', name: 'John Doe' },
+  { studentId: 'stu_2', name: 'Jane Smith' },
+];
+
+// Academic session and term options
+const academicSessions = ['2024-2025', '2025-2026'];
+const terms = ['First Term', 'Second Term', 'Third Term'];
+const weeksPerTerm = 12;
 
 const Instructor = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-
-  const [openEditModal, setOpenEditModal] = useState(false);
-  const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState(null);
-  const [formData, setFormData] = useState({ date: '', course: '', time: '', location: '', topic: '' });
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedSession, setSelectedSession] = useState(academicSessions[0]);
+  const [selectedTerm, setSelectedTerm] = useState(terms[0]);
+  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [timeTable, setTimeTable] = useState(dummyTimeTable);
   const [sortBy, setSortBy] = useState('date');
   const [sortDirection, setSortDirection] = useState('asc');
-  const [scheduleToDelete, setScheduleToDelete] = useState(null);
-  const [schedules, setSchedules] = useState([]);
-  const [deleteConfirm, setDeleteConfrim] = useState(false);
-  const [updateConfirm, setUpdateConfrim] = useState(false)
-  const [openAttendanceModal, setOpenAttendanceModal] = useState(false);
-  const [timeTableToMark, setTimeTableToMark] = useState('');
-  const [openDetailsModal, setOpenDetailsModal] = useState(false); 
-  const [isDone, setIsDone] = useState(false); 
-  const [isPast, setIsPast] = useState(false); 
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
+  const [selectedScheduleId, setSelectedScheduleId] = useState(null);
+  const [newSchedule, setNewSchedule] = useState({
+    date: '',
+    location: '',
+    time: '',
+    topic: '',
+  });
+  const [attendanceChanges, setAttendanceChanges] = useState({});
 
-  const userDetails = useSelector((state) => state.users.user);
-  const cohortName = userDetails.cohort;
-  const postUrl = `${endpoints.TIMETABLE}/${cohortName}`;
-console.log(cohortName);
-  //handle confirm modal close
-  const handleConfirmModalClose = () => {
-    if(deleteConfirm === true){
-      setDeleteConfrim(false);
+  // Calculate week number for a given date
+  const getWeekNumber = (dateString) => {
+    const date = parseISO(dateString);
+    const startDate = startOfWeek(parseISO('2024-09-01')); // Adjust to academic year start
+    return getWeek(date, { weekStartsOn: 1 }) - getWeek(startDate, { weekStartsOn: 1 }) + 1;
+  };
+
+  // Filter timetable data for selected session, term, and week
+  const filteredSchedules = timeTable
+    .filter(
+      (schedule) =>
+        schedule.session === selectedSession &&
+        schedule.term === selectedTerm &&
+        getWeekNumber(schedule.date) === selectedWeek
+    )
+    .map((schedule, index) => ({
+      ...schedule,
+      sn: index + 1,
+      date: schedule.date ? new Date(schedule.date).toLocaleDateString() : 'N/A',
+    }));
+
+  // Handle adding a new schedule
+  const handleAddSchedule = () => {
+    const newId = timeTable.length + 1;
+    const newScheduleEntry = {
+      id: newId,
+      session: selectedSession,
+      term: selectedTerm,
+      date: newSchedule.date,
+      location: newSchedule.location,
+      time: newSchedule.time,
+      topic: newSchedule.topic,
+      students: dummyStudents.map((student) => ({
+        studentId: student.studentId,
+        name: student.name,
+        attendance: 'No', // Default attendance
+      })),
     };
+    setTimeTable([...timeTable, newScheduleEntry]);
+    setNewSchedule({ date: '', location: '', time: '', topic: '' });
+    setAddModalOpen(false);
+  };
 
-    if(updateConfirm === true){
-      setUpdateConfrim(false);
+  // Handle attendance change in the modal
+  const handleAttendanceChange = (studentId, newAttendance) => {
+    setAttendanceChanges((prev) => ({
+      ...prev,
+      [studentId]: newAttendance,
+    }));
+  };
+
+  // Confirm attendance changes
+  const handleConfirmAttendance = () => {
+    setTimeTable((prev) =>
+      prev.map((schedule) =>
+        schedule.id === selectedScheduleId
+          ? {
+              ...schedule,
+              students: schedule.students.map((student) => ({
+                ...student,
+                attendance: attendanceChanges[student.studentId] || student.attendance,
+              })),
+            }
+          : schedule
+      )
+    );
+    setAttendanceModalOpen(false);
+    setSelectedScheduleId(null);
+    setAttendanceChanges({});
+  };
+
+  // Open attendance modal
+  const openAttendanceModal = (scheduleId) => {
+    const schedule = timeTable.find((s) => s.id === scheduleId);
+    if (schedule) {
+      const initialAttendance = schedule.students.reduce(
+        (acc, student) => ({
+          ...acc,
+          [student.studentId]: student.attendance,
+        }),
+        {}
+      );
+      setAttendanceChanges(initialAttendance);
+      setSelectedScheduleId(scheduleId);
+      setAttendanceModalOpen(true);
     }
   };
 
-  //open mark attendance modal
-const openAttendance =  (timeTable)=> {
-  setOpenAttendanceModal(true);
-  setTimeTableToMark(timeTable);
-}
-
-  //close mark attendance modal
-  const handleAttendanceModalClose =  (timeTableId)=> {
-    setOpenAttendanceModal(false);
-  }
-
-  const { loading: postLoading, data: postData, error: postError, callApi: postCallApi } = useApi();
-  const { loading: getLoading, error: getError, callApi: getCallApi } = useApi();
-  const { loading: putLoading, data: putData, error: putError, callApi: putCallApi } = useApi();
-  const { loading: deleteLoading, data: deleteData, error: deleteError, callApi: deleteCallApi } = useApi();
-  const { loading: loadDone, data: doneData, error: doneError, callApi: doneApi } = useApi();
-
-  useEffect(() => {
-    const fetchSchedules = async () => {
-      if (postUrl) {
-        const data = await getCallApi(postUrl, 'GET');
-        setSchedules(data);
-      }
-    };
-
-    fetchSchedules();
-  }, []);
-
-  const formatDateTime = (dateStr, timeStr) => {
-    if (!dateStr || !timeStr) return 'Invalid Date';
-  
-    const formattedDate = new Date(dateStr).toISOString().split('T')[0];
-    const scheduleDateTime = new Date(`${formattedDate}T${timeStr}`);
-  
-    if (isNaN(scheduleDateTime)) {
-      return 'Invalid Date';
-    }
-  
-    return scheduleDateTime; // Return the Date object for comparison
-  };
-  
-
+  // Table columns
   const columns = [
+    { id: 'sn', label: 'S/N', flex: 0.5 },
     {
       id: 'date',
       label: 'Date',
-      renderCell: (row) => formatDateTime(row.date, row.time).toLocaleDateString(), // Format date for display
+      flex: 1,
+      renderCell: (row) => <Typography>{row.date || 'N/A'}</Typography>,
     },
-    { id: 'time', label: 'Time' },
-    { id: 'location', label: 'Location' },
-    { id: 'topic', label: 'Topic' },
     {
-      id: 'actions',
-      label: 'Actions',
-      renderCell: (row) => {
-        const scheduleDateTime = formatDateTime(row.date, row.time); // Get the scheduled date and time
-        const currentDateTime = new Date(); // Get the current date and time
-        
-        const Past = scheduleDateTime <= currentDateTime  // Check if the scheduled time is in the past
-        const done = row.done;
-        setIsDone(done);
-        setIsPast(Past);
-        return (
-          <Box sx={{px:0}}>
-              < CustomIconButton
-                onClick={() => handleEdit(row)}
-                icon= {<EditIcon />}
-              />
-               <CustomIconButton onClick={() => handleViewDetails(row)} icon={<VisibilityIcon />} />
-               <CustomIconButton onClick={() => handleDelete(row)} icon={<DeleteIcon />} />
-
-          </Box>
-        );
-      },
+      id: 'location',
+      label: 'Location',
+      flex: 1,
+      renderCell: (row) => <Typography>{String(row.location || 'N/A')}</Typography>,
+    },
+    {
+      id: 'time',
+      label: 'Time',
+      flex: 1,
+      renderCell: (row) => <Typography>{String(row.time || 'N/A')}</Typography>,
+    },
+    {
+      id: 'topic',
+      label: 'Topic',
+      flex: 2,
+      renderCell: (row) => <Typography>{String(row.topic || 'N/A')}</Typography>,
+    },
+    {
+      id: 'students',
+      label: 'Student Attendance',
+      flex: 3,
+      renderCell: (row) => (
+        <Box>
+          {row.students.map((student) => (
+            <Typography key={student.studentId} mb="5px">
+              {student.name}: {student.attendance}
+            </Typography>
+          ))}
+          <Button
+            variant="contained"
+            color="secondary"
+            size="small"
+            onClick={() => openAttendanceModal(row.id)}
+            sx={{ mt: 1 }}
+          >
+            Mark Attendance
+          </Button>
+        </Box>
+      ),
     },
   ];
-
-
-  const handleOpenEditModal = () => setOpenEditModal(true);
-  const handleCloseEditModal = () => {
-    setOpenEditModal(false);
-    setFormData({ date: '', course: '', time: '', location: '', topic: '' });
-    setEditingSchedule(null);
-  };
-
-  const handleOpenDeleteModal = () => setOpenDeleteModal(true);
-  const handleCloseDeleteModal = () => {
-    setOpenDeleteModal(false);
-    setScheduleToDelete(null);
-  };
-
-  const handleEdit = (schedule) => {
-    setEditingSchedule(schedule);
-
-    // Set form data to existing values of the selected schedule
-    setFormData({
-      date: schedule.date || '',
-      time: schedule.time || '',
-      location: schedule.location || '',
-      topic: schedule.topic || '',
-      course: schedule.course || '',
-    });
-
-    handleOpenEditModal();
-  };
-
-  const handleUpdate = async () => {
-    if (editingSchedule) {
-      const updatedSchedule = {
-        date: formData.date,
-        time: formData.time,
-        location: formData.location,
-        topic: formData.topic,
-        course: formData.course,
-      };
-
-      const response = await putCallApi(`${postUrl}/${editingSchedule.id}`, 'PUT', updatedSchedule);
-
-      // If update is successful, update the schedules state
-      if (response) {
-        setSchedules((prevSchedules) =>
-          prevSchedules.map((schedule) =>
-            schedule.id === editingSchedule.id ? { ...schedule, ...updatedSchedule } : schedule
-          )
-        );
-        setUpdateConfrim(true);
-
-      }else{
-        setUpdateConfrim(true);
-
-      }
-
-      handleCloseEditModal();
-    }
-  };
-
-//mark as done
-const markAsDone = async () => {
-  if (editingSchedule) {
-    const updatedSchedule = {
-      cohortName,
-      entryId: editingSchedule.id
-    };
-
-    const response = await doneApi(endpoints.MARK_TIMETABLE, 'PATCH', updatedSchedule);
-
-    // If the API call is successful, update the frontend state (mark as done)
-    if (response) {
-      setSchedules((prevSchedules) =>
-        prevSchedules.map((schedule) =>
-          schedule.id === editingSchedule.id ? { ...schedule, done: true } : schedule
-        )
-      );
-      setUpdateConfrim(true);
-    } else {
-      setUpdateConfrim(true);
-    }
-
-    handleCloseEditModal();
-  }
-};
-
-console.log(doneData)
-  const handleViewDetails = (schedule) => {
-    setEditingSchedule(schedule);
-    setOpenDetailsModal(true); // Open the details modal
-  };
-
-  const handleDelete = (schedule) => {
-    setScheduleToDelete(schedule);
-    handleOpenDeleteModal();
-  };
-
-  const handleConfirmDelete = async () => {
-    if (editingSchedule) {
-      const response = await deleteCallApi(`${postUrl}/${editingSchedule.id}`, 'DELETE');
-
-      // If deletion is successful, remove the schedule from the state
-      if (response) {
-        setSchedules((prevSchedules) =>
-          prevSchedules.filter((schedule) => schedule.id !== editingSchedule.id)
-        );
-      }else{
-        setDeleteConfrim(true);
-      }
-
-      handleCloseDeleteModal();
-      setDeleteConfrim(true);
-    }
-  };
-
-  const handleSubmit = async () => {
-    const newSchedule = {
-      date: formData.date,
-      time: formData.time,
-      location: formData.location,
-      topic: formData.topic,
-      course: formData.course,
-    };
-
-    const response = await postCallApi(postUrl, 'POST', newSchedule);
-
-    // If post is successful, add the new schedule to the state
-    if (response) {
-      setSchedules(response.timetable);
-    }
-
-    handleCloseEditModal();
-  };
 
   const handleSortChange = (columnId) => {
     const isAsc = sortBy === columnId && sortDirection === 'asc';
@@ -275,144 +259,237 @@ console.log(doneData)
   };
 
   const handleRowsPerPageChange = (event) => {
-    setRowsPerPage(+event.target.value);
+    setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
+  const handleRowClick = (row) => {
+    console.log('Row clicked:', row);
+  };
+
+  const handlePreviousWeek = () => {
+    if (selectedWeek > 1) {
+      setSelectedWeek(selectedWeek - 1);
+      setPage(0);
+    }
+  };
+
+  const handleNextWeek = () => {
+    if (selectedWeek < weeksPerTerm) {
+      setSelectedWeek(selectedWeek + 1);
+      setPage(0);
+    }
+  };
+
+  const tableProps = {
+    columns,
+    tableHeader: `Schedule for ${selectedSession}, ${selectedTerm}, Week ${selectedWeek}`,
+    data: filteredSchedules,
+    sortBy,
+    sortDirection,
+    onSortChange: handleSortChange,
+    page,
+    rowsPerPage,
+    onPageChange: handlePageChange,
+    onRowsPerPageChange: handleRowsPerPageChange,
+    onRowClick: handleRowClick,
+  };
+
   return (
-    <Box>
-      <Header title="TIME TABLE" subtitle="Overview of Weekly Schedule" />
+    <Box py="20px">
+      <Header title="TEACHER TIME TABLE" subtitle="Manage Weekly Schedule and Attendance" />
+      <Box mb="20px" display="flex" gap="20px" alignItems="center">
+        {/* Session Selector */}
+        <FormControl sx={{ minWidth: 150 }}>
+          <InputLabel id="session-select-label">Session</InputLabel>
+          <Select
+            labelId="session-select-label"
+            value={selectedSession}
+            label="Session"
+            onChange={(e) => {
+              setSelectedSession(e.target.value);
+              setSelectedTerm(terms[0]);
+              setSelectedWeek(1);
+              setPage(0);
+            }}
+          >
+            {academicSessions.map((session) => (
+              <MenuItem key={session} value={session}>
+                {session}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-      <ActionButton 
-        onClick={handleOpenEditModal}
-        content= 'Add Schedule'
-      />
-      <TableComponent
-        columns={columns}
-        data={schedules}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onSortChange={handleSortChange}
-        sortBy={sortBy}
-        sortDirection={sortDirection}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        hiddenColumnsSmallScreen={['topic', 'location']}
+        {/* Term Selector */}
+        <FormControl sx={{ minWidth: 150 }}>
+          <InputLabel id="term-select-label">Term</InputLabel>
+          <Select
+            labelId="term-select-label"
+            value={selectedTerm}
+            label="Term"
+            onChange={(e) => {
+              setSelectedTerm(e.target.value);
+              setSelectedWeek(1);
+              setPage(0);
+            }}
+          >
+            {terms.map((term) => (
+              <MenuItem key={term} value={term}>
+                {term}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-      />
-
-      {/* Edit Modal */}
-      <Modal
-        open={openEditModal}
-        onClose={handleCloseEditModal}
-        title={editingSchedule ? 'Edit Schedule' : 'Add Schedule'}
-        onConfirm={editingSchedule ? handleUpdate : handleSubmit}
-        confirmMessage={editingSchedule ? 'Update' : 'Add'}
-      >
-        <TextField
-          fullWidth
-          name="date"
-          label="Date"
-          type="date"
-          value={formData.date}
-          onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-          sx={{ mb: '15px' }}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-        <TextField
-          fullWidth
-          name="time"
-          label="Time"
-          type="time"
-          value={formData.time}
-          onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-          sx={{ mb: '15px' }}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-        <TextField
-          fullWidth
-          name="location"
-          label="Location"
-          value={formData.location}
-          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-          sx={{ mb: '15px' }}
-        />
-        <TextField
-          fullWidth
-          name="topic"
-          label="Topic"
-          value={formData.topic}
-          onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
-          sx={{ mb: '15px' }}
-        />
-      </Modal>
-
-            {/* Assignment Details Modal */}
-        <Modal
-        open={openDetailsModal}
-        onClose={() => setOpenDetailsModal(false)}
-        title="Assignment Details"
-        noConfirm
-      >
-        <Box>
-          <p>Topic: {editingSchedule?.topic}</p>
-          <p>Date: {editingSchedule?.date}</p>
-          <p>Time: {editingSchedule?.time}</p>
-          <p>Location: {editingSchedule?.location}</p>
+        {/* Week Navigation */}
+        <Box display="flex" alignItems="center" gap="10px">
+          <Button
+            variant="contained"
+            onClick={handlePreviousWeek}
+            disabled={selectedWeek === 1}
+            sx={{ backgroundColor: colors.blueAccent[700] }}
+          >
+            Previous Week
+          </Button>
+          <Typography variant="h6">Week {selectedWeek}</Typography>
+          <Button
+            variant="contained"
+            onClick={handleNextWeek}
+            disabled={selectedWeek === weeksPerTerm}
+            sx={{ backgroundColor: colors.blueAccent[700] }}
+          >
+            Next Week
+          </Button>
         </Box>
-        <ActionButton 
-                onClick={() => openAttendance(editingSchedule)}
-                content=  'Mark Attendance'
-              sx={{width: '120px'}}
-            />
 
-             <ActionButton 
-              onClick={() => (markAsDone())}
-              content= {isDone ? 'Schedule completed' : 'Mark as done'}
-              sx={{width: '120px', mx: 1}}
-              disable= {isDone}
-            />
-      </Modal>
+        {/* Add Schedule Button */}
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => setAddModalOpen(true)}
+          sx={{ ml: 'auto' }}
+        >
+          Add Schedule
+        </Button>
+      </Box>
+      <Box>
+        {filteredSchedules.length > 0 ? (
+          <TableComponent {...tableProps} />
+        ) : (
+          <Typography>No schedule available for this week.</Typography>
+        )}
+      </Box>
 
-      {/* Delete Modal */}
-      <Modal
-        open={openDeleteModal}
-        onClose={handleCloseDeleteModal}
-        title="Delete Schedule"
-        onConfirm={handleConfirmDelete}
-        confirmMessage="Delete"
+      {/* Add Schedule Modal */}
+      <Dialog
+        open={addModalOpen}
+        onClose={() => {
+          setAddModalOpen(false);
+          setNewSchedule({ date: '', location: '', time: '', topic: '' });
+        }}
       >
-        Are you sure you want to delete this schedule?
-      </Modal>
+        <DialogTitle>Add New Schedule</DialogTitle>
+        <DialogContent>
+          <Box display="flex" flexDirection="column" gap="16px" mt="10px">
+            <TextField
+              label="Date (YYYY-MM-DD)"
+              value={newSchedule.date}
+              onChange={(e) => setNewSchedule({ ...newSchedule, date: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Location"
+              value={newSchedule.location}
+              onChange={(e) => setNewSchedule({ ...newSchedule, location: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Time (e.g., 08:00 - 09:00)"
+              value={newSchedule.time}
+              onChange={(e) => setNewSchedule({ ...newSchedule, time: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Topic"
+              value={newSchedule.topic}
+              onChange={(e) => setNewSchedule({ ...newSchedule, topic: e.target.value })}
+              fullWidth
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setAddModalOpen(false);
+              setNewSchedule({ date: '', location: '', time: '', topic: '' });
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleAddSchedule}
+            color="primary"
+            disabled={!newSchedule.date || !newSchedule.location || !newSchedule.time || !newSchedule.topic}
+          >
+            Add
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      <ConfirmationModal
-        open={deleteConfirm || updateConfirm}
-        onClose={handleConfirmModalClose}
-        title= {deleteConfirm ? "Delete Confirmation" : 'Update confirmation'}
-        isLoading= {deleteConfirm ? deleteLoading : putLoading}
-        message= {
-          deleteConfirm ?
-          "Time Table successfully deleted" :
-          updateConfirm ? putError :
-          deleteConfirm && deleteError ? "Could not update time table, something went wrong" :
-          updateConfirm && putError ? "Could not update time table, something went wrong" :
-           "something went wrong"
-          }
-
+      {/* Attendance Modal */}
+      <Dialog
+        open={attendanceModalOpen}
+        onClose={() => {
+          setAttendanceModalOpen(false);
+          setSelectedScheduleId(null);
+          setAttendanceChanges({});
+        }}
       >
-      </ConfirmationModal>
-
-      {/* mark attendance modal */}
-      <AttendanceModal 
-        openAttendanceModal={openAttendanceModal}
-        cohortName={userDetails.cohort}
-        timeTable={timeTableToMark}
-        handleAttendanceModalClose={handleAttendanceModalClose}
-      />
+        <DialogTitle>Mark Attendance</DialogTitle>
+        <DialogContent>
+          <Box display="flex" flexDirection="column" gap="16px" mt="10px">
+            {selectedScheduleId &&
+              timeTable
+                .find((schedule) => schedule.id === selectedScheduleId)
+                ?.students.map((student) => (
+                  <Box
+                    key={student.studentId}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Typography>{student.name}</Typography>
+                    <FormControl sx={{ minWidth: 100 }}>
+                      <Select
+                        value={attendanceChanges[student.studentId] || student.attendance}
+                        onChange={(e) =>
+                          handleAttendanceChange(student.studentId, e.target.value)
+                        }
+                      >
+                        <MenuItem value="Yes">Yes</MenuItem>
+                        <MenuItem value="No">No</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setAttendanceModalOpen(false);
+              setSelectedScheduleId(null);
+              setAttendanceChanges({});
+            }}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmAttendance} color="primary">
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

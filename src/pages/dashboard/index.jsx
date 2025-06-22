@@ -35,6 +35,7 @@ const StudentManagement = lazy(() => import("./scenes/studentManagement/studentM
 const StudentInstructors = lazy(() => import("./scenes/studentInstructors"));
 const ChatApp = lazy(() => import("../messaging"));
 const AnalyticsAndreporting = lazy(() => import("./scenes/analyticsAndreporting"));
+const ClassDetails = lazy(() => import("./scenes/teacherClassManagement"));
 
 
 function DashboardHome() {
@@ -100,7 +101,7 @@ function DashboardHome() {
             <Route path="/studentInstructors" element={<StudentInstructors />} />
           </>
         );
-      case "instructor":
+      case "teacher":
         return (
           <>
             <Route path="/messenger" element={<ChatApp />} />
@@ -110,7 +111,7 @@ function DashboardHome() {
             <Route path="/studentProgress" element={<StudentProgress />} />
             <Route path="/curriculum" element={<Curriculum />} />
             <Route path="/instructorReviews" element={<InstructorReviews />} />
-            <Route path="/courseManagement" element={<CourseManagement />} />
+            <Route path="/classDetails" element={<ClassDetails />} />
             <Route path="/studentManagement" element={<StudentManagement />} />
           </>
         );

@@ -1,183 +1,199 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button, TextField, IconButton,  Avatar } from '@mui/material';
+import React, { useState } from 'react';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  useTheme,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 import { tokens } from '../../theme';
-import { useTheme } from '@mui/material';
 import Header from '../../components/Header';
-import Modal from '../../components/modal';
-import TableComponent from '../../../../components/table'; // Adjust the import path as needed
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import VisibilityIcon from '@mui/icons-material/Visibility'; // For view submissions button
-import { useSelector } from 'react-redux';
-import useApi from '../../../../hooks/useApi';
-import { endpoints } from '../../../../utils/constants';
+import TableComponent from '../../../../components/table';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import ConfirmationModal from '../../components/confirmationModal';
-import ActionButton from '../../components/actionButton';
-import CustomIconButton from '../../components/customIconButton';
+
+// Dummy assignment data with class, session, and term
+const dummyAssignments = [
+  {
+    id: 'asst_1',
+    session: '2024-2025',
+    term: 'First Term',
+    classId: 'class_1',
+    title: 'Algebra Worksheet',
+    dueDate: '2024-09-10',
+    description: 'Solve 20 algebra problems covering linear equations.',
+    submissions: [{ studentId: 'stu_1', name: 'John Doe' }],
+  },
+  {
+    id: 'asst_2',
+    session: '2024-2025',
+    term: 'First Term',
+    classId: 'class_2',
+    title: 'English Essay',
+    dueDate: '2024-09-12',
+    description: 'Write a 500-word essay on Shakespeare’s Macbeth.',
+    submissions: [],
+  },
+  {
+    id: 'asst_3',
+    session: '2024-2025',
+    term: 'Second Term',
+    classId: 'class_1',
+    title: 'Science Lab Report',
+    dueDate: '2025-01-15',
+    description: 'Submit a report on the recent chemistry experiment.',
+    submissions: [{ studentId: 'stu_2', name: 'Jane Smith' }],
+  },
+  {
+    id: 'asst_4',
+    session: '2024-2025',
+    term: 'Second Term',
+    classId: 'class_2',
+    title: 'History Timeline',
+    dueDate: '2025-01-17',
+    description: 'Create a timeline of World War II events.',
+    submissions: [],
+  },
+];
+
+// Dummy classes the teacher is assigned to
+const dummyClasses = [
+  { classId: 'class_1', name: 'Primary 1A', session: '2024-2025' },
+  { classId: 'class_2', name: 'Secondary 1B', session: '2024-2025' },
+];
+
+// Academic session and term options
+const academicSessions = ['2024-2025', '2025-2026'];
+const terms = ['First Term', 'Second Term', 'Third Term'];
 
 const Assignment = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-
-  const [assignments, setAssignments] = useState([]);
+  const [assignments, setAssignments] = useState(dummyAssignments);
+  const [selectedSession, setSelectedSession] = useState(academicSessions[0]);
+  const [selectedTerm, setSelectedTerm] = useState(terms[0]);
+  const [selectedClass, setSelectedClass] = useState('');
   const [selectedAssignment, setSelectedAssignment] = useState(null);
-  const [openModal, setOpenModal] = useState(false);
-  const [newAssignment, setNewAssignment] = useState({ title: '', dueDate: '', description: '' });
-  const [sortBy, setSortBy] = useState('sn');
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  const [newAssignment, setNewAssignment] = useState({
+    title: '',
+    dueDate: '',
+    description: '',
+    classId: '',
+  });
+  const [sortBy, setSortBy] = useState('id');
   const [sortDirection, setSortDirection] = useState('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [viewSubmissionsModal, setViewSubmissionsModal] = useState(false); // Modal for viewing submissions
-  const [submissions, setSubmissions] = useState([]); // Store submissions for the selected assignment
-  const [openDeleteModal, setOpenDeleteModal] = useState(false); // Modal for confirmation before delete
-  const [assignmentToDelete, setAssignmentToDelete] = useState(null); // Store assignment to delete
-  const [deleteConfirm, setDeleteConfrim] = useState(false);
-  const [updateConfirm, setUpdateConfrim] = useState(false)
-  const [postConfirm, setPostConfrim] = useState(false)
 
-    //handle confirm modal close
-    const handleConfirmModalClose = () => {
-      if(deleteConfirm === true){
-        setDeleteConfrim(false);
-      };
-  
-      if(updateConfirm === true){
-        setUpdateConfrim(false);
-      };
-      if(postConfirm === true){
-        setPostConfrim(false);
-      }
+  // Filter assignments by session, term, and class
+  const filteredAssignments = assignments
+    .filter(
+      (assignment) =>
+        assignment.session === selectedSession &&
+        assignment.term === selectedTerm &&
+        (!selectedClass || assignment.classId === selectedClass)
+    )
+    .map((assignment, index) => ({
+      id: index + 1,
+      title: assignment.title,
+      dueDate: assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'N/A',
+      description: String(assignment.description || 'N/A'),
+      className: dummyClasses.find((cls) => cls.classId === assignment.classId)?.name || 'N/A',
+      assignmentId: assignment.id,
+      submissions: assignment.submissions,
+    }));
+
+  // Handle adding a new assignment
+  const handleAddAssignment = () => {
+    const newId = `asst_${assignments.length + 1}`;
+    const newAssignmentEntry = {
+      id: newId,
+      session: selectedSession,
+      term: selectedTerm,
+      classId: newAssignment.classId,
+      title: newAssignment.title,
+      dueDate: newAssignment.dueDate,
+      description: newAssignment.description,
+      submissions: [],
     };
-
-  const userDetails = useSelector((state) => state.users.user);
-  const cohortName = userDetails.cohort;
-  const postUrl = `${endpoints.ASSIGNMENT}/${cohortName}`;
-
-  const { loading: postLoading, data: postData, error: postError, callApi: postCallApi } = useApi();
-  const { loading: getLoading, data: getCallData, error: getError, callApi: getCallApi } = useApi();
-  const { loading: putLoading, data: putData, error: putError, callApi: putCallApi } = useApi();
-  const { loading: deleteLoading, data: deleteData, error: deleteError, callApi: deleteCallApi } = useApi();
-
-  useEffect(() => {
-    const fetchSchedules = async () => {
-      if (postUrl) {
-        console.log(postUrl)
-        const data = await getCallApi(postUrl, 'GET');
-        setAssignments(data);
-      }
-    };
-
-    fetchSchedules();
-  }, []);
-
-  const sortAssignments = (assignments) => {
-    return assignments.sort((a, b) => (b?.id || 0) - (a?.id || 0));
+    setAssignments([...assignments, newAssignmentEntry]);
+    setMessage('Assignment added successfully!');
+    setMessageModalOpen(true);
+    setNewAssignment({ title: '', dueDate: '', description: '', classId: '' });
+    setAddModalOpen(false);
   };
 
-  const handleOpenModal = (assignment = null) => {
-    if (assignment) {
-      setSelectedAssignment(assignment);
-      setNewAssignment({
-        title: assignment.title,
-        dueDate: assignment.dueDate,
-        description: assignment.description,
-      });
-    } else {
-      setSelectedAssignment(null);
-      setNewAssignment({ title: '', dueDate: '', description: '' });
-    }
-    setOpenModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setOpenModal(false);
-  };
-
-  const handleSubmit = async () => {
-    try {
-      if (selectedAssignment) {
-        // Update assignment via the API using PUT request
-        const response = await putCallApi(
-          `${postUrl}/${selectedAssignment._id}`,
-          'PUT',
-          newAssignment
-        );
-
-        // If the update is successful, update assignments in local state
-        if (response) {
-          const updatedAssignments = assignments.map(a =>
-            a.id === selectedAssignment.id ? { ...a, ...newAssignment } : a
-          );
-          setAssignments(sortAssignments(updatedAssignments)); // Sort after update
-          setUpdateConfrim(true);
-        }else{
-          setUpdateConfrim(true);
-        }
-      } else {
-        // Add new assignment via the API using POST request
-        const response = await postCallApi(postUrl, 'POST', newAssignment);
-
-        // If post is successful, add the new assignment to the state
-        if (response) {
-          const newAssignmentWithId = { ...newAssignment, id: assignments.length + 1 };
-          const updatedAssignments = [...assignments, newAssignmentWithId];
-          setAssignments(sortAssignments(updatedAssignments)); // Sort after adding
-          setPostConfrim(true);
-        }else{
-          setPostConfrim(true);
-        }
-      }
-
-      handleCloseModal(); // Close the modal after submitting
-    } catch (error) {
-      console.error('Error submitting assignment: ', error);
-    }
-  };
-
-  const handleDeleteAssignment = (assignment) => {
-    setAssignmentToDelete(assignment);
-    setOpenDeleteModal(true); // Show confirmation modal
-  };
-
-  const confirmDeleteAssignment = async () => {
-    try {
-      // Delete assignment using DELETE request
-      const response = await deleteCallApi(
-        `${postUrl}/${assignmentToDelete._id}`,
-        'DELETE'
-      );
-      // If delete is successful, update assignments in local state
-      if (response) {
-        const updatedAssignments = assignments.filter(a => a.id !== assignmentToDelete.id);
-        setAssignments(sortAssignments(updatedAssignments)); // Sort after deletion
-        setDeleteConfrim(true);
-        setDeleteConfrim(true);
-
-      }else{
-        setDeleteConfrim(true);
-
-      }
-      setOpenDeleteModal(false); // Close confirmation modal after delete
-    } catch (error) {
-      console.error('Error deleting assignment: ', error);
-      setOpenDeleteModal(false); // Close confirmation modal on error
-    }
-  };
-
-  const handleCancelDelete = () => {
-    setOpenDeleteModal(false); // Close confirmation modal without deleting
-  };
-
-  const handleViewSubmissions = (assignment) => {
-    setSelectedAssignment(assignment);
-    setSubmissions(assignment.submissions || []); // Populate submissions from the assignment
-    console.log(submissions)
-    setViewSubmissionsModal(true);
-  };
-
-  const handleCloseSubmissionsModal = () => {
-    setViewSubmissionsModal(false);
-  };
+  // Table columns
+  const columns = [
+    { id: 'id', label: 'ID', flex: 0.5 },
+    {
+      id: 'title',
+      label: 'Title',
+      flex: 1,
+      renderCell: (row) => <Typography>{String(row.title || 'N/A')}</Typography>,
+    },
+    {
+      id: 'className',
+      label: 'Class',
+      flex: 1,
+      renderCell: (row) => <Typography>{row.className}</Typography>,
+    },
+    {
+      id: 'dueDate',
+      label: 'Due Date',
+      flex: 1,
+      renderCell: (row) => <Typography>{row.dueDate || 'N/A'}</Typography>,
+    },
+    {
+      id: 'description',
+      label: 'Description',
+      flex: 2,
+      renderCell: (row) => <Typography>{String(row.description || 'N/A')}</Typography>,
+    },
+    {
+      id: 'submissions',
+      label: 'Submissions',
+      flex: 1,
+      renderCell: (row) => (
+        <Typography>
+          {row.submissions.length > 0
+            ? `${row.submissions.length} student(s) submitted`
+            : 'No submissions'}
+        </Typography>
+      ),
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      flex: 1,
+      renderCell: (row) => (
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={() => {
+            setSelectedAssignment(row);
+            setViewModalOpen(true);
+          }}
+          startIcon={<VisibilityIcon />}
+        >
+          View
+        </Button>
+      ),
+    },
+  ];
 
   const handleSortChange = (columnId) => {
     const isAsc = sortBy === columnId && sortDirection === 'asc';
@@ -191,209 +207,242 @@ const Assignment = () => {
 
   const handleRowsPerPageChange = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   const handleRowClick = (row) => {
-    console.log(row);
+    console.log('Row clicked:', row);
   };
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setNewAssignment(prevState => ({ ...prevState, [name]: value }));
+  const tableProps = {
+    columns,
+    tableHeader: `Assignments for ${selectedSession}, ${selectedTerm}${
+      selectedClass ? `, ${dummyClasses.find((cls) => cls.classId === selectedClass)?.name}` : ''
+    }`,
+    data: filteredAssignments,
+    sortBy,
+    sortDirection,
+    onSortChange: handleSortChange,
+    page,
+    rowsPerPage,
+    onPageChange: handlePageChange,
+    onRowsPerPageChange: handleRowsPerPageChange,
+    onRowClick: handleRowClick,
+    hiddenColumnsSmallScreen: ['description', 'submissions'],
   };
-
-  // Columns definition with actions
-  const columns = [
-    { id: 'sn', label: 'S/N', minWidth: 50 },
-    { id: 'title', label: 'Title', minWidth: 100 },
-    { id: 'dueDate', label: 'Due Date', minWidth: 100 },
-    { id: 'description', label: 'Description', minWidth: 150 },
-    {
-      id: 'actions',
-      label: 'Actions',
-      minWidth: 150,
-      renderCell: (row) => (
-        <Box display="flex" justifyContent="start">
-           < CustomIconButton
-                title="Edit assignment"
-                onClick={() => handleOpenModal(row)}
-                icon= {<EditIcon />}
-              />
-             < CustomIconButton
-                onClick={() => handleDeleteAssignment(row)}
-                title="Delete assignment"
-                icon= {<DeleteIcon />}
-              />
-
-              < CustomIconButton
-                onClick={() => handleViewSubmissions(row)}
-                title="View submissions"
-                icon= {<VisibilityIcon />}
-              />
-    </Box>
-      ),
-    },
-  ];
 
   return (
-    <Box>
-      <Header
-        title="ASSIGNMENTS"
-        subtitle="Overview of Assignments"
-      />
-         <ActionButton
-        onClick={() => handleOpenModal()}
-        content= 'Add Assignment'
-      />
+    <Box py="20px">
+      <Header title="TEACHER ASSIGNMENTS" subtitle="Manage Assignments for Classes" />
+      <Box mb="20px" display="flex" gap="20px" alignItems="center">
+        {/* Session Selector */}
+        <FormControl sx={{ minWidth: 150 }}>
+          <InputLabel id="session-select-label">Session</InputLabel>
+          <Select
+            labelId="session-select-label"
+            value={selectedSession}
+            label="Session"
+            onChange={(e) => {
+              setSelectedSession(e.target.value);
+              setSelectedTerm(terms[0]);
+              setSelectedClass('');
+              setPage(0);
+            }}
+          >
+            {academicSessions.map((session) => (
+              <MenuItem key={session} value={session}>
+                {session}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-      <TableComponent
-        columns={columns}
-        tableHeader="Overview of Assignments"
-        data={assignments.map((assignment, index) => ({
-          ...assignment,
-          sn: index + 1, // This will reflect the current index
-        }))} 
-        sortBy={sortBy}
-        sortDirection={sortDirection}
-        onSortChange={handleSortChange}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-        onRowClick={handleRowClick}
-        hiddenColumnsSmallScreen={['dueDate', 'description']}
-      />
+        {/* Term Selector */}
+        <FormControl sx={{ minWidth: 150 }}>
+          <InputLabel id="term-select-label">Term</InputLabel>
+          <Select
+            labelId="term-select-label"
+            value={selectedTerm}
+            label="Term"
+            onChange={(e) => {
+              setSelectedTerm(e.target.value);
+              setSelectedClass('');
+              setPage(0);
+            }}
+          >
+            {terms.map((term) => (
+              <MenuItem key={term} value={term}>
+                {term}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
-      <Modal
-        open={openModal}
-        onClose={handleCloseModal}
-        title={selectedAssignment ? "Update Assignment" : "Add Assignment"}
-        onConfirm={handleSubmit}
-      >
-        <Box
-          component="form"
-          sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+        {/* Class Selector */}
+        <FormControl sx={{ minWidth: 150 }}>
+          <InputLabel id="class-select-label">Class</InputLabel>
+          <Select
+            labelId="class-select-label"
+            value={selectedClass}
+            label="Class"
+            onChange={(e) => {
+              setSelectedClass(e.target.value);
+              setPage(0);
+            }}
+          >
+            <MenuItem value="">All Classes</MenuItem>
+            {dummyClasses
+              .filter((cls) => cls.session === selectedSession)
+              .map((cls) => (
+                <MenuItem key={cls.classId} value={cls.classId}>
+                  {cls.name}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+
+        {/* Add Assignment Button */}
+        <Button
+          variant="contained"
+          color="secondary"
+          onClick={() => setAddModalOpen(true)}
+          sx={{ ml: 'auto' }}
         >
-          <TextField
-            type="text"
-            name="title"
-            label="Title"
-            value={newAssignment.title}
-            onChange={handleInputChange}
-            required
-          />
-          <TextField
-            type="date"
-            name="dueDate"
-            label="Due Date"
-            value={newAssignment.dueDate}
-            onChange={handleInputChange}
-            required
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            type="text"
-            name="description"
-            label="Description"
-            value={newAssignment.description}
-            onChange={handleInputChange}
-            required
-            multiline
-            rows={4}
-          />
-        </Box>
-      </Modal>
+          Add Assignment
+        </Button>
+      </Box>
+      <Box>
+        {filteredAssignments.length > 0 ? (
+          <TableComponent {...tableProps} />
+        ) : (
+          <Typography>No assignments available for the selected filters.</Typography>
+        )}
+      </Box>
 
-      {/* Confirmation Modal for Deleting Assignment */}
-      <Modal
-        open={openDeleteModal}
-        onClose={handleCancelDelete}
-        title="Confirm Deletion"
-        onConfirm={confirmDeleteAssignment}
+      {/* Add Assignment Modal */}
+      <Dialog
+        open={addModalOpen}
+        onClose={() => {
+          setAddModalOpen(false);
+          setNewAssignment({ title: '', dueDate: '', description: '', classId: '' });
+        }}
       >
-        <Box>
-          <p>Are you sure you want to delete this assignment?</p>
-        </Box>
-      </Modal>
-
-      {/* View Submissions Modal */}
-      <Modal
-        open={viewSubmissionsModal}
-        onClose={handleCloseSubmissionsModal}
-        title="View Submissions"
-        noConfirm
-      >
-       <Box>
-  {submissions.length === 0 ? (
-    <p>No submissions yet.</p>
-  ) : (
-    <Box>
-      {submissions.map((submission, index) => (
-       <Box
-       key={index}
-       sx={{
-         display: 'flex',
-         alignItems: 'center',
-         marginBottom: '1rem',
-         padding: '1rem',
-         border: '1px solid #ddd',
-         borderRadius: '8px',
-         boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.5)', // Adding a box shadow
-       }}
-     >
-          {/* Display Profile Picture using MUI Avatar */}
-          <Avatar 
-            alt={`${submission.firstName} ${submission.lastName}`} 
-            src={submission.profilePictureUrl} 
-            sx={{ width: 50, height: 50, marginRight: '1rem' }} 
-          />
-
-          <Box>
-            {/* Display Name */}
-            <p>
-              <strong>{submission.firstName} {submission.lastName}</strong>
-            </p>
-
-            {/* Student ID */}
-            <p>Student ID: {submission.studentId}</p>
-
-            {/* Submission Time */}
-            <p>Submitted At: {new Date(submission.submittedAt).toLocaleString()}</p>
-
-            {/* Submission URL as a Downloadable Link */}
-            <p>
-              <a 
-                href={submission.submission} 
-                download
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{ textDecoration: 'none', color: 'blue' }}
+        <DialogTitle>Add New Assignment</DialogTitle>
+        <DialogContent>
+          <Box display="flex" flexDirection="column" gap="16px" mt="10px">
+            <FormControl fullWidth>
+              <InputLabel id="add-class-select-label">Class</InputLabel>
+              <Select
+                labelId="add-class-select-label"
+                value={newAssignment.classId}
+                label="Class"
+                onChange={(e) => setNewAssignment({ ...newAssignment, classId: e.target.value })}
               >
-                Download Submission
-              </a>
-            </p>
+                {dummyClasses
+                  .filter((cls) => cls.session === selectedSession)
+                  .map((cls) => (
+                    <MenuItem key={cls.classId} value={cls.classId}>
+                      {cls.name}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <TextField
+              label="Title"
+              value={newAssignment.title}
+              onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Due Date (YYYY-MM-DD)"
+              value={newAssignment.dueDate}
+              onChange={(e) => setNewAssignment({ ...newAssignment, dueDate: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Description"
+              value={newAssignment.description}
+              onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })}
+              multiline
+              rows={4}
+              fullWidth
+            />
           </Box>
-        </Box>
-      ))}
-    </Box>
-  )}
-</Box>
-      </Modal>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setAddModalOpen(false);
+              setNewAssignment({ title: '', dueDate: '', description: '', classId: '' });
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleAddAssignment}
+            color="primary"
+            disabled={
+              !newAssignment.title ||
+              !newAssignment.dueDate ||
+              !newAssignment.description ||
+              !newAssignment.classId
+            }
+          >
+            Add
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-       {/* delete and update confrim modal */}
+      {/* View Assignment Modal */}
+      <Dialog
+        open={viewModalOpen}
+        onClose={() => {
+          setViewModalOpen(false);
+          setSelectedAssignment(null);
+        }}
+      >
+        <DialogTitle>Assignment Details</DialogTitle>
+        <DialogContent>
+          {selectedAssignment && (
+            <Box display="flex" flexDirection="column" gap="16px">
+              <Typography variant="h6">Title: {selectedAssignment.title}</Typography>
+              <Typography variant="body1">Class: {selectedAssignment.className}</Typography>
+              <Typography variant="body1">Due Date: {selectedAssignment.dueDate}</Typography>
+              <Typography variant="body2">Description: {selectedAssignment.description}</Typography>
+              <Typography variant="body2">
+                Submissions:
+                {selectedAssignment.submissions.length > 0 ? (
+                  <ul>
+                    {selectedAssignment.submissions.map((submission) => (
+                      <li key={submission.studentId}>{submission.name}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  ' No submissions'
+                )}
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setViewModalOpen(false);
+              setSelectedAssignment(null);
+            }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirmation Modal */}
       <ConfirmationModal
-        open={deleteConfirm || updateConfirm || postConfirm}
-        onClose={handleConfirmModalClose}
-        title= {deleteConfirm ? "Delete Confirmation" : postConfirm ? "Assignment created" : 'Update confirmation'}
-        isLoading= {deleteConfirm ? deleteLoading : postConfirm ? postLoading : putLoading}
-        message= {deleteConfirm ?
-          "Assignment successfully deleted" :
-          updateConfirm ? 'Assignment successfully updated' :
-          deleteConfirm && deleteError ? "Could not update assignemnt, something went wrong" :
-          updateConfirm && putError ? "Could not update assignemnt, something went wrong" :
-          postConfirm ? 'Assignment successfully posted' :
-           "something went wrong"
-          }
+        open={messageModalOpen}
+        onClose={() => setMessageModalOpen(false)}
+        isLoading={false}
+        title="Assignment Action"
+        message={message}
       />
     </Box>
   );

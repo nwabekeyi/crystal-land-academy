@@ -131,7 +131,7 @@ const Sidebar = () => {
 
   const instructorMenuItems = [
     { title: "Dashboard", to: "/dashboard", icon: <HomeOutlinedIcon /> },
-    { title: "Course Details", to: "/dashboard/courseManagement", icon: <SchoolIcon /> },
+    { title: "Class Details", to: "/dashboard/classDetails", icon: <SchoolIcon /> },
     { title: "Timetable", to: "/dashboard/timeTable", icon: <CalendarTodayIcon /> },
     { title: "Assignments", to: "/dashboard/assignment", icon: <AssignmentIcon /> },
     { title: "Student Management", to: "/dashboard/studentManagement", icon: <PeopleOutlinedIcon /> },
