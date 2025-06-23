@@ -6,7 +6,6 @@ import Sidebar from "./scenes/global/Sidebar";
 import { CssBaseline, ThemeProvider, Box } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
 import { useSelector } from "react-redux";
-import FloatingMessageIcon from "./components/floatingMessageIcon";
 import { tokens } from "./theme";
 import SignIn from "../../components/Signin";
 import Loader from "../../utils/loader";
@@ -36,7 +35,8 @@ const StudentInstructors = lazy(() => import("./scenes/studentInstructors"));
 const ChatApp = lazy(() => import("../messaging"));
 const AnalyticsAndreporting = lazy(() => import("./scenes/analyticsAndreporting"));
 const ClassDetails = lazy(() => import("./scenes/teacherClassManagement"));
-
+const StudentExams = lazy(() => import("./scenes/testAndExams/student"));
+const AdminTestsAndExams = lazy(() => import("./scenes/testAndExams/admin"));
 
 function DashboardHome() {
   const [theme, colorMode] = useMode();
@@ -86,6 +86,7 @@ function DashboardHome() {
             <Route path="/feedbacks" element={<Feedbacks />} />
             <Route path="/classManagement" element={<ClassManagement />} />
             <Route path="/analytics" element={<AnalyticsAndreporting />} />
+            <Route path="/adminTestsAndExams" element={<AdminTestsAndExams />} />
           </>
         );
       case "student":
@@ -99,6 +100,7 @@ function DashboardHome() {
             <Route path="/curriculum" element={<Curriculum />} />
             <Route path="/studentPayment" element={<StudentPayment />} />
             <Route path="/studentInstructors" element={<StudentInstructors />} />
+            <Route path="/studentExams" element={<StudentExams />} />
           </>
         );
       case "teacher":
@@ -128,7 +130,6 @@ function DashboardHome() {
         </div>
       ) : (
         <ColorModeContext.Provider value={colorMode}>
-          <FloatingMessageIcon />
           <ThemeProvider theme={theme}>
             <CssBaseline />
             <Box

@@ -1,21 +1,20 @@
 import React, { useState } from 'react';
-import { FaEnvelope } from 'react-icons/fa';
 import { Box, TextField } from '@mui/material';
-import Modal from '../../dashboard/components/modal'; // Adjust the import path as needed
+import Modal from '../../dashboard/components/modal'; // Adjust path
+import FloatingMessageIcon from './floatingMessageIcon'; // Adjust path
 
 const Enquiry = () => {
   const [open, setOpen] = useState(false);
-  const [successModal, setSuccessModal] = useState(false); // State for success modal
+  const [successModal, setSuccessModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     email: '',
     message: '',
   });
-  const [loading, setLoading] = useState(false); // For loading state
-  const [error, setError] = useState(null); // For error handling
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Get the base URL and enquiry endpoint from the environment variables
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const ENQUIRY_ENDPOINT = import.meta.env.VITE_ENQUIRY_ENDPOINT;
 
@@ -25,11 +24,11 @@ const Enquiry = () => {
 
   const handleClose = () => {
     setOpen(false);
-    setError(null); // Clear any errors when closing the modal
+    setError(null);
   };
 
   const handleSuccessModalClose = () => {
-    setSuccessModal(false); // Close success modal
+    setSuccessModal(false);
   };
 
   const handleInputChange = (e) => {
@@ -82,10 +81,9 @@ const Enquiry = () => {
       const data = await response.json();
       console.log('Enquiry submitted successfully:', data);
 
-      // Reset form and close modal
       setFormData({ name: '', phone: '', email: '', message: '' });
       setOpen(false);
-      setSuccessModal(true); // Open success modal
+      setSuccessModal(true);
     } catch (error) {
       console.error('Error submitting enquiry:', error);
       setError(error.message);
@@ -97,32 +95,7 @@ const Enquiry = () => {
   return (
     <>
       {/* Floating Enquiry Icon */}
-      <Box
-        onClick={handleEnquiryClick}
-        sx={{
-          position: 'fixed',
-          bottom: 50,
-          right: 50,
-          backgroundColor: '#0E0C30',
-          color: 'white',
-          borderRadius: '5px',
-          width: 70,
-          height: 50,
-          display: 'flex',
-          alignItems: 'center',
-          zIndex: '1000',
-          justifyContent: 'center',
-          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-          cursor: 'pointer',
-          transition: 'transform 0.3s ease, background-color 0.3s ease',
-          '&:hover': {
-            transform: 'scale(1.1)',
-            backgroundColor: '#0E0C20',
-          },
-        }}
-      >
-        <FaEnvelope size={24} />
-      </Box>
+      <FloatingMessageIcon onClick={handleEnquiryClick} showLabel={true} />
 
       {/* Modal with Form */}
       <Modal
@@ -187,9 +160,9 @@ const Enquiry = () => {
         onClose={handleSuccessModalClose}
         title="Success"
         noConfirm
-        sx={{ px:4}}
+        sx={{ px: 4 }}
       >
-        <Box sx={{  mt: 2 }}>
+        <Box sx={{ mt: 2 }}>
           <h2>Enquiry Submitted Successfully!</h2>
           <p>Thank you for reaching out. We will get back to you shortly.</p>
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>

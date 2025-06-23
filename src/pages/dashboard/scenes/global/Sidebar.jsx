@@ -26,6 +26,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import { useSelector, useDispatch } from "react-redux";
 import CloseIcon from "@mui/icons-material/Close";
 import { toggleDashboardCollapse } from "../../../../reduxStore/slices/uiSlice";
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
 
 const Item = ({ title, to, icon, selected, setSelected, isCollapsed }) => {
   const theme = useTheme();
@@ -110,6 +111,7 @@ const Sidebar = () => {
     { title: "User Management", to: "/dashboard/userManagement", icon: <PeopleOutlinedIcon /> },
     { title: "Academic Sessions", to: "/dashboard/courseManagement", icon: <ReceiptOutlinedIcon /> },
     { title: "Class Management", to: "/dashboard/classManagement", icon: <ClassIcon /> }, // Replaced Support, placed under Academic Sessions
+    { title: "Tests & Exams", to: "/dashboard/adminTestsAndExams", icon: <AssignmentTurnedInIcon /> }, // ✅ Added
     { title: "Financial Management", to: "/dashboard/financialManagement", icon: <ContactsOutlinedIcon /> },
     { title: "Analytics and Reporting", to: "/dashboard/analytics", icon: <MapOutlinedIcon /> },
     { title: "Contacts", to: "/dashboard/contacts", icon: <SettingsOutlinedIcon /> },
@@ -122,12 +124,14 @@ const Sidebar = () => {
     { title: "Dashboard", to: "/dashboard", icon: <HomeOutlinedIcon /> },
     { title: "Timetable", to: "/dashboard/timeTable", icon: <CalendarTodayIcon /> },
     { title: "Assignments", to: "/dashboard/assignment", icon: <AssignmentIcon /> },
+    { title: "Tests & Exams", to: "/dashboard/studentExams", icon: <AssignmentTurnedInIcon /> }, // ✅ Added
     { title: "Learning Plan", to: "/dashboard/learningPlan", icon: <LibraryBooksIcon /> },
     { title: "Student Progress", to: "/dashboard/studentProgress", icon: <TimelineOutlinedIcon /> },
     { title: "Instructor", to: "/dashboard/studentInstructors", icon: <PersonOutlinedIcon /> },
     { title: "Curriculum", to: "/dashboard/curriculum", icon: <FolderIcon /> },
     { title: "Payment History", to: "/dashboard/studentPayment", icon: <MapOutlinedIcon /> },
   ];
+  
 
   const instructorMenuItems = [
     { title: "Dashboard", to: "/dashboard", icon: <HomeOutlinedIcon /> },

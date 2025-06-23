@@ -19,8 +19,9 @@ import Header from '../../components/Header';
 import TableComponent from '../../../../components/table';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ConfirmationModal from '../../components/confirmationModal';
+import CustomAccordion from '../../components/accordion';
 
-// Dummy assignment data with class, session, and term
+// Dummy assignment data with class, session, term, and submissions
 const dummyAssignments = [
   {
     id: 'asst_1',
@@ -30,7 +31,17 @@ const dummyAssignments = [
     title: 'Algebra Worksheet',
     dueDate: '2024-09-10',
     description: 'Solve 20 algebra problems covering linear equations.',
-    submissions: [{ studentId: 'stu_1', name: 'John Doe' }],
+    submissions: [
+      {
+        studentId: 'stu_1',
+        name: 'John Doe',
+        cloudinaryLink: 'https://res.cloudinary.com/demo/sample.pdf',
+        submissionDate: '2024-09-08',
+        comments: [
+          { id: 'comm_1', text: 'Good work, but check problem 5.', date: '2024-09-09' },
+        ],
+      },
+    ],
   },
   {
     id: 'asst_2',
@@ -50,7 +61,15 @@ const dummyAssignments = [
     title: 'Science Lab Report',
     dueDate: '2025-01-15',
     description: 'Submit a report on the recent chemistry experiment.',
-    submissions: [{ studentId: 'stu_2', name: 'Jane Smith' }],
+    submissions: [
+      {
+        studentId: 'stu_2',
+        name: 'Jane Smith',
+        cloudinaryLink: 'https://res.cloudinary.com/demo/lab_report.pdf',
+        submissionDate: '2025-01-13',
+        comments: [],
+      },
+    ],
   },
   {
     id: 'asst_4',
@@ -64,7 +83,7 @@ const dummyAssignments = [
   },
 ];
 
-// Dummy classes the teacher is assigned to
+// Dummy classes
 const dummyClasses = [
   { classId: 'class_1', name: 'Primary 1A', session: '2024-2025' },
   { classId: 'class_2', name: 'Secondary 1B', session: '2024-2025' },
@@ -92,6 +111,8 @@ const Assignment = () => {
     description: '',
     classId: '',
   });
+  const [newComment, setNewComment] = useState('');
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [sortBy, setSortBy] = useState('id');
   const [sortDirection, setSortDirection] = useState('asc');
   const [page, setPage] = useState(0);
@@ -117,6 +138,16 @@ const Assignment = () => {
 
   // Handle adding a new assignment
   const handleAddAssignment = () => {
+    if (
+      !newAssignment.title ||
+      !newAssignment.dueDate ||
+      !newAssignment.description ||
+      !newAssignment.classId
+    ) {
+      setMessage('Please fill all fields.');
+      setMessageModalOpen(true);
+      return;
+    }
     const newId = `asst_${assignments.length + 1}`;
     const newAssignmentEntry = {
       id: newId,
@@ -133,6 +164,43 @@ const Assignment = () => {
     setMessageModalOpen(true);
     setNewAssignment({ title: '', dueDate: '', description: '', classId: '' });
     setAddModalOpen(false);
+  };
+
+  // Handle adding a comment
+  const handleAddComment = (submission) => {
+    if (!newComment.trim()) {
+      setMessage('Comment cannot be empty.');
+      setMessageModalOpen(true);
+      return;
+    }
+    const updatedAssignments = assignments.map((assignment) => {
+      if (assignment.id === selectedAssignment.assignmentId) {
+        return {
+          ...assignment,
+          submissions: assignment.submissions.map((sub) => {
+            if (sub.studentId === submission.studentId) {
+              return {
+                ...sub,
+                comments: [
+                  ...sub.comments,
+                  {
+                    id: `comm_${assignment.submissions.reduce((sum, s) => sum + s.comments.length, 0) + 1}`,
+                    text: newComment,
+                    date: new Date().toISOString().split('T')[0],
+                  },
+                ],
+              };
+            }
+            return sub;
+          }),
+        };
+      }
+      return assignment;
+    });
+    setAssignments(updatedAssignments);
+    setNewComment('');
+    setMessage('Comment added successfully!');
+    setMessageModalOpen(true);
   };
 
   // Table columns
@@ -399,6 +467,8 @@ const Assignment = () => {
         onClose={() => {
           setViewModalOpen(false);
           setSelectedAssignment(null);
+          setSelectedSubmission(null);
+          setNewComment('');
         }}
       >
         <DialogTitle>Assignment Details</DialogTitle>
@@ -409,18 +479,80 @@ const Assignment = () => {
               <Typography variant="body1">Class: {selectedAssignment.className}</Typography>
               <Typography variant="body1">Due Date: {selectedAssignment.dueDate}</Typography>
               <Typography variant="body2">Description: {selectedAssignment.description}</Typography>
-              <Typography variant="body2">
-                Submissions:
-                {selectedAssignment.submissions.length > 0 ? (
-                  <ul>
-                    {selectedAssignment.submissions.map((submission) => (
-                      <li key={submission.studentId}>{submission.name}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  ' No submissions'
-                )}
+              <Typography variant="h6" sx={{ mt: 2 }}>
+                Submissions
               </Typography>
+              {selectedAssignment.submissions.length > 0 ? (
+                selectedAssignment.submissions.map((submission) => (
+                  <CustomAccordion
+                    key={submission.studentId}
+                    title={`${submission.name} (Submitted: ${new Date(
+                      submission.submissionDate
+                    ).toLocaleDateString()})`}
+                    details={
+                      <Box display="flex" flexDirection="column" gap="16px">
+                        <Typography variant="body1">
+                          Submission Link:{' '}
+                          <a
+                            href={submission.cloudinaryLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: colors.blueAccent[500] }}
+                          >
+                            View Submission
+                          </a>
+                        </Typography>
+                        <Typography variant="body2">
+                          Submitted on: {new Date(submission.submissionDate).toLocaleDateString()}
+                        </Typography>
+                        <Box>
+                          <Typography variant="h6">Comments</Typography>
+                          {submission.comments.length > 0 ? (
+                            submission.comments.map((comment) => (
+                              <Box key={comment.id} sx={{ mb: 1 }}>
+                                <Typography variant="body2">{comment.text}</Typography>
+                                <Typography
+                                  variant="caption"
+                                  color={colors.grey[500]}
+                                >
+                                  {new Date(comment.date).toLocaleDateString()}
+                                </Typography>
+                              </Box>
+                            ))
+                          ) : (
+                            <Typography variant="body2">No comments yet.</Typography>
+                          )}
+                        </Box>
+                        <Box>
+                          <TextField
+                            label="Add Comment"
+                            value={selectedSubmission?.studentId === submission.studentId ? newComment : ''}
+                            onChange={(e) => {
+                              setSelectedSubmission(submission);
+                              setNewComment(e.target.value);
+                            }}
+                            fullWidth
+                            multiline
+                            rows={2}
+                            sx={{ mb: 2 }}
+                          />
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => handleAddComment(submission)}
+                            disabled={!newComment.trim() || selectedSubmission?.studentId !== submission.studentId}
+                          >
+                            Add Comment
+                          </Button>
+                        </Box>
+                      </Box>
+                    }
+                    defaultExpanded={false}
+                  />
+                ))
+              ) : (
+                <Typography>No submissions</Typography>
+              )}
             </Box>
           )}
         </DialogContent>
@@ -429,6 +561,8 @@ const Assignment = () => {
             onClick={() => {
               setViewModalOpen(false);
               setSelectedAssignment(null);
+              setSelectedSubmission(null);
+              setNewComment('');
             }}
           >
             Close
