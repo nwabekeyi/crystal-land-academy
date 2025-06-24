@@ -1,4 +1,3 @@
-// src/pages/useClassManagement.js
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { endpoints } from '../../../../utils/constants';
@@ -24,6 +23,9 @@ const useClassManagement = () => {
     subclasses: [{ letter: 'A', feesPerTerm: [{ termName: '1st Term', amount: 0, description: '' }], timetables: [] }],
   });
   const [error, setError] = useState('');
+  // Add state for delete confirmation dialog
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [classToDelete, setClassToDelete] = useState(null);
 
   const {
     data: classData,
@@ -42,12 +44,12 @@ const useClassManagement = () => {
   // Update Redux store when class data is fetched
   useEffect(() => {
     if (classData && Array.isArray(classData.data)) {
-      console.log('Fetched classLevels:', classData.data); // Debug log
+      console.log('Fetched classLevels:', classData.data);
       dispatch(setClassLevels(classData.data));
     }
   }, [classData, dispatch]);
 
-  // Handle sorting (global fallback)
+  // Handle sorting
   const handleSortChange = useCallback((columnId) => {
     if (sortBy === columnId) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -82,6 +84,32 @@ const useClassManagement = () => {
     }
     setModalOpen(true);
   }, [academicYears]);
+
+  // Open delete confirmation dialog
+  const openDeleteConfirm = useCallback((classItem) => {
+    setClassToDelete(classItem);
+    setDeleteConfirmOpen(true);
+  }, []);
+
+  // Close delete confirmation dialog
+  const closeDeleteConfirm = useCallback(() => {
+    setClassToDelete(null);
+    setDeleteConfirmOpen(false);
+  }, []);
+
+  // Handle delete after confirmation
+  const handleDelete = useCallback(async () => {
+    if (!classToDelete) return;
+    try {
+      await submitClass(`${endpoints.CLASS_LEVEL}/${classToDelete._id}`, 'DELETE');
+      fetchClasses(endpoints.CLASS_LEVEL, 'GET');
+      setError('');
+    } catch (err) {
+      setError(errorSubmit || 'Failed to delete class');
+    } finally {
+      closeDeleteConfirm();
+    }
+  }, [classToDelete, submitClass, fetchClasses, errorSubmit, closeDeleteConfirm]);
 
   // Handle form input changes
   const handleFormChange = useCallback((e) => {
@@ -286,7 +314,7 @@ const useClassManagement = () => {
           (cls.section?.toLowerCase() === 'secondary' || cls.section?.toLowerCase() === 'Secondary')
         ),
       };
-      console.log(`Grouped data for year ${year._id}:`, grouped[year._id]); // Debug log
+      console.log(`Grouped data for year ${year._id}:`, grouped[year._id]);
     });
     return grouped;
   }, [tableData, academicYears]);
@@ -335,14 +363,14 @@ const useClassManagement = () => {
             <CustomIconButton
               icon={<FaTrash />}
               title="Delete Class"
-              onClick={() => openModal('delete', row)}
+              onClick={() => openDeleteConfirm(row)} // Use openDeleteConfirm instead of openModal
               sx={{ mx: 0.5 }}
             />
           </>
         ),
       },
     ],
-    [openModal]
+    [openModal, openDeleteConfirm]
   );
 
   // Table props
@@ -354,7 +382,6 @@ const useClassManagement = () => {
     sortBy,
     sortDirection,
     onSortChange: handleSortChange,
-    onRowClick: row => openModal('view', row),
     hiddenColumnsSmallScreen: ['description'],
     hiddenColumnsTabScreen: [],
     academicYears,
@@ -385,6 +412,11 @@ const useClassManagement = () => {
     openModal,
     academicYears,
     selectedClass,
+    // Add delete confirmation props
+    deleteConfirmOpen,
+    classToDelete,
+    handleDelete,
+    closeDeleteConfirm,
   };
 };
 

@@ -111,6 +111,7 @@ const Sidebar = () => {
     { title: "User Management", to: "/dashboard/userManagement", icon: <PeopleOutlinedIcon /> },
     { title: "Academic Sessions", to: "/dashboard/courseManagement", icon: <ReceiptOutlinedIcon /> },
     { title: "Class Management", to: "/dashboard/classManagement", icon: <ClassIcon /> }, // Replaced Support, placed under Academic Sessions
+    { title: "Subjects Management", to: "/dashboard/subjectManagement", icon: <PersonOutlinedIcon /> },
     { title: "Tests & Exams", to: "/dashboard/adminTestsAndExams", icon: <AssignmentTurnedInIcon /> }, // ✅ Added
     { title: "Financial Management", to: "/dashboard/financialManagement", icon: <ContactsOutlinedIcon /> },
     { title: "Analytics and Reporting", to: "/dashboard/analytics", icon: <MapOutlinedIcon /> },

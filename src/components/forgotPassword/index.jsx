@@ -45,7 +45,7 @@ const SmapleComponent = () => {
 
     const response = await callApi(endpoints.PASSWORD_LINK, "POST", { email });
 
-    if (response && response.message && response.message === 'Password reset link sent successfully') {
+    if (response && response.status === 'success') {
       setMessage("Password reset link sent. Kindly check your email!");
       setEmail('');
       setLinkSent(true);
