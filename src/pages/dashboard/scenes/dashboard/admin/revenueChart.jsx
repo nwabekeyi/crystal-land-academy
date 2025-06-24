@@ -58,6 +58,8 @@ const RevenueChart = ({ isCustomLineColors = false, isDashboard = false }) => {
     <Box width="98%" height={isDashboard ? '300px' : '400px'}> {/* Explicit height */}
       <ResponsiveLine
         data={dummyData}
+        animate={true}
+        motionConfig="default"
         theme={{
           axis: {
             domain: {

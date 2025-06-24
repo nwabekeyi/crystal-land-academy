@@ -410,6 +410,8 @@ const AnalyticsDashboard = () => {
                       margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
                       padding={0.3}
                       colors={{ scheme: 'nivo' }}
+                      animate={true}
+                      motionConfig="default"
                       theme={{
                         axis: {
                           ticks: { text: { fill: colors.grey[100] } },
@@ -494,6 +496,8 @@ const AnalyticsDashboard = () => {
                           .filter((key) => key !== 'week')
                           .map((className) => ({ x: trend.week, y: trend[className] })),
                       }))}
+                      animate={true}
+                      motionConfig="default"
                       margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
                       xScale={{ type: 'point' }}
                       yScale={{ type: 'linear', min: 'auto', max: 'auto', stacked: false, reverse: false }}

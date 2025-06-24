@@ -98,6 +98,8 @@ console.log(students)
     <Box width="98%" height="100%">
       <ResponsiveLine
         data={lineData}
+        animate={true}
+        motionConfig="default"
         theme={{
           axis: {
             domain: {

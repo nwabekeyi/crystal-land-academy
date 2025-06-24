@@ -28,6 +28,8 @@ const OutstandingPayments = () => {
         margin={{ top: 50, right: 20, bottom: 50, left: 60 }}
         padding={0.3}
         colors={{ scheme: 'nivo' }}
+        animate={true}
+        motionConfig="default"
         axisTop={null}
         axisRight={null}
         axisBottom={{ tickSize: 5, tickPadding: 5, tickRotation: 0, legend: 'Class Level', legendPosition: 'middle', legendOffset: 32 }}
