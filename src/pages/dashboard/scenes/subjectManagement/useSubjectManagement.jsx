@@ -18,7 +18,7 @@ const useSubjectManagement = () => {
     name: '',
     description: '',
     academicYear: '',
-    classLevels: [], // Array of { classLevel: string, teachers: string[] }
+    classLevelSubclasses: [],
   });
   const [error, setError] = useState('');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -46,6 +46,18 @@ const useSubjectManagement = () => {
     }
   }, [subjectData, dispatch]);
 
+  // Get teachers for a specific classLevel
+  const getTeachersForClassLevel = useCallback(
+    (classLevelId) => {
+      const classLevel = classLevels.find(cl => cl._id === classLevelId);
+      return (classLevel?.teachers || []).map(teacher => ({
+        _id: teacher.teacherId,
+        name: teacher.name || 'Unknown Teacher',
+      }));
+    },
+    [classLevels]
+  );
+
   // Handle sorting
   const handleSortChange = useCallback((columnId) => {
     if (sortBy === columnId) {
@@ -65,16 +77,17 @@ const useSubjectManagement = () => {
         name: '',
         description: '',
         academicYear: academicYears.find(year => year.isCurrent)?._id || '',
-        classLevels: [],
+        classLevelSubclasses: [],
       });
     } else if (subjectItem) {
       setFormData({
         name: subjectItem.name || '',
         description: subjectItem.description || '',
         academicYear: subjectItem.academicYear?._id || '',
-        classLevels: subjectItem.classLevels?.map(cl => ({
-          classLevel: cl.classLevel?._id || cl.classLevel,
-          teachers: cl.teachers?.map(t => t._id) || [],
+        classLevelSubclasses: subjectItem.classLevelSubclasses?.map(cls => ({
+          classLevel: cls.classLevel?._id || cls.classLevel,
+          subclassLetter: cls.subclassLetter || '',
+          teachers: cls.teachers?.map(t => t._id || t) || [],
         })) || [],
       });
     }
@@ -113,29 +126,37 @@ const useSubjectManagement = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   }, []);
 
-  // Handle classLevels and teachers change
+  // Handle classLevelSubclasses and teachers change
   const handleClassLevelChange = useCallback((index, field, value) => {
     setFormData(prev => {
-      const newClassLevels = [...prev.classLevels];
-      newClassLevels[index] = { ...newClassLevels[index], [field]: value };
-      return { ...prev, classLevels: newClassLevels };
+      const newClassLevelSubclasses = [...prev.classLevelSubclasses];
+      newClassLevelSubclasses[index] = { ...newClassLevelSubclasses[index], [field]: value };
+      if (field === 'classLevel') {
+        newClassLevelSubclasses[index].subclassLetter = '';
+        newClassLevelSubclasses[index].teachers = [];
+      }
+      if (field === 'subclassLetter') {
+        newClassLevelSubclasses[index].teachers = [];
+      }
+      return { ...prev, classLevelSubclasses: newClassLevelSubclasses };
     });
   }, []);
 
-  // Add a new class level entry
+  // Add a new class level subclass entry
   const addClassLevel = useCallback(() => {
     setFormData(prev => ({
       ...prev,
-      classLevels: [...prev.classLevels, { classLevel: '', teachers: [] }],
+      classLevelSubclasses: [...prev.classLevelSubclasses, { classLevel: '', subclassLetter: '', teachers: [] }],
     }));
   }, []);
 
-  // Remove a class level entry
+  // Remove a class level subclass entry
   const removeClassLevel = useCallback((index) => {
     setFormData(prev => ({
       ...prev,
-      classLevels: prev.classLevels.filter((_, i) => i !== index),
-    }));
+      classLevelSubclasses: prev.classLevelSubclasses.filter((_, i) => i !== index),
+    })
+  )
   }, []);
 
   // Validate form data
@@ -143,12 +164,19 @@ const useSubjectManagement = () => {
     if (!formData.name) return 'Subject name is required';
     if (!formData.description) return 'Description is required';
     if (!formData.academicYear) return 'Academic year is required';
-    if (formData.classLevels.length === 0) return 'At least one class level is required';
-    for (const cl of formData.classLevels) {
-      if (!cl.classLevel) return 'Class level is required for all entries';
+    if (formData.classLevelSubclasses.length === 0) return 'At least one class level and subclass is required';
+    for (const cls of formData.classLevelSubclasses) {
+      if (!cls.classLevel) return 'Class level is required for all entries';
+      if (!cls.subclassLetter) return 'Subclass is required for all entries';
+      const validTeachers = getTeachersForClassLevel(cls.classLevel);
+      for (const teacherId of cls.teachers) {
+        if (!validTeachers.find(t => t._id === teacherId)) {
+          return `Invalid teacher ID: ${teacherId} for class level`;
+        }
+      }
     }
     return '';
-  }, [formData]);
+  }, [formData, getTeachersForClassLevel]);
 
   // Handle form submission
   const handleSubmit = useCallback(async () => {
@@ -162,8 +190,10 @@ const useSubjectManagement = () => {
       name: formData.name,
       description: formData.description,
       academicYear: formData.academicYear,
-      classLevels: formData.classLevels,
+      classLevelSubclasses: formData.classLevelSubclasses,
     };
+
+    console.log('Submitting payload:', payload);
 
     try {
       if (modalMode === 'create') {
@@ -270,7 +300,6 @@ const useSubjectManagement = () => {
     openModal,
     academicYears,
     classLevels,
-    teachers: usersData.teachers || [],
     selectedSubject,
     deleteConfirmOpen,
     subjectToDelete,
@@ -278,6 +307,7 @@ const useSubjectManagement = () => {
     closeDeleteConfirm,
     classLevelsModalOpen,
     setClassLevelsModalOpen,
+    getTeachersForClassLevel, // Expose for SubjectManagement.js
   };
 };
 

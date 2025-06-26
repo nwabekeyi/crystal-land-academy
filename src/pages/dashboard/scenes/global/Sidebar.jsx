@@ -27,6 +27,7 @@ import { useSelector, useDispatch } from "react-redux";
 import CloseIcon from "@mui/icons-material/Close";
 import { toggleDashboardCollapse } from "../../../../reduxStore/slices/uiSlice";
 import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
 
 const Item = ({ title, to, icon, selected, setSelected, isCollapsed }) => {
   const theme = useTheme();
@@ -111,14 +112,14 @@ const Sidebar = () => {
     { title: "User Management", to: "/dashboard/userManagement", icon: <PeopleOutlinedIcon /> },
     { title: "Academic Sessions", to: "/dashboard/courseManagement", icon: <ReceiptOutlinedIcon /> },
     { title: "Class Management", to: "/dashboard/classManagement", icon: <ClassIcon /> }, // Replaced Support, placed under Academic Sessions
-    { title: "Subjects Management", to: "/dashboard/subjectManagement", icon: <PersonOutlinedIcon /> },
+    { title: "Subjects Management", to: "/dashboard/subjectManagement", icon: <MenuBookIcon /> },
     { title: "Tests & Exams", to: "/dashboard/adminTestsAndExams", icon: <AssignmentTurnedInIcon /> }, // ✅ Added
     { title: "Financial Management", to: "/dashboard/financialManagement", icon: <ContactsOutlinedIcon /> },
     { title: "Analytics and Reporting", to: "/dashboard/analytics", icon: <MapOutlinedIcon /> },
     { title: "Contacts", to: "/dashboard/contacts", icon: <SettingsOutlinedIcon /> },
     { title: "Feedbacks", to: "/dashboard/feedbacks", icon: <FeedbackIcon /> },
     { title: "Enquiries", to: "/dashboard/enquiries", icon: <EmailIcon /> },
-    { title: "Generated Codes", to: "/dashboard/offlineStudents", icon: <PersonOutlinedIcon /> },
+    { title: "Generated Codes", to: "/dashboard/registrationCode", icon: <PersonOutlinedIcon /> },
   ];
 
   const studentMenuItems = [

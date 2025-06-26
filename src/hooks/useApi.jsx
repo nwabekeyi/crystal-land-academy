@@ -50,7 +50,6 @@ const useApi = () => {
           console.log(errorMessage);
           if (errorMessage && errorMessage.message) {
             setError(errorMessage.message || 'Something went wrong');
-            console.log(error);
           }
         } else {
           const contentType = response.headers.get('Content-Type');

@@ -19,10 +19,11 @@ const SignUpForm = ({ role, selectedUser }) => {
     modalOpen,
     modalMessage,
     setModalOpen,
+    subclassSubjectOptions,
   } = useSignUp({ role, selectedUser });
 
   // Log for debugging
-  console.log("SignUpForm - role:", role, "selectedUser:", selectedUser, "formData:", formData);
+  console.log("SignUpForm - role:", role, "selectedUser:", selectedUser, "formData:", formData, "subclassSubjectOptions:", subclassSubjectOptions);
 
   const handleCloseModal = () => {
     setModalOpen(false);
@@ -48,7 +49,7 @@ const SignUpForm = ({ role, selectedUser }) => {
         } else {
           value = value?.[part];
         }
-        if (value === undefined) return "";
+        if (value === undefined || value === null) return "";
       }
       return value;
     }
@@ -81,19 +82,26 @@ const SignUpForm = ({ role, selectedUser }) => {
                 <InputLabel>{field.label}</InputLabel>
                 <Select
                   name={field.name}
-                  value={getFieldValue(field.name)}
+                  value={getFieldValue(field.name) || ""}
                   onChange={handleChange}
                   required={field.required}
                 >
-                  {field.options.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
+                  {!field.required && <MenuItem value="">None</MenuItem>}
+                  {field.name === "teachingAssignments[0].subject"
+                    ? subclassSubjectOptions.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))
+                    : field.options.map((option) => (
+                        <MenuItem key={option} value={option}>
+                          {option}
+                        </MenuItem>
+                      ))}
                 </Select>
               </FormControl>
             ) : field.type === "file" ? (
-              <Box mb={2}>
+              <Box>
                 <input
                   type="file"
                   name={field.name}
