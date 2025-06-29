@@ -14,7 +14,6 @@ import { useSelector } from 'react-redux';
 
 const PaymentHistory = () => {
   const user = useSelector((state) => state.users.user); // Retrieve user from Redux
-console.log('User object:', user); // Debugging log
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -26,6 +25,7 @@ console.log('User object:', user); // Debugging log
   const [sortDirection, setSortDirection] = useState('asc');
   const [openReceiptModal, setOpenReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [openSuccessModal, setOpenSuccessModal] = useState(false);
 
   // State for payment summary
   const [totalOutstanding, setTotalOutstanding] = useState(0);
@@ -34,26 +34,40 @@ console.log('User object:', user); // Debugging log
   // Custom hook for API calls
   const { callApi, loading, error } = useApi();
 
-  // Fetch payment records from the backend
-  useEffect(() => {
-    const fetchPaymentRecords = async () => {
-      const response = await callApi(endpoints.getAllPayments, 'GET', {
-        page: page + 1,
-        limit: rowsPerPage,
-        sortBy,
-        sortDirection,
-      });
+  // Fetch payment records for the student
+useEffect(() => {
+  const fetchPaymentRecords = async () => {
+    const url = `${endpoints.PAYMENT}?studentId=${user._id}&page=${page + 1}&limit=${rowsPerPage}&sortBy=${sortBy}&sortDirection=${sortDirection}`;
+    console.log(`Calling API: ${url}`);
+
+    try {
+      const response = await callApi(url, 'GET');
+      console.log("API Response:", response);
 
       if (response) {
-        setReceipts(response.data);
+        const flatPayments = response.data.flatMap((receipt) => {
+          const term = receipt.termPayments?.[0] || {};
+          return (term.payments || []).map((payment) => ({
+            reference: payment.reference,
+            amountPaid: payment.amountPaid,
+            datePaid: payment.datePaid,
+            status: payment.status || receipt.status,
+            originalReceipt: receipt, // to pass full receipt to view
+          }));
+        });
+      
+        setReceipts(flatPayments); // Flattened structure
         setTotalOutstanding(response.totalOutstanding || 0);
         setAmountPaid(response.totalPaid || 0);
       }
-    };
+      
+    } catch (error) {
+      console.error("Error fetching payment records:", error);
+    }
+  };
 
-    fetchPaymentRecords();
-  }, [page, rowsPerPage, sortBy, sortDirection, callApi]);
-
+  fetchPaymentRecords();
+}, [page, rowsPerPage, sortBy, sortDirection, callApi, user._id]);
   // Calculate total amount due and payment percentage
   const totalAmount = totalOutstanding + amountPaid;
   const paymentPercentage = totalAmount > 0 ? (amountPaid / totalAmount) * 100 : 0;
@@ -73,60 +87,80 @@ console.log('User object:', user); // Debugging log
 
   // Handle payment success
   const handlePaymentSuccess = async (paymentDetails) => {
+    console.log("Payment details:", paymentDetails); 
+    setOpenSuccessModal(true); 
     const payload = {
-      studentId: user.studentId, // Replace with actual student ID from context or API
-      classLevelId: user.classLevelId, // Replace with actual class level ID
-      academicYear: user.academicYear, // Replace with actual academic year ID
-      termName: user.termName, // Replace with actual term name
-      subclassLetter: user.subclassLetter, // Replace with actual subclass letter
-      amountPaid: paymentDetails.amount,
-      method: 'Card',
-      reference: paymentDetails.reference,
-      status: 'success',
+      studentId: user._id, // ObjectId from Redux
+      classLevelId: user.classLevelId, // ObjectId from Redux
+      academicYear: user.currentClassLevel?.academicYear?._id, // ObjectId from currentClassLevel
+      section: user.currentClassLevel?.section, // e.g., "Primary" or "Secondary"
+      termPayments: [
+        {
+          termName: "1st Term", // Replace with dynamic value if needed
+          subclassLetter: user.currentClassLevel?.subclass, // e.g., "A"
+          payments: [
+            {
+              amountPaid: paymentDetails.amount, // Ensure this is a valid number
+              method: "Card", // Payment method
+              reference: paymentDetails.reference, // Transaction reference from Paystack
+              status: "success", // Payment status
+            },
+          ],
+        },
+      ],
     };
-
-    const response = await callApi(endpoints.createPayment, 'POST', payload);
-
+  
+    console.log("Payload being sent to backend:", JSON.stringify(payload, null, 2));
+  
+    const response = await callApi(endpoints.createPayment, "POST", payload);
+  
     if (response) {
       setReceipts((prevReceipts) => [response.data, ...prevReceipts]);
       setAmountPaid((prevAmount) => prevAmount + paymentDetails.amount);
       setTotalOutstanding((prevOutstanding) => prevOutstanding - paymentDetails.amount);
+      setOpenSuccessModal(true);
     }
   };
 
   // Table Columns
   const columns = [
     {
-      id: 'id',
+      id: 'sn',
       label: 'S/N',
-      flex: 0.5,
-      renderCell: (row) => <Typography>{row.id}</Typography>,
+      flex: 0.3,
+      renderCell: (row, index) => <Typography>{index + 1}</Typography>,
     },
     {
       id: 'reference',
       label: 'Transaction ID',
       flex: 1,
-      renderCell: (row) => <Typography>{String(row.reference || 'N/A')}</Typography>,
+      renderCell: (row) => <Typography>{row.reference || 'N/A'}</Typography>,
     },
     {
       id: 'amountPaid',
       label: 'Amount (₦)',
       flex: 1,
-      renderCell: (row) => <Typography>₦{(row.amountPaid / 100).toFixed(2)}</Typography>, // Convert kobo to naira
+      renderCell: (row) => <Typography>₦{row.amountPaid }</Typography>,
     },
     {
       id: 'status',
       label: 'Status',
       flex: 1,
       renderCell: (row) => (
-        <Typography>{row.status.charAt(0).toUpperCase() + row.status.slice(1)}</Typography>
+        <Typography>
+          {row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'N/A'}
+        </Typography>
       ),
     },
     {
       id: 'datePaid',
       label: 'Date',
       flex: 1,
-      renderCell: (row) => <Typography>{row.datePaid || 'N/A'}</Typography>,
+      renderCell: (row) => (
+        <Typography>
+          {row.datePaid ? new Date(row.datePaid).toLocaleDateString() : 'N/A'}
+        </Typography>
+      ),
     },
     {
       id: 'actions',
@@ -134,13 +168,14 @@ console.log('User object:', user); // Debugging log
       flex: 1,
       renderCell: (row) => (
         <Box display="flex" gap="10px">
-          <IconButton onClick={() => handleViewReceipt(row)}>
+          <IconButton onClick={() => handleViewReceipt(row.originalReceipt)}>
             <Visibility />
           </IconButton>
         </Box>
       ),
     },
   ];
+  
 
   const tableProps = {
     columns,
@@ -187,16 +222,15 @@ console.log('User object:', user); // Debugging log
               </Typography>
             </Box>
             <Box>
-            <PaystackButton
-              onSuccess={handlePaymentSuccess}
-              studentId={user._id} // ObjectId
-              classLevelId={user.currentClassLevel?._id} // ObjectId
-              academicYear={user.currentClassLevel?.academicYear?._id} // ObjectId
-              program={user.program} // e.g., "Primary" or "Secondary"
-              termName="1st Term"
-              subclassLetter={user.currentClassLevel?.subclass}
-            />
-                  
+              <PaystackButton
+                onSuccess={handlePaymentSuccess}
+                studentId={user._id} // ObjectId
+                classLevelId={user.classLevelId} // ObjectId
+                academicYear={user.currentClassLevel?.academicYear?._id} // ObjectId
+                section={user.currentClassLevel?.section}
+                termName="1st Term"
+                subclassLetter={user.currentClassLevel?.subclass}
+              />
             </Box>
           </Box>
 
@@ -215,6 +249,18 @@ console.log('User object:', user); // Debugging log
         </Box>
 
         <TableComponent {...tableProps} />
+
+        {/* Success Modal */}
+        <Modal
+          open={openSuccessModal}
+          onClose={() => setOpenSuccessModal(false)}
+          title="Payment Successful"
+          noConfirm
+        >
+          <Typography variant="h6" align="center" color="green">
+            Your payment was successful!
+          </Typography>
+        </Modal>
 
         {/* View Receipt Modal */}
         <Modal

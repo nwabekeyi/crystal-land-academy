@@ -1,4 +1,5 @@
-// src/components/ClassManagementModals.jsx
+
+
 import React from 'react';
 import {
   Box,
@@ -44,6 +45,25 @@ export const ClassModal = ({
   const isViewMode = modalMode === 'view';
   const isDeleteMode = modalMode === 'delete';
 
+  // Define class name options based on section
+  const primaryClasses = [
+    'Kindergarten',
+    'Reception',
+    'Nursery 1',
+    'Nursery 2',
+    'Primary 1',
+    'Primary 2',
+    'Primary 3',
+    'Primary 4',
+    'Primary 5',
+    'Primary 6',
+  ];
+  const secondaryClasses = ['JSS 1', 'JSS 2', 'JSS 3', 'SS 1', 'SS 2', 'SS 3'];
+
+  // Select class options based on formData.section
+  const classOptions =
+    formData.section === 'Primary' ? primaryClasses : formData.section === 'Secondary' ? secondaryClasses : [];
+
   // Debug log to confirm props
   React.useEffect(() => {
     console.log('ClassModal props:', { modalMode, setModal: typeof setModal });
@@ -54,13 +74,39 @@ export const ClassModal = ({
       open={open}
       onClose={onClose}
       title={title}
-      onConfirm={handleSubmit}
-      confirmMessage={isDeleteMode ? 'Delete' : 'Save'}
-      noConfirm={isViewMode}
+      onConfirm={isDeleteMode ? handleSubmit : handleSubmit} // Handle submit for delete or other modes
+      confirmMessage={isDeleteMode ? 'Confirm Delete' : 'Save'}
+      cancelMessage={isDeleteMode ? 'Cancel' : 'Cancel'}
+      noConfirm={isViewMode} // No confirm button in view mode
       styleProps={{ padding: theme.spacing(3) }}
     >
       {isDeleteMode ? (
-        <Typography>Are you sure you want to delete this class level?</Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="h6" color="error">
+            Confirm Deletion
+          </Typography>
+          <Typography>
+            Are you sure you want to delete the class <strong>{formData.name}</strong>? This action cannot be undone.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 2 }}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleSubmit}
+              disabled={loadingSubmit}
+            >
+              {loadingSubmit ? 'Deleting...' : 'Confirm Delete'}
+            </Button>
+          </Box>
+          {error && <Typography color="error">{error}</Typography>}
+        </Box>
       ) : (
         <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {isViewMode && (
@@ -81,7 +127,11 @@ export const ClassModal = ({
             label="Section"
             name="section"
             value={formData.section}
-            onChange={handleFormChange}
+            onChange={e => {
+              handleFormChange(e);
+              // Reset class name when section changes
+              handleFormChange({ target: { name: 'name', value: '' } });
+            }}
             fullWidth
             disabled={isViewMode}
             required
@@ -89,15 +139,24 @@ export const ClassModal = ({
             <MenuItem value="Primary">Primary</MenuItem>
             <MenuItem value="Secondary">Secondary</MenuItem>
           </Select>
-          <TextField
+          <Select
             label="Class Name"
             name="name"
             value={formData.name}
             onChange={handleFormChange}
             fullWidth
-            disabled={isViewMode}
+            disabled={isViewMode || !formData.section}
             required
-          />
+          >
+            <MenuItem value="" disabled>
+              Select a class
+            </MenuItem>
+            {classOptions.map(className => (
+              <MenuItem key={className} value={className}>
+                {className}
+              </MenuItem>
+            ))}
+          </Select>
           <Select
             label="Academic Year"
             name="academicYear"
@@ -242,12 +301,14 @@ export const ClassModal = ({
             </Box>
           )}
           {error && <Typography color="error">{error}</Typography>}
-          {loadingSubmit && <Typography>Processing...</Typography>}
+          {loadingSubmit && !isDeleteMode && <Typography>Processing...</Typography>}
         </Box>
       )}
     </Modal>
   );
 };
+
+
 
 // Other modals (StudentsModal, TeachersModal, TimetableModal, FeesModal) remain unchanged
 export const StudentsModal = ({ open, onClose, students, theme }) => (

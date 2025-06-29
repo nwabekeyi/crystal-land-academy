@@ -121,6 +121,8 @@ const handleSubmit = async () => {
     setRole('');
     setDate('');
     setComments('');
+  }else{
+    console.error('Error submitting feedback:', submitError);
   }
 };
 
@@ -144,9 +146,9 @@ const handleSubmit = async () => {
         <FormControl fullWidth margin="normal">
           <InputLabel>Role</InputLabel>
           <Select value={role} onChange={(e) => setRole(e.target.value)}>
-            <MenuItem value="student">Student</MenuItem>
-            <MenuItem value="instructor">Instructor</MenuItem>
-            <MenuItem value="worker">Worker</MenuItem>
+            <MenuItem value="Student">Student</MenuItem>
+            <MenuItem value="Instructor">Instructor</MenuItem>
+            <MenuItem value="Worker">Worker</MenuItem>
           </Select>
         </FormControl>
         <TextField

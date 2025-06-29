@@ -2,28 +2,67 @@ import React, { useRef, useState } from 'react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Button, Card, CardContent, CardMedia, Typography, Grid, Modal, CircularProgress } from '@mui/material';
-import logo from '../../../assets/idCompanyLogo.jpeg';
-import backendDevImg from "../../../images/backend.jpeg";
-import frontendDevImg from "../../../images/frontend.jpeg";
-import imgplaceholder from "../../../images/karen.jpg";
+import logo from '../../../pages/homePage/assets/crystal-land-log-removebg.png'; // Update with your logo path
+import backendDevImg from '../../../images/backend.jpeg'; // Update with your background image
+import frontendDevImg from '../../../images/frontend.jpeg'; // Update with your background image
+import imgplaceholder from '../../../images/karen.jpg'; // Update with your placeholder image
 import { useSelector } from 'react-redux';
 
-// IDCard component (not exported, used internally for generating the card)
-const IDCard = ({ idCardRef }) => {
-  const userData = useSelector(state => state.users.user); // Access user data from Redux store
+// Font imports with fallback
+try {
+  import('@fontsource/roboto/400.css');
+  import('@fontsource/roboto/700.css');
+} catch (error) {
+  console.warn('Failed to load Roboto fonts, falling back to Arial:', error);
+}
 
-  // Fallback data if userData is not available
+// Helper function to format date (MM/DD/YYYY)
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  try {
+    const date = new Date(dateString);
+    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+  } catch {
+    return 'N/A';
+  }
+};
+
+// Helper function to calculate expire date (1 year from createdAt)
+const getExpireDate = (createdAt) => {
+  if (!createdAt) return 'N/A';
+  try {
+    const date = new Date(createdAt);
+    date.setFullYear(date.getFullYear() + 1);
+    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+  } catch {
+    return 'N/A';
+  }
+};
+
+// IDCard component
+const IDCard = ({ idCardRef }) => {
+  const userData = useSelector((state) => state.users.user);
+
+  // Fallback data based on provided schemas
   const fallbackData = {
     firstName: 'John',
     lastName: 'Doe',
     email: 'john.doe@example.com',
-    phone: '00000000000',
+    phoneNumber: '08137912280',
     role: 'student',
-    studentId: 'btech/std/Data Analysis/10',
-    instructorId: '',
-    program: 'Data Analysis',
+    studentId: 'CLIA/PRI/01',
+    teacherId: 'TEA27750JD',
+    currentClassLevel: {
+      section: 'Primary',
+      className: 'Primary 6',
+      subclass: 'A',
+      academicYear: { name: '2007/2008' },
+    },
+    subject: [{ name: 'English Language' }],
+    qualification: 'BSc',
     profilePictureUrl: imgplaceholder,
-    address: '123 Tech Street, Beks',
+    createdAt: new Date().toISOString(),
+    guardians: [{ phone: '08137912280' }],
   };
 
   const {
@@ -33,170 +72,350 @@ const IDCard = ({ idCardRef }) => {
     phoneNumber,
     role,
     studentId,
-    instructorId,
-    program,
+    teacherId,
+    currentClassLevel,
+    subject,
+    qualification,
     profilePictureUrl,
+    createdAt,
+    guardians,
   } = userData || fallbackData;
 
-  const companyName = "Beks Technology";
+  const companyName = 'Crystal Land Academy';
+  const companyAddress = 'Crystal_Land Intl Academy, Beside Awujoola Mosque, Ologuneru-ido road, Ibadan, Oyo state';
+  const companyEmail = 'info@crystallandacademy.com';
+
+  // Use guardian's phone for students
+  const phone = role === 'student' && guardians?.length ? guardians[0].phone : phoneNumber;
 
   return (
-    <div ref={idCardRef} style={{ display: 'flex', justifyContent: "center", width: 'auto' }}>
+    <div ref={idCardRef} style={{ display: 'flex', justifyContent: 'center', width: '1012px', height: '638px' }}>
       {/* FRONT CARD */}
-      <Card sx={{
-        width: 300,
-        height: 450,
-        margin: 'auto',
-        boxShadow: 3,
-        borderRadius: 2,
-        backgroundColor: "#fff",
-        backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url(${frontendDevImg})`,
-        margin: "2px",
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        {/* Gradient Overlay */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          background: 'linear-gradient(135deg, rgba(31, 58, 147, 0.1), rgba(255, 255, 255, 0.1))',
-          zIndex: 1,
-        }}></div>
-
-        <CardContent style={{ position: 'relative', zIndex: 2 }}>
-          {/* Company Logo and Name */}
-          <Grid container direction="row" alignItems="center" justifyContent="center" spacing={1} mb={3}>
+      <Card
+        sx={{
+          width: 506, // 3.375" at 300 DPI
+          height: 638, // 2.125" at 300 DPI
+          margin: '2px',
+          boxShadow: '0 6px 16px rgba(0, 0, 0, 0.3)',
+          borderRadius: '12px',
+          backgroundColor: '#fff',
+          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), url(${frontendDevImg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+          border: '3px solid #1F3A93',
+          '&:before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(45deg, rgba(31, 58, 147, 0.1), rgba(255, 255, 255, 0.1))',
+            zIndex: 1,
+          },
+          '&:after': {
+            content: '""',
+            position: 'absolute',
+            top: 5,
+            left: 5,
+            right: 5,
+            bottom: 5,
+            border: '1px dashed #1F3A93',
+            borderRadius: '8px',
+            zIndex: 1,
+          },
+        }}
+      >
+        <CardContent
+          style={{
+            position: 'relative',
+            zIndex: 2,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+        >
+          {/* Header: Logo and Company Name */}
+          <Grid container direction="column" alignItems="center" spacing={1} mb={2}>
             <Grid item>
               <CardMedia
                 component="img"
                 image={logo}
                 alt="Company Logo"
-                sx={{ width: 30, height: 40 }}
+                sx={{ width: 70, height: 70, borderRadius: '8px', boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' }}
               />
             </Grid>
             <Grid item>
-              <Typography variant="h6" fontWeight="bold" color="#1F3A93">
+              <Typography
+                variant="h5"
+                fontFamily="Roboto, Arial, sans-serif"
+                fontWeight={700}
+                color="#1F3A93"
+                textAlign="center"
+              >
                 {companyName}
               </Typography>
             </Grid>
           </Grid>
 
-          {/* Profile Picture */}
-          <Grid container justifyContent="center" mb={3}>
+          {/* Profile Picture and Details */}
+          <Grid container spacing={2} alignItems="center" justifyContent="center" mb={2}>
             <Grid item>
               <CardMedia
                 component="img"
                 image={profilePictureUrl || fallbackData.profilePictureUrl}
-                alt={firstName}
+                alt={`${firstName} ${lastName}`}
                 sx={{
-                  width: 60,
-                  height: 60,
-                  border: '4px solid #1F3A93',
-                  borderRadius: '50%',
-                  boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.2)',
+                  width: 120,
+                  height: 160,
+                  border: '2px solid #1F3A93',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
                 }}
               />
             </Grid>
+            <Grid item>
+              <Grid container direction="column" spacing={1} color="#1F3A93">
+                <Grid item>
+                  <Typography
+                    variant="h6"
+                    fontFamily="Roboto, Arial, sans-serif"
+                    fontWeight={700}
+                    color="#1F3A93"
+                  >
+                    {firstName} {lastName}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    fontFamily="Roboto, Arial, sans-serif"
+                    fontWeight={500}
+                    color="#1F3A93"
+                  >
+                    {role === 'student' ? 'Student' : 'Teacher'}
+                  </Typography>
+                </Grid>
+                <DetailItem label="Email" value={email || 'N/A'} />
+                <DetailItem label="Phone" value={phone || 'N/A'} />
+                {role === 'student' && (
+                  <>
+                    <DetailItem
+                      label="Class"
+                      value={
+                        currentClassLevel?.section && currentClassLevel?.className && currentClassLevel?.subclass
+                          ? `${currentClassLevel.section} ${currentClassLevel.className} ${currentClassLevel.subclass}`
+                          : 'N/A'
+                      }
+                    />
+                    <DetailItem label="Student ID" value={studentId || 'N/A'} />
+                    <DetailItem label="Academic Year" value={currentClassLevel?.academicYear?.name || 'N/A'} />
+                  </>
+                )}
+                {role === 'teacher' && (
+                  <>
+                    <DetailItem label="Subject" value={subject?.[0]?.name || 'N/A'} />
+                    <DetailItem label="Teacher ID" value={teacherId || 'N/A'} />
+                    <DetailItem label="Qualification" value={qualification || 'N/A'} />
+                  </>
+                )}
+              </Grid>
+            </Grid>
           </Grid>
 
-          {/* User Name and Role */}
-          <Typography variant="h5" textAlign="center" fontWeight="bold" color="#1F3A93" mb={1}>
-            {firstName} {lastName}
-          </Typography>
-          <Typography variant="body2" textAlign="center" color="#1F3A93" mb={3}>
-            {role === 'student' ? 'Student' : role === 'teacher' ? 'Teacher' : ''}
-          </Typography>
-
-          {/* User Details */}
-          <Grid container spacing={2} justifyContent="left" color="#1F3A93">
-            <DetailItem label="Email" value={email} />
-            <DetailItem label="Phone" value={phoneNumber} />
-            <DetailItem label="Program" value={program} />
-            {role === 'student' && <DetailItem label="Student ID" value={studentId} />}
-            {role === 'instructor' && <DetailItem label="Instructor ID" value={instructorId} />}
+          {/* Footer: Company Address */}
+          <Grid
+            container
+            justifyContent="center"
+            sx={{
+              backgroundColor: '#1F3A93',
+              padding: '10px 0',
+              borderRadius: '0 0 12px 12px',
+              position: 'absolute',
+              bottom: 0,
+              width: '100%',
+              zIndex: 2,
+            }}
+          >
+            <Typography
+              variant="caption"
+              fontFamily="Roboto, Arial, sans-serif"
+              color="white"
+              textAlign="center"
+            >
+              {companyAddress}
+            </Typography>
           </Grid>
-
-          {/* Company Address */}
-          <Typography variant="body2" textAlign="center" color="#1F3A93" mt={3} fontWeight="bold">
-            {companyName}
-          </Typography>
-          <Typography variant="body2" textAlign="center" color="#1F3A93" fontWeight="bold">
-            53, Governor's road, Anishere bus-stop, Ikotun, Lagos.
-          </Typography>
         </CardContent>
       </Card>
 
       {/* BACK CARD */}
-      <Card sx={{
-        width: 300,
-        height: 450,
-        boxShadow: 3,
-        borderRadius: 2,
-        backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url(${backendDevImg})`,
-        margin: '2px',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        <CardContent style={{ position: 'relative', zIndex: 2, padding: '30px' }}>
-          {/* Top Section */}
-          <Typography variant="body2" color="#1F3A93" fontWeight="bold" mb={2}>
-            This is to certify that the bearer whose name, email, and phone is affixed is a student/staff of Beks.
+      <Card
+        sx={{
+          width: 506,
+          height: 638,
+          margin: '2px',
+          boxShadow: '0 6px 16px rgba(0, 0, 0, 0.3)',
+          borderRadius: '12px',
+          backgroundColor: '#fff',
+          backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95)), url(${backendDevImg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+          border: '3px solid #1F3A93',
+          '&:before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(45deg, rgba(31, 58, 147, 0.1), rgba(255, 255, 255, 0.1))',
+            zIndex: 1,
+          },
+          '&:after': {
+            content: '""',
+            position: 'absolute',
+            top: 5,
+            left: 5,
+            right: 5,
+            bottom: 5,
+            border: '1px dashed #1F3A93',
+            borderRadius: '8px',
+            zIndex: 1,
+          },
+        }}
+      >
+        <CardContent
+          style={{
+            position: 'relative',
+            zIndex: 2,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+        >
+          {/* Certification Text */}
+          <Typography
+            variant="body2"
+            fontFamily="Roboto, Arial, sans-serif"
+            fontWeight={700}
+            color="#1F3A93"
+            textAlign="center"
+            mb={2}
+          >
+            This certifies that the bearer, whose name, email, and phone are affixed, is a{' '}
+            {role === 'student' ? 'student' : 'teacher'} of {companyName}.
           </Typography>
-          <Typography variant="body2" color="#1F3A93" fontWeight="bold" mb={4}>
-            If found, kindly return to the nearest police station or 53, Governor Road, Ikotun, Lagos.
+          <Typography
+            variant="body2"
+            fontFamily="Roboto, Arial, sans-serif"
+            fontWeight={700}
+            color="#1F3A93"
+            textAlign="center"
+            mb={3}
+          >
+            If found, please return to the nearest police station or {companyAddress}.
           </Typography>
 
           {/* Date and ID Section */}
-          <Grid container justifyContent="center" mb={4} color="#1F3A93" >
+          <Grid container justifyContent="center" mb={3} color="#1F3A93">
             <Grid item>
-              <Typography variant="body2" fontWeight="bold" mb={1}>
-                Joined Date: MM/DD/YEAR
+              <Typography
+                variant="body2"
+                fontFamily="Roboto, Arial, sans-serif"
+                fontWeight={700}
+                mb={1}
+              >
+                Joined Date: {formatDate(createdAt)}
               </Typography>
-              <Typography variant="body2" fontWeight="bold" mb={1}>
-                Expire Date: MM/DD/YEAR
+              <Typography
+                variant="body2"
+                fontFamily="Roboto, Arial, sans-serif"
+                fontWeight={700}
+                mb={1}
+              >
+                Expire Date: {getExpireDate(createdAt)}
               </Typography>
-              <Typography variant="body2" fontWeight="bold">
-                Emp ID: 00-0000
+              <Typography variant="body2" fontFamily="Roboto, Arial, sans-serif" fontWeight={700}>
+                {role === 'student' ? 'Student ID' : 'Teacher ID'}: {role === 'student' ? studentId : teacherId}
               </Typography>
             </Grid>
           </Grid>
 
           {/* Signature Section */}
-          <Grid container justifyContent="center" mb={4}>
+          <Grid container justifyContent="center" mb={3}>
             <Grid item textAlign="center">
-              <Typography variant="body2" color="#1F3A93" fontWeight="bold">
-                Your Signature
+              <Typography
+                variant="body2"
+                fontFamily="Roboto, Arial, sans-serif"
+                color="#1F3A93"
+                fontWeight={700}
+              >
+                Authorized Signature
               </Typography>
-              <Typography variant="body2" color="#1F3A93" fontWeight="bold" mt={1}>
-                Your Sincerely
+              <div
+                style={{
+                  height: '40px',
+                  borderBottom: '2px solid #1F3A93',
+                  width: '150px',
+                  margin: '10px auto',
+                }}
+              />
+              <Typography
+                variant="body2"
+                fontFamily="Roboto, Arial, sans-serif"
+                color="#1F3A93"
+                fontWeight={700}
+              >
+                {companyName}
               </Typography>
             </Grid>
           </Grid>
 
-          {/* Bottom Section - Company Info */}
-          <Grid container justifyContent="center" alignItems="center" sx={{
-            backgroundColor: '#1F3A93',
-            padding: '20px 0',
-            borderRadius: '0 0 8px 8px',
-            marginTop: '20px',
-          }}>
+          {/* Footer: Company Info */}
+          <Grid
+            container
+            justifyContent="center"
+            alignItems="center"
+            sx={{
+              backgroundColor: '#1F3A93',
+              padding: '10px 0',
+              borderRadius: '0 0 12px 12px',
+              position: 'absolute',
+              bottom: 0,
+              width: '100%',
+              zIndex: 2,
+            }}
+          >
             <Grid item>
               <CardMedia
                 component="img"
                 image={logo}
                 alt="Company Logo"
-                sx={{ width: 40, height: 50, marginRight: '10px' }}
+                sx={{ width: 50, height: 50, marginRight: '10px', borderRadius: '8px' }}
               />
             </Grid>
             <Grid item>
-              <Typography variant="h6" fontWeight="bold" color="white">
-                Beks Technology
+              <Typography
+                variant="body2"
+                fontFamily="Roboto, Arial, sans-serif"
+                fontWeight={700}
+                color="white"
+              >
+                {companyName}
               </Typography>
-              <Typography variant="body2" fontWeight="bold" color="white" mt={1}>
-                info@beksTech.com
+              <Typography
+                variant="caption"
+                fontFamily="Roboto, Arial, sans-serif"
+                color="white"
+              >
+                {companyEmail}
               </Typography>
             </Grid>
           </Grid>
@@ -208,14 +427,24 @@ const IDCard = ({ idCardRef }) => {
 
 // Reusable DetailItem component
 const DetailItem = ({ label, value }) => (
-  <Grid item xs={12} container>
+  <Grid item container alignItems="center">
     <Grid item xs={4}>
-      <Typography variant="body2" fontWeight="bold" color="#1F3A93">
+      <Typography
+        variant="body2"
+        fontFamily="Roboto, Arial, sans-serif"
+        fontWeight={700}
+        color="#1F3A93"
+      >
         {label}:
       </Typography>
     </Grid>
     <Grid item xs={8}>
-      <Typography variant="body2" fontWeight="bold">
+      <Typography
+        variant="body2"
+        fontFamily="Roboto, Arial, sans-serif"
+        fontWeight={400}
+        color="#1F3A93"
+      >
         {value}
       </Typography>
     </Grid>
@@ -226,23 +455,26 @@ const DetailItem = ({ label, value }) => (
 const generatePDFAndUpload = async (idCardRef, userId) => {
   try {
     if (!idCardRef.current) throw new Error('ID card reference is not set.');
-
-    const componentWidth = idCardRef.current.offsetWidth;
-    const componentHeight = idCardRef.current.offsetHeight;
+    if (!userId) throw new Error('User ID is required.');
 
     const canvas = await html2canvas(idCardRef.current, {
       useCORS: true,
-      scale: 4, // Increase scale for better quality
-      width: componentWidth,
-      height: componentHeight,
+      scale: 4,
+      width: 1012,
+      height: 638,
     });
 
     const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('landscape', 'px', [componentWidth, componentHeight]);
-    pdf.addImage(imgData, 'PNG', 0, 0, componentWidth, componentHeight);
-    pdf.save('ID_Card.pdf');
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'px',
+      format: [1012, 638],
+    });
+    pdf.addImage(imgData, 'PNG', 0, 0, 1012, 638);
+    pdf.save(`${userId}_ID_Card.pdf`);
   } catch (error) {
-    console.error("Error generating PDF:", error);
+    console.error('Error generating PDF:', error);
+    throw error;
   }
 };
 
@@ -258,42 +490,53 @@ const LoaderModal = ({ open }) => (
       justifyContent: 'center',
     }}
   >
-    <div style={{
-      backgroundColor: '#1F3A93',
-      padding: '20px',
-      borderRadius: '8px',
-      outline: 'none',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-    }}>
-      <CircularProgress color="primary" />
-      <Typography variant="h6" style={{ marginTop: '16px' }}>
+    <div
+      style={{
+        backgroundColor: '#1F3A93',
+        padding: '20px',
+        borderRadius: '8px',
+        outline: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      <CircularProgress sx={{ color: 'white' }} />
+      <Typography
+        variant="h6"
+        fontFamily="Roboto, Arial, sans-serif"
+        color="white"
+        mt={2}
+      >
         Downloading...
       </Typography>
     </div>
   </Modal>
 );
 
-// Exported DownloadButton component
+// DownloadIdButton component
 const DownloadIdButton = () => {
   const idCardRef = useRef(null);
-  const userData = useSelector(state => state.users.user);
-  const [loading, setLoading] = useState(false); // State to manage loading
+  const userData = useSelector((state) => state.users.user);
+  const [loading, setLoading] = useState(false);
+
+  // Log userData for debugging
+  console.log('User Data:', JSON.stringify(userData, null, 2));
 
   const handleDownload = async () => {
-    if (!userData?.userId) {
-      console.error("User ID is required for downloading the ID card.");
+    if (!userData?._id && !userData?.studentId && !userData?.teacherId) {
+      console.error('User ID is required for downloading the ID card.');
       return;
     }
 
-    setLoading(true); // Show loader
+    setLoading(true);
     try {
-      await generatePDFAndUpload(idCardRef, userData.userId);
+      const userId = userData.studentId || userData.teacherId || userData._id;
+      await generatePDFAndUpload(idCardRef, userId);
     } catch (error) {
-      console.error("Error during PDF generation:", error);
+      console.error('Error during PDF generation:', error);
     } finally {
-      setLoading(false); // Hide loader
+      setLoading(false);
     }
   };
 
@@ -302,10 +545,21 @@ const DownloadIdButton = () => {
       <div style={{ position: 'absolute', left: '-9999px' }}>
         <IDCard idCardRef={idCardRef} />
       </div>
-      <Button variant="contained" color="primary" onClick={handleDownload} sx={{ marginTop: 2 }}>
-        Download ID Card as PDF
+      <Button
+        variant="contained"
+        sx={{
+          backgroundColor: '#1F3A93',
+          fontFamily: 'Roboto, Arial, sans-serif',
+          fontWeight: 700,
+          padding: '10px 20px',
+          borderRadius: '8px',
+          '&:hover': { backgroundColor: '#153068' },
+        }}
+        onClick={handleDownload}
+      >
+        Download ID Card
       </Button>
-      <LoaderModal open={loading} /> {/* Loader Modal */}
+      <LoaderModal open={loading} />
     </>
   );
 };

@@ -6,8 +6,9 @@ import TableComponent from "../../../../../components/table";
 import useAcademicYears from "./useAcademicYears";
 import { AddAcademicYearModal, AddAcademicTermModal } from "./academicYearModals";
 import ActionButton from "../../../components/actionButton";
-import { FaEdit, FaPlusCircle } from "react-icons/fa"; // Replaced MUI icons with React Icons
+import { FaEdit, FaPlusCircle, FaTrash } from "react-icons/fa"; // Added FaTrash
 import { useSelector } from "react-redux";
+import Modal from "../../../components/modal"; // Import Modal for confirmation
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
@@ -53,6 +54,7 @@ const Admin = () => {
     termError,
     handleSubmit,
     handleCreateAcademicTerm,
+    handleDeleteAcademicYear, // Add this
     startEdit,
     startAddTerm,
     editMode,
@@ -67,6 +69,8 @@ const Admin = () => {
   } = useAcademicYears();
   const [openForm, setOpenForm] = useState(false);
   const [openTermForm, setOpenTermForm] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false); // Add state for delete modal
+  const [deleteYearId, setDeleteYearId] = useState(null); // Track year to delete
   const userId = useSelector((state) => state.users.user?._id) || "";
 
   const [sortBy, setSortBy] = useState("name");
@@ -103,7 +107,7 @@ const Admin = () => {
             handleEdit(year);
           }}
         >
-          <FaEdit /> {/* Replaced EditIcon with FaEdit */}
+          <FaEdit />
         </IconButton>
         <IconButton
           onClick={() => {
@@ -111,7 +115,15 @@ const Admin = () => {
             handleAddTerm(year._id);
           }}
         >
-          <FaPlusCircle /> {/* Replaced AddCircleIcon with FaPlusCircle */}
+          <FaPlusCircle />
+        </IconButton>
+        <IconButton
+          onClick={() => {
+            console.log("DeleteIcon clicked for academicYearId:", year._id);
+            handleDeleteClick(year._id);
+          }}
+        >
+          <FaTrash />
         </IconButton>
       </Box>
     ),
@@ -131,6 +143,26 @@ const Admin = () => {
     } catch (err) {
       console.error("Error in handleAddTerm:", err);
     }
+  };
+
+  const handleDeleteClick = (yearId) => {
+    setDeleteYearId(yearId);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (deleteYearId) {
+      const success = await handleDeleteAcademicYear(deleteYearId);
+      if (success) {
+        setDeleteConfirmOpen(false);
+        setDeleteYearId(null);
+      }
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmOpen(false);
+    setDeleteYearId(null);
   };
 
   const handleSortChange = (columnId) => {
@@ -244,6 +276,20 @@ const Admin = () => {
                 handleChange={handleTermChange}
                 isSubmitting={isSubmitting}
               />
+
+              <Modal
+                open={deleteConfirmOpen}
+                onClose={handleDeleteCancel}
+                title="Confirm Deletion"
+                noConfirm={false}
+                confirmText="Delete"
+                onConfirm={handleDeleteConfirm}
+                cancelText="Cancel"
+              >
+                <Typography>
+                  Are you sure you want to delete this academic year? This action cannot be undone.
+                </Typography>
+              </Modal>
 
               <TableComponent
                 columns={columns}

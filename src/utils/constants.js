@@ -33,8 +33,8 @@ const ACADEMIC_YEAR = import.meta.env.VITE_ACADEMIC_YEARS;
 const ACADEMIC_TERM = import.meta.env.VITE_ACADEMIC_TERM;
 const CLASS_LEVEL = import.meta.env.VITE_ACADEMIC_CLASSES;
 const SUBJECT = import.meta.env.VITE_SUBJECT;
-
-
+const CHANGEPASS = import.meta.env.VITE_CHANGE_PASSWORD;
+const REGISTRATION_CODE = import.meta.env.VITE_REGISTRATION_CODE;
 
 const endpoints = {
   LOGIN: {
@@ -73,6 +73,9 @@ const endpoints = {
   ACADEMIC_TERM: `${BASE_URL}${ACADEMIC_TERM}`,
   CLASS_LEVEL: `${BASE_URL}${CLASS_LEVEL}`,
   SUBJECT: `${BASE_URL}${SUBJECT}`,
+  CHANGEPASS: `${BASE_URL}${CHANGEPASS}`,
+  GET_A_TEACHER: `${BASE_URL}/teacher`,
+  REGISTRATION_CODE: `${BASE_URL}${REGISTRATION_CODE}`
 };
 
 export { endpoints };

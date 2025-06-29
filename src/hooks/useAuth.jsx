@@ -80,7 +80,8 @@ const useAuth = () => {
         console.log('Logged in:', data.data.user);
       }
     } catch (err) {
-      dispatch(setError(err.message));
+      dispatch(setError(data.message));
+      console.error(err);
     } finally {
       dispatch(setLoading(false));
     }

@@ -19,11 +19,6 @@ const useSignUp = ({ role, selectedUser }) => {
   const classLevels = useSelector((state) => state.adminData?.classLevels || []);
   const subjects = useSelector((state) => state.adminData?.subjects || []);
 
-  console.log(classLevels);
-  useEffect(() => {
-    console.log("Redux state - users:", users, "classLevels:", classLevels, "subjects:", subjects);
-  }, [users, classLevels, subjects]);
-
   const [classLevelOptions, setClassLevelOptions] = useState({
     sections: [],
     classNames: [],
@@ -33,20 +28,57 @@ const useSignUp = ({ role, selectedUser }) => {
   // Map subjects to { value: _id, label: name } for select options
   const [subjectOptions, setSubjectOptions] = useState([]);
 
+  // Initialize formData before useEffect hooks
+  const [formData, setFormData] = useState({});
+  const [profilePicture, setProfilePicture] = useState(null);
+  const formRef = useRef(null);
+
+  // Subjects specific to the selected class's subclass
+  const [subclassSubjectOptions, setSubclassSubjectOptions] = useState([]);
+
   useEffect(() => {
     setSubjectOptions(subjects.map((s) => ({ value: s._id, label: s.name })));
   }, [subjects]);
 
+  // Update subclass subject options based on selected className and subclass
+  useEffect(() => {
+    if (
+      role === "teacher" &&
+      formData.teachingAssignments?.[0]?.section &&
+      formData.teachingAssignments?.[0]?.className &&
+      formData.teachingAssignments?.[0]?.subclasses?.[0]
+    ) {
+      const selectedClass = classLevels.find(
+        (cl) =>
+          cl.section === formData.teachingAssignments[0].section &&
+          cl.name === formData.teachingAssignments[0].className
+      );
+      const selectedSubclass = formData.teachingAssignments[0].subclasses[0];
+      const subclass = selectedClass?.subclasses.find((sc) => sc.letter === selectedSubclass);
+      const subjectsForSubclass = subclass?.subjects || [];
+      setSubclassSubjectOptions(
+        subjectsForSubclass.map((s) => ({
+          value: s._id.toString(),
+          label: s.name,
+        }))
+      );
+    } else {
+      setSubclassSubjectOptions([]);
+    }
+  }, [formData.teachingAssignments, classLevels, subjects, role]);
+
   const getClassLevelOptions = (formData = {}, parentKey = "currentClassLevel") => {
+    console.log("getClassLevelOptions called with:", { formData, parentKey, classLevels });
     const sections = [...new Set(classLevels.map((cl) => cl.section))];
     const getClassNames = (section) =>
       classLevels
         .filter((cl) => cl.section === section)
         .map((cl) => cl.name);
-    const getSubclasses = (section, className) =>
-      classLevels
-        .find((cl) => cl.section === section && cl.name === className)
-        ?.subclasses.map((sc) => sc.letter) || [];
+    const getSubclasses = (section, className) => {
+      const classLevel = classLevels.find((cl) => cl.section === section && cl.name === className);
+      console.log("getSubclasses:", { section, className, classLevel });
+      return classLevel?.subclasses.map((sc) => sc.letter) || [];
+    };
 
     const selectedSection =
       parentKey === "currentClassLevel"
@@ -57,11 +89,13 @@ const useSignUp = ({ role, selectedUser }) => {
         ? formData.currentClassLevel?.className || getClassNames(selectedSection)[0] || ""
         : formData.teachingAssignments?.[0]?.className || getClassNames(selectedSection)[0] || "";
 
-    return {
+    const options = {
       sections,
       classNames: getClassNames(selectedSection),
       subclasses: getSubclasses(selectedSection, selectedClassName),
     };
+    console.log("getClassLevelOptions result:", options);
+    return options;
   };
 
   useEffect(() => {
@@ -71,10 +105,6 @@ const useSignUp = ({ role, selectedUser }) => {
       setError("Invalid user ID format");
     }
   }, [selectedUser]);
-
-  const [formData, setFormData] = useState({});
-  const [profilePicture, setProfilePicture] = useState(null);
-  const formRef = useRef(null);
 
   const getInitialFormData = (role) => {
     const initialData = {};
@@ -117,8 +147,8 @@ const useSignUp = ({ role, selectedUser }) => {
         {
           section: sections[0] || "",
           className: classNames[0] || "",
-          subclasses: [subclasses[0]] || [""], // Backend expects an array
-          subject: subjects[0]?._id || "", // Initialize with first subject _id
+          subclasses: [subclasses[0] || ""],
+          subject: "",
         },
       ];
     }
@@ -168,7 +198,7 @@ const useSignUp = ({ role, selectedUser }) => {
                 section: user[key][0].section || initialData.teachingAssignments[0].section,
                 className: user[key][0].className || initialData.teachingAssignments[0].className,
                 subclasses: user[key][0].subclasses || initialData.teachingAssignments[0].subclasses,
-                subject: user[key][0].subject?._id || initialData.teachingAssignments[0].subject, // Use subject _id
+                subject: user[key][0].subject?._id || "",
               },
             ];
           } else {
@@ -182,6 +212,11 @@ const useSignUp = ({ role, selectedUser }) => {
   };
 
   useEffect(() => {
+    if (classLevels.length === 0) {
+      console.log("classLevels not loaded yet");
+      return;
+    }
+    console.log("Initializing formData with classLevels:", classLevels);
     const initialFormData = getInitialFormData(role);
     setFormData(initialFormData);
     setClassLevelOptions(
@@ -192,6 +227,7 @@ const useSignUp = ({ role, selectedUser }) => {
   }, [role, selectedUser, classLevels, subjects]);
 
   useEffect(() => {
+    console.log("formData updated:", formData);
     if (formData) {
       setClassLevelOptions(
         role === "student"
@@ -199,7 +235,7 @@ const useSignUp = ({ role, selectedUser }) => {
           : getClassLevelOptions(formData, "teachingAssignments")
       );
     }
-  }, [formData]);
+  }, [formData, role, classLevels]);
 
   const roleFields = {
     student: [
@@ -285,18 +321,18 @@ const useSignUp = ({ role, selectedUser }) => {
         options: classLevelOptions.classNames,
       },
       {
-        label: "Teaching Subclasses",
-        name: "teachingAssignments[0].subclasses",
+        label: "Teaching Subclass",
+        name: "teachingAssignments[0].subclasses[0]",
         type: "select",
         required: !selectedUser,
         options: classLevelOptions.subclasses,
       },
       {
-        label: "Subject",
+        label: "Subclass Subject",
         name: "teachingAssignments[0].subject",
         type: "select",
-        required: !selectedUser,
-        options: subjectOptions.map((s) => s.label), // Display names in UI
+        required: false,
+        options: subclassSubjectOptions,
       },
       { label: "Bank Account Name", name: "bankAccountDetails.accountName", type: "text", required: !selectedUser },
       { label: "Bank Account Number", name: "bankAccountDetails.accountNumber", type: "text", required: !selectedUser },
@@ -331,14 +367,20 @@ const useSignUp = ({ role, selectedUser }) => {
         return { ...prevData, currentClassLevel: newClassLevel };
       });
     } else if (name.includes("teachingAssignments")) {
-      const [, index, child] = name.split(/\.|\[|\]/).filter(Boolean);
+      const [, index, child, subIndex] = name.split(/\.|\[|\]/).filter(Boolean);
       setFormData((prevData) => {
         const updatedAssignments = [...(prevData.teachingAssignments || [{}])];
-        if (child === "subclasses") {
-          updatedAssignments[0] = { ...updatedAssignments[0], [child]: [value] }; // Store as array
+        if (child === "subclasses" && subIndex === "0") {
+          updatedAssignments[0] = {
+            ...updatedAssignments[0],
+            subclasses: [value],
+            subject: "", // Reset subject when subclass changes
+          };
         } else if (child === "subject") {
-          const selectedSubject = subjectOptions.find((s) => s.label === value);
-          updatedAssignments[0] = { ...updatedAssignments[0], [child]: selectedSubject?.value || "" }; // Store subject _id
+          updatedAssignments[0] = {
+            ...updatedAssignments[0],
+            subject: value,
+          };
         } else {
           updatedAssignments[0] = { ...updatedAssignments[0], [child]: value };
         }
@@ -348,13 +390,15 @@ const useSignUp = ({ role, selectedUser }) => {
             "teachingAssignments"
           );
           updatedAssignments[0].className = classNames[0] || "";
-          updatedAssignments[0].subclasses = [subclasses[0]] || [""];
+          updatedAssignments[0].subclasses = [subclasses[0] || ""];
+          updatedAssignments[0].subject = "";
         } else if (child === "className") {
           const { subclasses } = getClassLevelOptions(
             { teachingAssignments: [{ ...updatedAssignments[0], className: value }] },
             "teachingAssignments"
           );
-          updatedAssignments[0].subclasses = [subclasses[0]] || [""];
+          updatedAssignments[0].subclasses = [subclasses[0] || ""];
+          updatedAssignments[0].subject = "";
         }
         return { ...prevData, teachingAssignments: updatedAssignments };
       });
@@ -368,8 +412,7 @@ const useSignUp = ({ role, selectedUser }) => {
         },
       }));
     } else if (name.includes("guardians")) {
-      // Fix: Properly handle guardians[0].field
-      const [, index, child] = name.split(/\.|\[|\]/).filter(Boolean); // e.g., "guardians[0].name" -> ["guardians", "0", "name"]
+      const [, index, child] = name.split(/\.|\[|\]/).filter(Boolean);
       setFormData((prevData) => {
         const updatedGuardians = [...(prevData.guardians || [{}])];
         updatedGuardians[0] = { ...updatedGuardians[0], [child]: value };
@@ -409,12 +452,6 @@ const useSignUp = ({ role, selectedUser }) => {
       return;
     }
 
-    if (selectedUser) {
-      formRef.current.querySelectorAll("[required]").forEach((field) => {
-        field.removeAttribute("required");
-      });
-    }
-
     if (!selectedUser) {
       if (!formData.firstName || !formData.lastName || !formData.email || !formData.gender) {
         setError("First name, last name, email, and gender are required");
@@ -450,7 +487,6 @@ const useSignUp = ({ role, selectedUser }) => {
           !formData.phoneNumber ||
           !formData.tribe ||
           !formData.religion ||
-          !formData.teachingAssignments?.[0]?.subject ||
           !formData.bankAccountDetails?.accountName ||
           !formData.bankAccountDetails?.accountNumber ||
           !formData.bankAccountDetails?.bank ||
@@ -474,11 +510,6 @@ const useSignUp = ({ role, selectedUser }) => {
         }
         if (!formData.teachingAssignments[0].subclasses.every((sub) => /^[A-Z]$/.test(sub))) {
           setError("Subclasses must be single uppercase letters");
-          setLoading(false);
-          return;
-        }
-        if (!validateObjectId(formData.teachingAssignments[0].subject)) {
-          setError("Invalid subject ID");
           setLoading(false);
           return;
         }
@@ -514,10 +545,25 @@ const useSignUp = ({ role, selectedUser }) => {
           formDataToSubmit.append("bankAccountDetails[accountNumber]", formData[key].accountNumber || "");
           formDataToSubmit.append("bankAccountDetails[bank]", formData[key].bank || "");
         } else if (key === "teachingAssignments" && formData[key]?.length && formData[key][0].section) {
-          formDataToSubmit.append("teachingAssignments[0][section]", formData[key][0].section || "");
-          formDataToSubmit.append("teachingAssignments[0][className]", formData[key][0].className || "");
-          formDataToSubmit.append("teachingAssignments[0][subclasses]", JSON.stringify(formData[key][0].subclasses || [])); // Send as JSON array
-          formDataToSubmit.append("subject", formData[key][0].subject || ""); // Send subject _id directly
+          // Send individual fields as required by backend
+          formDataToSubmit.append("section", formData[key][0].section || "");
+          formDataToSubmit.append("className", formData[key][0].className || "");
+          formDataToSubmit.append("subclassLetter", formData[key][0].subclasses[0] || "");
+          if (formData[key][0].subject) {
+            formDataToSubmit.append("subject", formData[key][0].subject);
+            // Find and append classLevel ID
+            const classLevel = classLevels.find(
+              (cl) => cl.section === formData[key][0].section && cl.name === formData[key][0].className
+            );
+            if (classLevel) {
+              formDataToSubmit.append("classLevel", classLevel._id || "");
+            }
+          }
+        } else if (key === "isWithdrawn" || key === "isSuspended") {
+          // Convert string "true"/"false" to boolean for backend
+          formDataToSubmit.append(key, value === "true");
+        } else if (key === "applicationStatus" && value) {
+          formDataToSubmit.append(key, value);
         } else if (!selectedUser || (formData[key] && formData[key] !== "" && key !== "boardingDetails")) {
           formDataToSubmit.append(key, formData[key]);
         }
@@ -533,7 +579,7 @@ const useSignUp = ({ role, selectedUser }) => {
 
       let endpoint;
       if (selectedUser && validateObjectId(selectedUser)) {
-        endpoint = role === "student" ? `/api/students/${selectedUser}/update/admin` : `/api/teachers/teacher/${selectedUser}/update`;
+        endpoint = role === "student" ? `/api/students/${selectedUser}/update/admin` : `/api/teachers/subject/${selectedUser}/update`;
       } else {
         endpoint = role === "student" ? endpoints.CREATE_STUDENT : role === "teacher" ? endpoints.CREATE_TEACHER : endpoints.CREATE_ADMIN;
       }
@@ -542,19 +588,20 @@ const useSignUp = ({ role, selectedUser }) => {
         "Content-Type": "multipart/form-data",
       });
 
-      if (response && response.data) {
+      if (response && response.status === 'success') {
         dispatch(selectedUser ? updateUser({ id: selectedUser, user: response.data, role }) : addUser({ user: response.data, role }));
         setModalMessage(`${response.data.firstName} ${response.data.lastName} has been successfully ${selectedUser ? "updated" : "registered"}`);
         setFormData(getInitialFormData(role));
         setProfilePicture(null);
-      } else {
-        setModalMessage(response?.data?.message || "An error occurred");
+      } else if(response && response.status === 'failed') {
+          console.log(submitError)
+          setModalMessage(response?.message || "An error occurred");
       }
 
       setModalOpen(true);
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      setError(error.response?.data?.message || "Failed to submit the form. Please try again.");
+    } catch (err) {
+      console.error("Error submitting form:", err);
+      setError(err.response?.message || "Failed to submit the form. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -572,6 +619,7 @@ const useSignUp = ({ role, selectedUser }) => {
     modalOpen,
     modalMessage,
     setModalOpen,
+    subclassSubjectOptions,
   };
 };
 

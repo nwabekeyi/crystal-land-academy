@@ -12,7 +12,7 @@ const PaystackButton = ({
   academicYear,
   termName,
   subclassLetter,
-  program,
+  section,
 }) => {
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -29,7 +29,6 @@ const PaystackButton = ({
   };
 
   const handleConfirmPayment = () => {
-    // Proceed with Paystack payment after confirming the amount
     handlePaystackPayment();
     handleCloseModal();
   };
@@ -39,8 +38,8 @@ const PaystackButton = ({
 
     try {
       const paystack = window.PaystackPop.setup({
-        key: publicKey, // Public key from environment
-        email: 'user@example.com', // Replace with the user's email
+        key: publicKey,
+        email: 'user@example.com', // Replace with the user's email dynamically if available
         currency: 'NGN',
         amount: parseFloat(paymentAmount) * 100, // Convert to kobo
         metadata: {
@@ -56,14 +55,25 @@ const PaystackButton = ({
           console.log('Payment dialog closed');
         },
         callback: function (response) {
+          console.log('Paystack callback triggered:', response);
+        
           const transactionId = response.reference;
-          console.log('Payment successful. Transaction ID:', transactionId);
+        
+          if (!paymentAmount || isNaN(paymentAmount)) {
+            console.error('Invalid payment amount:', paymentAmount);
+            return;
+          }
+        
+          if (!transactionId) {
+            console.error('Missing transaction reference:', response);
+            return;
+          }
         
           const payload = {
             studentId,
             classLevelId,
             academicYear,
-            program,
+            section,
             termPayments: [
               {
                 termName,
@@ -71,33 +81,33 @@ const PaystackButton = ({
                 payments: [
                   {
                     amountPaid: parseFloat(paymentAmount),
-                    method: "Card",
+                    method: 'Card',
                     reference: transactionId,
-                    status: "success"
-                  }
-                ]
-              }
-            ]
+                    status: 'success',
+                  },
+                ],
+              },
+            ],
           };
-          
-          
         
-          console.log('Payload being sent to backend:', payload);
+          console.log('Payload being sent to backend:', JSON.stringify(payload, null, 2));
         
-          callApi('http://localhost:5000/api/v1/create-student-payment', 'POST', payload)
+          callApi('http://localhost:5000/api/v1/payment', 'POST', payload)
             .then((backendResponse) => {
               console.log('Transaction registered successfully:', backendResponse);
               onSuccess(payload);
             })
             .catch((error) => {
-              console.error('Failed to register transaction:', error);
+              console.error('Failed to register transaction:', error.response || error.message);
+              if (error.response) {
+                console.error('Backend error details:', error.response.data);
+              }
             });
         
           setPaymentAmount('');
         },
-      });        
+      });
 
-      // Open the Paystack payment dialog
       paystack.openIframe();
     } catch (error) {
       console.error('Error initializing Paystack payment:', error);
@@ -111,11 +121,10 @@ const PaystackButton = ({
       <ActionButton
         icon={<PaymentIcon />}
         disabled={loading}
-        onClick={handleOpenModal} // Open modal on button click
+        onClick={handleOpenModal}
         content={loading ? <CircularProgress size={24} /> : 'Pay Now'}
       />
 
-      {/* Modal for inputting payment amount */}
       <Modal
         open={modalOpen}
         onClose={handleCloseModal}
@@ -127,10 +136,11 @@ const PaystackButton = ({
           label="Amount (Naira)"
           type="number"
           value={paymentAmount}
-          onChange={(e) => setPaymentAmount(e.target.value)} // Update payment amount
+          onChange={(e) => setPaymentAmount(e.target.value)}
           fullWidth
         />
       </Modal>
+      
     </Box>
   );
 };

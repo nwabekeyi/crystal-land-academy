@@ -60,6 +60,45 @@ const useAcademicYears = () => {
     }));
   };
 
+  const handleDeleteAcademicYear = async (id) => {
+    if (!userId) {
+      setError((prev) => ({ ...prev, general: "User not authenticated. Please log in." }));
+      return false;
+    }
+  
+    try {
+      setIsSubmitting(true);
+      setError((prev) => ({ ...prev, general: "" }));
+  
+      const response = await callApi(`${endpoints.ACADEMIC_YEARS}/${id}`, "DELETE");
+      if (!response || response.status !== "success") {
+        throw new Error(response?.message || "Failed to delete academic year");
+      }
+  
+      // Remove the deleted academic year from the store
+      dispatch(
+        setAcademicYears(academicYears.filter((year) => year._id !== id))
+      );
+  
+      // If the deleted year was the current academic year, clear it
+      if (currentAcademicYear?._id === id) {
+        dispatch(setCurrentAcademicYear(null));
+      }
+  
+      await refetchAcademicYears();
+      await refetchCurrentYear();
+  
+      return true;
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || err.message || "Failed to delete academic year";
+      setError((prev) => ({ ...prev, general: errorMessage }));
+      dispatch(setError(errorMessage));
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleTermChange = (e, index, isCurrentChange = false) => {
     const { name, value, type, checked } = e.target;
     const val = type === "checkbox" ? checked : value;
@@ -425,6 +464,7 @@ const useAcademicYears = () => {
     resetForm,
     resetTermForm,
     termFormValues,
+    handleDeleteAcademicYear
   };
 };
 

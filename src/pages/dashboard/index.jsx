@@ -37,6 +37,8 @@ const AnalyticsAndreporting = lazy(() => import("./scenes/analyticsAndreporting"
 const ClassDetails = lazy(() => import("./scenes/teacherClassManagement"));
 const StudentExams = lazy(() => import("./scenes/testAndExams/student"));
 const AdminTestsAndExams = lazy(() => import("./scenes/testAndExams/admin"));
+const SubjectManagement = lazy(() => import("./scenes/subjectManagement"));
+const RegistrationCodes = lazy(() => import("./scenes/registrationCode"));
 
 function DashboardHome() {
   const [theme, colorMode] = useMode();
@@ -87,6 +89,8 @@ function DashboardHome() {
             <Route path="/classManagement" element={<ClassManagement />} />
             <Route path="/analytics" element={<AnalyticsAndreporting />} />
             <Route path="/adminTestsAndExams" element={<AdminTestsAndExams />} />
+            <Route path="/subjectManagement" element={<SubjectManagement />} />
+            <Route path="/registrationCode" element={<RegistrationCodes />} />
           </>
         );
       case "student":

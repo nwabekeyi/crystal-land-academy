@@ -1,6 +1,5 @@
-// src/pages/ClassManagement.jsx
 import React, { useState, useEffect } from 'react';
-import { Box, useTheme, Tabs, Tab, Typography } from '@mui/material';
+import { Box, useTheme, Tabs, Tab, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { tokens } from '../../theme';
 import Header from '../../components/Header';
@@ -60,6 +59,11 @@ const ClassManagement = () => {
     openModal,
     academicYears,
     selectedClass,
+    // Add delete confirmation props
+    deleteConfirmOpen,
+    classToDelete,
+    handleDelete,
+    closeDeleteConfirm,
   } = useClassManagement();
   const { usersData } = useSelector(selectAdminDataState);
 
@@ -166,7 +170,7 @@ const ClassManagement = () => {
     };
     const sections = tableProps.classLevels[yearId] || { Primary: [], Secondary: [] };
     
-    console.log(`Data for year ${yearId}:`, sections); // Debug log
+    console.log(`Data for year ${yearId}:`, sections);
 
     let primaryData = [...(sections.Primary || [])];
     let secondaryData = [...(sections.Secondary || [])];
@@ -187,7 +191,6 @@ const ClassManagement = () => {
           aValue = a.academicYear?.name ?? '';
           bValue = b.academicYear?.name ?? '';
         } else if (sortBy === 'section') {
-          // Sort sections: Primary first, then Secondary
           aValue = a.section?.toLowerCase() === 'primary' ? 0 : 1;
           bValue = b.section?.toLowerCase() === 'secondary' ? 1 : 0;
         }
@@ -212,7 +215,6 @@ const ClassManagement = () => {
     let secondarySnCounter = 1;
 
     if (page > 0) {
-      // Adjust S/N for pagination
       const primaryCountOnPreviousPages = primaryData.slice(0, startIndex).length;
       const secondaryCountOnPreviousPages = secondaryData.slice(0, startIndex).length;
       primarySnCounter = primaryCountOnPreviousPages + 1;
@@ -226,12 +228,12 @@ const ClassManagement = () => {
       } else if (row.section?.toLowerCase() === 'secondary') {
         sn = secondarySnCounter++;
       } else {
-        sn = 0; // Fallback for unexpected sections
+        sn = 0;
       }
       return { ...row, sn };
     });
 
-    console.log(`Paginated data for year ${yearId}:`, result); // Debug log
+    console.log(`Paginated data for year ${yearId}:`, result);
     return result;
   };
 
@@ -404,6 +406,35 @@ const ClassManagement = () => {
         colors={colors}
         theme={theme}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={closeDeleteConfirm}
+        aria-labelledby="delete-confirm-dialog-title"
+        aria-describedby="delete-confirm-dialog-description"
+      >
+        <DialogTitle id="delete-confirm-dialog-title">Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <Typography id="delete-confirm-dialog-description">
+            Are you sure you want to delete the class <strong>{classToDelete?.name}</strong>? This action cannot be undone.
+          </Typography>
+          {error && <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDeleteConfirm} color="secondary">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDelete}
+            color="error"
+            variant="contained"
+            disabled={loadingSubmit}
+          >
+            {loadingSubmit ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
