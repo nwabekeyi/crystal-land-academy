@@ -1,3 +1,4 @@
+// components/Dashboard.jsx
 import { Box, useTheme, Rating, Typography } from '@mui/material';
 import { tokens } from '../../theme';
 import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
@@ -10,83 +11,111 @@ import withDashboardWrapper from '../../../../components/dasboardPagesContainer'
 import { useState } from 'react';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
 import { MakeAnnouncement, SubmitFeedback } from './modals';
-import ActionButton from '../../components/actionButton'; // Import the ActionButton component
+import ActionButton from '../../components/actionButton';
 
-const Component = ({home}) => {
+const Component = ({ home }) => {
   const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
+  const [openAnnouncementModal, setOpenAnnouncementModal] = useState(false);
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const user = useSelector((state) => state.users.user);
-  const [openAnouncementModal, setOpenAnouncementModal] = useState(false);
+
+  // Fallback if user is not loaded
+  if (!user || !user.firstName) {
+    return (
+      <Box>
+        <Typography>Loading user data...</Typography>
+      </Box>
+    );
+  }
 
   return (
-    <Box >
+    <Box>
       {/* HEADER */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header home title={user.firstName} subtitle="Welcome to your dashboard" />
-        <Box sx={{ display: 'flex' }}>
+        <Box sx={{ display: 'flex', gap: '10px' }}>
+          {/* Admin-specific buttons */}
           {user.role === 'admin' && (
-            <Box 
+            <Box
               sx={{
                 display: 'flex',
-                flexDirection: { xs: 'column', sm: 'column', md: 'row' }, // Column layout on small and medium screens, row on larger screens
-                alignItems: 'center',  // Align center
-                justifyContent: 'center',  // Justify center
-                gap: '10px', // Optional: Adds some space between items
+                flexDirection: { xs: 'column', sm: 'column', md: 'row' },
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
               }}
             >
               <ActionButton
                 icon={<DownloadOutlinedIcon sx={{ fontSize: { xs: '16px', sm: '18px', md: '20px' } }} />}
                 content="Download Reports"
               />
-
               <ActionButton
                 icon={<AnnouncementIcon sx={{ fontSize: { xs: '16px', sm: '18px', md: '20px' } }} />}
                 content="Make announcement"
-                onClick={() => setOpenAnouncementModal(true)}
-              />
-
-              {/* Make Announcement modal */}
-              <MakeAnnouncement
-                openAnnoucementModal={openAnouncementModal}
-                setModalOpen={setOpenAnouncementModal}
+                onClick={() => setOpenAnnouncementModal(true)}
               />
             </Box>
           )}
 
-          {/* student feedbacks button */}
-          {user.role === ('student' || 'admin' || 'teacher') && (
+          {/* Teacher-specific buttons */}
+          {user.role === 'teacher' && (
             <Box
               sx={{
                 display: 'flex',
-                flexDirection: { xs: 'column', sm: 'column', md: 'row' }, // Column layout on small and medium screens, row on larger screens
-                alignItems: 'center',  // Align center
-                justifyContent: 'center',  // Justify center
-                gap: '10px', // Optional: Adds some space between items
+                flexDirection: { xs: 'column', sm: 'column', md: 'row' },
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
               }}
             >
               <ActionButton
-                icon={<AnnouncementIcon sx={{ fontSize: { xs: '16px' } }} />}
+                icon={<AnnouncementIcon sx={{ fontSize: { xs: '16px', sm: '18px', md: '20px' } }} />}
+                content="Make announcement"
+                onClick={() => setOpenAnnouncementModal(true)}
+              />
+              <ActionButton
+                icon={<AnnouncementIcon sx={{ fontSize: { xs: '16px', sm: '18px', md: '20px' } }} />}
                 content="Submit Feedback"
                 onClick={() => setOpenFeedbackModal(true)}
               />
-              
-              {/* send feedback modal */}
-              <SubmitFeedback
-                openFeedbackModal={openFeedbackModal}
-                setModalOpen={setOpenFeedbackModal}
+              <Box>
+                <Rating sx={{ fontSize: { xs: '1em', sm: '1.2em' } }} value={user.rating} readOnly precision={0.1} />
+                <Typography variant="h6" sx={{ fontSize: { xs: '0.8em', sm: '1em' } }}>
+                  Rating: {user.rating}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
+          {/* Student-specific buttons */}
+          {user.role === 'student' && (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'column', md: 'row' },
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+              }}
+            >
+              <ActionButton
+                icon={<AnnouncementIcon sx={{ fontSize: { xs: '16px', sm: '18px', md: '20px' } }} />}
+                content="Submit Feedback"
+                onClick={() => setOpenFeedbackModal(true)}
               />
             </Box>
           )}
 
-          {user.role === 'teacher' && (
-            <Box>
-              <Rating sx={{ fontSize: { xs: '1em', sm: '1.2em' } }} value={user.rating} readOnly precision={0.1} />
-              <Typography variant="h6" sx={{ fontSize: { xs: '0.8em', sm: '1em' } }}>
-                Rating: {user.rating}
-              </Typography>
-            </Box>
-          )}
+          {/* Announcement and Feedback modals */}
+          <MakeAnnouncement
+            openAnnouncementModal={openAnnouncementModal}
+            setModalOpen={setOpenAnnouncementModal}
+          />
+          <SubmitFeedback
+            openFeedbackModal={openFeedbackModal}
+            setModalOpen={setOpenFeedbackModal}
+          />
         </Box>
       </Box>
 
