@@ -5,7 +5,7 @@ import { tokens } from "../../pages/dashboard/theme";
 import Loader from "../../utils/loader";
 import ActionButton from "../../pages/dashboard/components/actionButton";
 
-const SignUpForm = ({ role, selectedUser }) => {
+const SignUpForm = ({ role, selectedUser, studentReg, offline }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const {
@@ -23,7 +23,7 @@ const SignUpForm = ({ role, selectedUser }) => {
   } = useSignUp({ role, selectedUser });
 
   // Log for debugging
-  console.log("SignUpForm - role:", role, "selectedUser:", selectedUser, "formData:", formData, "subclassSubjectOptions:", subclassSubjectOptions);
+  console.log("SignUpForm - role:", role, "selectedUser:", selectedUser, "studentReg:", studentReg, "formData:", formData, "subclassSubjectOptions:", subclassSubjectOptions);
 
   const handleCloseModal = () => {
     setModalOpen(false);
@@ -70,7 +70,7 @@ const SignUpForm = ({ role, selectedUser }) => {
   });
 
   return (
-    <Box>
+    <Box sx={{paddingBottom: studentReg && '20px'}}>
       <Typography variant="h4">
         {selectedUser ? "Update" : "Sign Up"} ({role.charAt(0).toUpperCase() + role.slice(1)})
       </Typography>

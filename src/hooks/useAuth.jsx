@@ -60,8 +60,10 @@ const useAuth = () => {
 
       const data = await res.json();
 
-      // Store accessToken in sessionStorage
-      if (data.data.token) {
+      // Store accessToken in sessionStorage only if student is not withdrawn
+      if (role.toLowerCase() === 'student' && data.data.student.isWithdrawn) {
+        console.warn('Student is withdrawn; no access token stored');
+      } else if (data.data.token) {
         sessionStorage.setItem('accessToken', data.data.token);
         console.log('Access token stored in sessionStorage');
       } else {
@@ -80,7 +82,7 @@ const useAuth = () => {
         console.log('Logged in:', data.data.user);
       }
     } catch (err) {
-      dispatch(setError(data.message));
+      dispatch(setError(err.message));
       console.error(err);
     } finally {
       dispatch(setLoading(false));
@@ -89,6 +91,12 @@ const useAuth = () => {
 
   // Refresh token logic
   const refreshAccessToken = async () => {
+    // Skip refresh for withdrawn students
+    if (user?.role === 'student' && user?.isWithdrawn) {
+      console.warn('Student is withdrawn; skipping token refresh');
+      return;
+    }
+
     try {
       const res = await fetch(endpoints.REFRESH_TOKEN, {
         method: 'POST',

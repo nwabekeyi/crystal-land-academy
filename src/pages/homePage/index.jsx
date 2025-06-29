@@ -1,5 +1,4 @@
  import ButtonGradient from './assets/svg/ButtonGradient'
-import Button from './components/Button';
 import Collaboration from './components/Collaboration';
 import Footer from './components/Footer';
 import Header from './components/Header';
@@ -7,7 +6,6 @@ import Hero from './components/Hero';
 import About from './components/About';
 import Enquiry from './components/Enquiry'
 import Roadmap from './components/Roadmap';
-import Section from './components/Section';
 import Services from './components/Services';
 import './index.css'
 

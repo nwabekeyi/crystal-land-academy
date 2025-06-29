@@ -25,7 +25,7 @@ const Component = ({home}) => {
       <Box display="flex" justifyContent="space-between" alignItems="center">
         <Header home title={user.firstName} subtitle="Welcome to your dashboard" />
         <Box sx={{ display: 'flex' }}>
-          {user.role === 'superadmin' && (
+          {user.role === 'admin' && (
             <Box 
               sx={{
                 display: 'flex',
