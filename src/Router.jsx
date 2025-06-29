@@ -6,7 +6,7 @@ const Home = lazy(() => import('./pages/homePage'));
 const SignInPage = lazy(() => import('./pages/signin'));
 const DashboardHome = lazy(() => import('./pages/dashboard'));
 const CodeAuthenticator = lazy(() => import('./generateCode/codeAuthenticator'));
-const OfflineSignUp = lazy(() => import('./pages/offlineSignUp'));
+const OfflineSignUp = lazy(() => import('./pages/studentSignUp'));
 const ResetPassword  = lazy(() => import('./pages/resetPassword'));
 const ForgotPasswordPage = lazy(() => import('./pages/forgotPassword'));
 
@@ -21,11 +21,9 @@ function MyRoute() {
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/dashboard/*" element={<DashboardHome />} />
           <Route path="/code-authenticator" element={<CodeAuthenticator />} />
-          <Route path="/offlineSignup" element={<OfflineSignUp />} />
+          <Route path="/studentSignUp" element={<OfflineSignUp />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/reset-password" element={<ResetPassword />} /> 
-          
-          
+          <Route path="/reset-password" element={<ResetPassword />} />
                  </Routes>
       </Suspense>
     </Router>

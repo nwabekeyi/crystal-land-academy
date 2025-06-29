@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 import { Box, Tabs, Tab, Typography, useTheme } from '@mui/material';
-import { tokens } from '../../theme'; // Adjust path as needed
+import { tokens } from '../../theme';
 import Dropdown from '../../../../components/dropdown';
 import { SignUpStudent, SignUpTeacher, SignUpAdmin } from '../../../signUp';
 import Header from '../../components/Header';
 import TableComponent from '../../../../components/table';
-import useUserManagement from './useUserManagement'; // Adjust path as needed
+import useUserManagement from './useUserManagement';
 import ScrollDialog from '../../components/scrollDialog';
 import withDashboardWrapper from '../../../../components/dasboardPagesContainer';
-import { DeleteModal, EditFormModal } from './modals';
+import { DeleteModal, EditFormModal, WithdrawModal } from './modals';
 
 const UserManagement = () => {
   const theme = useTheme();
@@ -17,6 +17,7 @@ const UserManagement = () => {
     selectedUser,
     editDialogOpen,
     studentData,
+    withdrawnStudentData,
     teacherData,
     adminData,
     selectedRole,
@@ -40,7 +41,16 @@ const UserManagement = () => {
     setViewUserDetails,
     openDeleteModal,
     setOpenDeleteModal,
+    withdrawModalOpen,
+    setWithdrawModalOpen,
+    handleWithdraw,
+    handleWithdrawOpen,
+    handleWithdrawClose,
+    editUserDetailsState,
     rerender,
+    studentSections,
+    selectedStudentSection,
+    setSelectedStudentSection,
   } = useUserManagement();
 
   useEffect(() => {
@@ -48,7 +58,6 @@ const UserManagement = () => {
       setViewUserDetails(true);
     }
   }, [selectedUser, setViewUserDetails]);
-
 
   return (
     <Box>
@@ -78,6 +87,21 @@ const UserManagement = () => {
         >
           <Tab
             label='Students'
+            sx={{
+              color: 'white !important',
+              textTransform: 'none',
+              fontWeight: 'bold',
+              '&.Mui-selected': {
+                color: 'white !important',
+                boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.3)',
+                backgroundColor: colors.blueAccent[700],
+              },
+              boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
+              backgroundColor: colors.primary[400],
+            }}
+          />
+          <Tab
+            label='Withdrawn Students'
             sx={{
               color: 'white !important',
               textTransform: 'none',
@@ -127,6 +151,37 @@ const UserManagement = () => {
       {/* Tab Content for Students */}
       {tabIndex === 0 && (
         <Box m='20px 0 0 0' height='75vh'>
+          <Tabs
+            value={selectedStudentSection}
+            onChange={(event, newValue) => setSelectedStudentSection(newValue)}
+            aria-label="student section tabs"
+            sx={{
+              backgroundColor: colors.primary[400],
+              '& .MuiTabs-indicator': {
+                backgroundColor: colors.blueAccent[700],
+              },
+            }}
+          >
+            {studentSections.map((section) => (
+              <Tab
+                key={section}
+                label={section}
+                value={section}
+                sx={{
+                  color: 'white !important',
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  '&.Mui-selected': {
+                    color: 'white !important',
+                    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.3)',
+                    backgroundColor: colors.blueAccent[700],
+                  },
+                  boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
+                  backgroundColor: colors.primary[400],
+                }}
+              />
+            ))}
+          </Tabs>
           <TableComponent
             columns={columns}
             tableHeader='Student Management'
@@ -145,8 +200,60 @@ const UserManagement = () => {
         </Box>
       )}
 
-      {/* Tab Content for Teachers */}
+      {/* Tab Content for Withdrawn Students */}
       {tabIndex === 1 && (
+        <Box m='20px 0 0 0' height='75vh'>
+          <Tabs
+            value={selectedStudentSection}
+            onChange={(event, newValue) => setSelectedStudentSection(newValue)}
+            aria-label="withdrawn student section tabs"
+            sx={{
+              backgroundColor: colors.primary[400],
+              '& .MuiTabs-indicator': {
+                backgroundColor: colors.blueAccent[700],
+              },
+            }}
+          >
+            {studentSections.map((section) => (
+              <Tab
+                key={section}
+                label={section}
+                value={section}
+                sx={{
+                  color: 'white !important',
+                  textTransform: 'none',
+                  fontWeight: 'bold',
+                  '&.Mui-selected': {
+                    color: 'white !important',
+                    boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.3)',
+                    backgroundColor: colors.blueAccent[700],
+                  },
+                  boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.1)',
+                  backgroundColor: colors.primary[400],
+                }}
+              />
+            ))}
+          </Tabs>
+          <TableComponent
+            columns={columns}
+            tableHeader='Withdrawn Student Management'
+            data={withdrawnStudentData}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            onSortChange={handleSortChange}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+            onRowClick={() => setSelectedRole('student')}
+            hiddenColumnsSmallScreen={['email', 'createdAt']}
+            hiddenColumnsTabScreen={['createdAt', 'details']}
+          />
+        </Box>
+      )}
+
+      {/* Tab Content for Teachers */}
+      {tabIndex === 2 && (
         <Box m='20px 0 0 0' height='75vh'>
           <TableComponent
             columns={columns}
@@ -167,7 +274,7 @@ const UserManagement = () => {
       )}
 
       {/* Tab Content for Admins */}
-      {tabIndex === 2 && (
+      {tabIndex === 3 && (
         <Box m='20px 0 0 0' height='75vh'>
           <TableComponent
             columns={columns}
@@ -201,6 +308,7 @@ const UserManagement = () => {
                 <>
                   <Typography>Class: {selectedUser.classLevel}</Typography>
                   <Typography>Boarding Status: {selectedUser.boardingStatus}</Typography>
+                  <Typography>Withdrawn: {selectedUser.isWithdrawn ? 'Yes' : 'No'}</Typography>
                 </>
               )}
               {selectedUser.role === 'teacher' && (
@@ -228,6 +336,14 @@ const UserManagement = () => {
         editDialogOpen={editDialogOpen}
         setEditDialogOpen={setEditDialogOpen}
         handleEdit={handleEdit}
+      />
+
+      {/* Withdraw Modal */}
+      <WithdrawModal
+        open={withdrawModalOpen}
+        onClose={handleWithdrawClose}
+        onConfirm={handleWithdraw}
+        userName={editUserDetailsState ? `${editUserDetailsState.firstName} ${editUserDetailsState.lastName}` : ''}
       />
 
       {/* Sign Up User Dialog */}

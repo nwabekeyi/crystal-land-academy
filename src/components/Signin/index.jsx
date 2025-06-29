@@ -60,6 +60,10 @@ const SignIn = () => {
     }
   };
 
+  const handleBackClick = () => {
+    navigate('/'); // Fallback to home route
+  };
+
   const [mode, setMode] = useState('dark');
   const theme = createTheme({
     palette: {
@@ -78,14 +82,71 @@ const SignIn = () => {
     },
   });
 
+  // Contact Section Component for reuse
+  const ContactSection = () => (
+    <Box
+      sx={{
+        width: { xs: '90%', sm: '70%', md: '50%' }, // Responsive width
+        maxWidth: '400px', // Limit max width
+        backdropFilter: 'blur(12px)', // Glassmorphism effect
+        backgroundColor:
+          mode === 'light'
+            ? 'rgba(255, 255, 255, 0.2)'
+            : 'rgba(18, 18, 18, 0.8)', // Theme-based background
+        border: '1px solid rgba(255, 255, 255, 0.3)', // Subtle border
+        borderRadius: '12px', // Rounded corners
+        p: { xs: 2, sm: 3 }, // Responsive padding
+        textAlign: 'center',
+        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)', // Subtle shadow
+        mt: { xs: 3, md: 0 }, // Margin-top on mobile for spacing
+      }}
+    >
+      <Typography
+        variant="h5"
+        sx={{
+          color: '#fff',
+          fontWeight: 'bold',
+          mb: 2,
+          fontSize: { xs: '1.5rem', sm: '1.8rem' }, // Responsive font
+        }}
+      >
+        Need Help?
+      </Typography>
+      <Typography
+        variant="body1"
+        sx={{
+          color: '#fff',
+          mb: 2,
+          fontSize: { xs: '1rem', sm: '1.1rem' }, // Responsive font
+        }}
+      >
+        For any issues, please contact us:
+      </Typography>
+      <Link
+        href="tel:+2349161010145"
+        underline="hover"
+        sx={{
+          color: mode === 'light' ? '#1976d2' : '#90caf9', // Theme-based color
+          fontSize: { xs: '1.3rem', sm: '1.6rem' }, // Responsive font
+          fontWeight: 'bold',
+          transition: 'color 0.3s',
+          '&:hover': {
+            color: mode === 'light' ? '#1565c0' : '#bbdefb', // Hover effect
+          },
+        }}
+      >
+        09161010145
+      </Link>
+    </Box>
+  );
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'end',
-          alignItems: 'center',
+          flexDirection: { xs: 'column', md: 'row' }, // Stack on mobile, row on tablet/desktop
           minHeight: '100vh',
           backgroundImage: `url(${mode === 'light' ? bg1 : bg2})`,
           backgroundSize: 'cover',
@@ -94,6 +155,7 @@ const SignIn = () => {
           position: 'relative',
         }}
       >
+        {/* Background Overlay */}
         <Box
           sx={{
             position: 'absolute',
@@ -103,12 +165,29 @@ const SignIn = () => {
             height: '100%',
             background: `rgba(0, 0, 0, 0.6)`,
             opacity: mode === 'light' ? 0.4 : 0.2,
+            zIndex: 0,
           }}
         />
+
+        {/* Contact Section (Left Half on Desktop/Tablet, Hidden on Mobile) */}
         <Box
           sx={{
-            width: { xs: '100%', md: '40%' },
-            height: '100vh',
+            width: { xs: '0', md: '60%' }, // Hidden on mobile, 60% on tablet/desktop
+            display: { xs: 'none', md: 'flex' }, // Hidden on mobile, flex on tablet/desktop
+            justifyContent: 'center',
+            alignItems: 'center',
+            p: { xs: 2, sm: 4 }, // Reduced padding on mobile
+            zIndex: 1,
+          }}
+        >
+          <ContactSection />
+        </Box>
+
+        {/* Sign-in Form (Full Width on Mobile, Right Half on Desktop/Tablet) */}
+        <Box
+          sx={{
+            width: { xs: '100%', md: '40%' }, // Full width on mobile, 40% on tablet/desktop
+            height: { xs: 'auto', md: '100vh' }, // Auto height on mobile, full height on tablet/desktop
             backdropFilter: 'blur(12px)',
             backgroundColor:
               mode === 'light'
@@ -130,8 +209,22 @@ const SignIn = () => {
               mb: 2,
             }}
           >
-            <IconButton onClick={() => navigate(-1)} color="primary">
-              <ArrowBackIcon sx={{ color: '#fff' }} />
+            <IconButton
+              onClick={handleBackClick}
+              color="primary"
+              sx={{
+                p: { xs: 1.5, sm: 1 }, // Larger touch area on mobile
+                '& svg': {
+                  fontSize: { xs: '2rem', sm: '1.5rem' }, // Larger icon on mobile
+                  color: '#fff', // Ensure visibility
+                },
+                zIndex: 2, // Ensure above other elements
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)', // Subtle hover effect
+                },
+              }}
+            >
+              <ArrowBackIcon />
             </IconButton>
 
             <IconButton
@@ -140,6 +233,13 @@ const SignIn = () => {
                   prevMode === 'light' ? 'dark' : 'light'
                 )
               }
+              sx={{
+                p: { xs: 1.5, sm: 1 }, // Larger touch area on mobile
+                '& svg': {
+                  fontSize: { xs: '2rem', sm: '1.5rem' }, // Larger icon on mobile
+                },
+                zIndex: 2, // Ensure above other elements
+              }}
             >
               {mode === 'light' ? (
                 <DarkModeRoundedIcon sx={{ color: '#fff' }} />
@@ -160,8 +260,18 @@ const SignIn = () => {
           <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <IconButton size="small" color="primary">
-                  <BadgeRoundedIcon sx={{ color: '#fff' }} />
+                <IconButton
+                  size="small"
+                  color="primary"
+                  sx={{
+                    p: { xs: 1.5, sm: 1 }, // Larger touch area on mobile
+                    '& svg': {
+                      fontSize: { xs: '1.8rem', sm: '1.5rem' }, // Larger icon on mobile
+                      color: '#fff',
+                    },
+                  }}
+                >
+                  <BadgeRoundedIcon />
                 </IconButton>
                 <Typography variant="h6">Crystal Land Academy</Typography>
               </Box>
@@ -225,6 +335,11 @@ const SignIn = () => {
                 </Link>
               </Stack>
             </form>
+
+            {/* Contact Section (Inside Form Container on Mobile) */}
+            <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+              <ContactSection />
+            </Box>
           </Box>
 
           <Box sx={{ textAlign: 'center', mt: 3 }}>

@@ -1,15 +1,15 @@
 import "./index.css";
 import React, { useState, lazy, Suspense, useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import Topbar from "./scenes/global/Topbar";
 import Sidebar from "./scenes/global/Sidebar";
-import { CssBaseline, ThemeProvider, Box } from "@mui/material";
+import { CssBaseline, ThemeProvider, Box, Typography, Button } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
 import { useSelector } from "react-redux";
 import { tokens } from "./theme";
 import SignIn from "../../components/Signin";
 import Loader from "../../utils/loader";
-
+import useAuth from '../../hooks/useAuth'
 // Lazy load the components
 const Dashboard = lazy(() => import("./scenes/dashboard"));
 const Team = lazy(() => import("./scenes/team"));
@@ -46,29 +46,30 @@ function DashboardHome() {
   const colors = tokens(theme.palette.mode);
   const user = useSelector((state) => state.users.user);
   const userRole = user ? user.role : "not logged in";
+  const navigate = useNavigate();
+  const {logout} = useAuth();
+
+  const gotoHome = () => {
+    logout();
+    navigate('/');
+  }
 
   useEffect(() => {
-    // Check if we've already reloaded in this session to prevent infinite loops
-    // const hasReloaded = sessionStorage.getItem("hasReloaded");
+    const referrer = document.referrer;
+    const referrerPath = referrer ? referrer.split("/") : [];
+    const isFromDashboard = referrerPath.some((part) => part === "dashboard");
 
-    // if (!hasReloaded) {
-      const referrer = document.referrer;
-      const referrerPath = referrer ? referrer.split("/") : [];
-      const isFromDashboard = referrerPath.some((part) => part === "dashboard");
+    console.log(referrerPath);
+    console.log(isFromDashboard);
+    console.log(referrer);
 
-      console.log(referrerPath);
-      console.log(isFromDashboard);
-      console.log(referrer)
-      // Reload if the referrer does NOT contain "dashboard" and is not empty
-      if (!isFromDashboard && referrer == "") {
-        sessionStorage.setItem("hasReloaded", "true"); // Mark as reloaded
-        window.location.reload();
-      } else {
-        // Mark as loaded even if no reload is needed to prevent re-checking
-        sessionStorage.setItem("hasReloaded", "true");
-      // }
+    if (!isFromDashboard && referrer === "") {
+      sessionStorage.setItem("hasReloaded", "true");
+      window.location.reload();
+    } else {
+      sessionStorage.setItem("hasReloaded", "true");
     }
-  }, []); // Runs only once on mount
+  }, []);
 
   const renderRoutesBasedOnRole = (role) => {
     switch (role) {
@@ -125,6 +126,54 @@ function DashboardHome() {
         return null;
     }
   };
+
+  // Check if user is a withdrawn student
+  if (userRole === "student" && user?.isWithdrawn) {
+    return (
+      <ColorModeContext.Provider value={colorMode}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100vh",
+              backgroundColor: theme.palette.mode === "light" ? colors.primary[900] : colors.primary[500],
+              gap: 3,
+              px: 2,
+            }}
+          >
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: "bold",
+                textAlign: "center",
+                color: colors.redAccent[500],
+                maxWidth: "600px",
+              }}
+              aria-live="assertive"
+            >
+              You have been withdrawn and cannot access school information.
+            </Typography>
+            <Button
+              onClick={gotoHome}
+              style={{
+                color: colors.blueAccent[500],
+                textDecoration: "underline",
+                fontSize: "1.2rem",
+                fontWeight: "bold",
+              }}
+              aria-label="Return to homepage"
+            >
+              Return to Homepage
+            </Button>
+          </Box>
+        </ThemeProvider>
+      </ColorModeContext.Provider>
+    );
+  }
 
   return (
     <>

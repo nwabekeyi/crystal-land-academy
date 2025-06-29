@@ -59,7 +59,6 @@ const ClassManagement = () => {
     openModal,
     academicYears,
     selectedClass,
-    // Add delete confirmation props
     deleteConfirmOpen,
     classToDelete,
     handleDelete,
@@ -169,7 +168,7 @@ const ClassManagement = () => {
       sortDirection: 'asc',
     };
     const sections = tableProps.classLevels[yearId] || { Primary: [], Secondary: [] };
-    
+
     console.log(`Data for year ${yearId}:`, sections);
 
     let primaryData = [...(sections.Primary || [])];
@@ -279,6 +278,8 @@ const ClassManagement = () => {
                   value={tabValue}
                   onChange={handleTabChange}
                   aria-label="academic year tabs"
+                  variant="scrollable"
+                  scrollButtons="auto"
                   sx={{
                     backgroundColor: colors.primary[400],
                     '& .MuiTabs-indicator': {
@@ -294,6 +295,8 @@ const ClassManagement = () => {
                         color: 'white !important',
                         textTransform: 'none',
                         fontWeight: 'bold',
+                        minWidth: 160, // Match UserManagement.js tab width
+                        width: 160, // Fixed width to ensure consistency
                         '&.Mui-selected': {
                           color: 'white !important',
                           boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.3)',
