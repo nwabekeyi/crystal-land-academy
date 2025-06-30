@@ -25,31 +25,6 @@ const OutstandingPayments = () => {
   ];
 
   return (
-<<<<<<< HEAD
-    <div style={{ height: '350px' }}>
-      <ResponsiveBar
-        data={dummyData}
-        keys={['amount']}
-        indexBy="class"
-        theme={{
-          axis: { domain: { line: { stroke: colors.grey[100] } }, legend: { text: { fill: colors.grey[100], fontSize: 8 } }, ticks: { line: { stroke: colors.grey[100], strokeWidth: 1 }, text: { fill: colors.grey[100], fontSize: 8 } } },
-          legends: { text: { fill: colors.grey[100], fontSize: 8 } },
-        }}
-        margin={{ top: 50, right: 20, bottom: 50, left: 60 }}
-        padding={0.3}
-        colors={{ scheme: 'nivo' }}
-        animate={true}
-        motionConfig="default"
-        axisTop={null}
-        axisRight={null}
-        axisBottom={{ tickSize: 5, tickPadding: 5, tickRotation: 0, legend: 'Class Level', legendPosition: 'middle', legendOffset: 32 }}
-        axisLeft={{ tickSize: 5, tickPadding: 5, tickRotation: 0, legend: 'Outstanding Amount ($)', legendPosition: 'middle', legendOffset: -40 }}
-        labelSkipWidth={12}
-        labelSkipHeight={12}
-        labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-      />
-    </div>
-=======
     <Box>
       <div style={{ height: '350px' }}>
         <ResponsivePie
@@ -126,7 +101,6 @@ const OutstandingPayments = () => {
         ))}
       </Box>
     </Box>
->>>>>>> 4c1b2d1ea04f4d5d3a696ac8201f845966cdfb82
   );
 };
 
