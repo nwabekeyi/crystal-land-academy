@@ -14,6 +14,7 @@ import { useSelector } from 'react-redux';
 
 const PaymentHistory = () => {
   const user = useSelector((state) => state.users.user); // Retrieve user from Redux
+  console.log(user)
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
 
@@ -92,7 +93,7 @@ useEffect(() => {
     const payload = {
       studentId: user._id, // ObjectId from Redux
       classLevelId: user.classLevelId, // ObjectId from Redux
-      academicYear: user.currentClassLevel?.academicYear?._id, // ObjectId from currentClassLevel
+      academicYear: user.currentClassLevel?.academicYear?.academicYearId, // ObjectId from currentClassLevel
       section: user.currentClassLevel?.section, // e.g., "Primary" or "Secondary"
       termPayments: [
         {
@@ -110,7 +111,7 @@ useEffect(() => {
       ],
     };
   
-    console.log("Payload being sent to backend:", JSON.stringify(payload, null, 2));
+    console.log("Payload being sent to backend:", JSON.stringify(payload.academicYear, null, 2));
   
     const response = await callApi(endpoints.createPayment, "POST", payload);
   
@@ -226,7 +227,7 @@ useEffect(() => {
                 onSuccess={handlePaymentSuccess}
                 studentId={user._id} // ObjectId
                 classLevelId={user.classLevelId} // ObjectId
-                academicYear={user.currentClassLevel?.academicYear?._id} // ObjectId
+                academicYear={user.currentClassLevel?.academicYear?.acadenicYearId} // ObjectId
                 section={user.currentClassLevel?.section}
                 termName="1st Term"
                 subclassLetter={user.currentClassLevel?.subclass}

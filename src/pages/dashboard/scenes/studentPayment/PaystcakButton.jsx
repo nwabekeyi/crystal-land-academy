@@ -95,6 +95,7 @@ const PaystackButton = ({
           callApi('http://localhost:5000/api/v1/payment', 'POST', payload)
             .then((backendResponse) => {
               console.log('Transaction registered successfully:', backendResponse);
+              console.log("payload being sent", payload.academicYear)
               onSuccess(payload);
             })
             .catch((error) => {
