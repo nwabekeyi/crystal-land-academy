@@ -2,50 +2,34 @@
 import { ResponsiveLine } from '@nivo/line';
 import { useTheme } from '@mui/material';
 import { tokens } from '../../../theme';
-import  useStudentData  from './useStudentData';
+import useStudentData from './useStudentData';
+import { useEffect, useState } from 'react';
+import { Typography } from '@mui/material';
 
 const SubjectPerformance = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const { subjectPerformance } = useStudentData(); // Assumed to return performance data
+  const { fetchStudentData, loading, error } = useStudentData();
+  const [data, setData] = useState(null);
 
-  // Dummy data: Performance in Math, English, Science over months
-  const dummyData = [
-    {
-      id: 'Mathematics',
-      color: colors.blueAccent[500],
-      data: [
-        { x: 'Sep', y: 85 }, { x: 'Oct', y: 88 }, { x: 'Nov', y: 90 }, { x: 'Dec', y: 87 },
-        { x: 'Jan', y: 92 }, { x: 'Feb', y: 89 }, { x: 'Mar', y: 94 }, { x: 'Apr', y: 91 },
-        { x: 'May', y: 93 }, { x: 'Jun', y: 90 },
-      ],
-    },
-    {
-      id: 'English',
-      color: colors.greenAccent[500],
-      data: [
-        { x: 'Sep', y: 78 }, { x: 'Oct', y: 80 }, { x: 'Nov', y: 82 }, { x: 'Dec', y: 79 },
-        { x: 'Jan', y: 85 }, { x: 'Feb', y: 83 }, { x: 'Mar', y: 87 }, { x: 'Apr', y: 84 },
-        { x: 'May', y: 86 }, { x: 'Jun', y: 85 },
-      ],
-    },
-    {
-      id: 'Science',
-      color: colors.redAccent[500],
-      data: [
-        { x: 'Sep', y: 80 }, { x: 'Oct', y: 83 }, { x: 'Nov', y: 85 }, { x: 'Dec', y: 82 },
-        { x: 'Jan', y: 88 }, { x: 'Feb', y: 86 }, { x: 'Mar', y: 90 }, { x: 'Apr', y: 87 },
-        { x: 'May', y: 89 }, { x: 'Jun', y: 88 },
-      ],
-    },
-  ];
+  useEffect(() => {
+    const getData = async () => {
+      const result = await fetchStudentData();
+      setData(result);
+    };
+    getData();
+  }, [fetchStudentData]);
 
-  const data = subjectPerformance || dummyData;
+  if (loading) return <Typography>Loading...</Typography>;
+  if (error) return <Typography>Error: {error}</Typography>;
+  if (!data || !data.subjectPerformance) return <Typography>No performance data available</Typography>;
+
+  const { subjectPerformance } = data;
 
   return (
     <div style={{ height: '350px' }}>
       <ResponsiveLine
-        data={data}
+        data={subjectPerformance}
         animate={true}
         motionConfig="default"
         theme={{

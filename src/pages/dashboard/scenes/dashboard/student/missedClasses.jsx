@@ -2,33 +2,42 @@
 import { Box, Card, CardContent, Typography } from '@mui/material';
 import { useTheme } from '@mui/material';
 import { tokens } from '../../../theme';
-import  useStudentData  from './useStudentData';
+import useStudentData from './useStudentData';
+import { useEffect, useState } from 'react';
 
 const MissedClasses = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const { missedClasses, formatDateToDDMMYYYY } = useStudentData(); // Assumed to return [{ id, subject, date, time, location }]
+  const { fetchStudentData, formatDateToDDMMYYYY, loading, error } = useStudentData();
+  const [data, setData] = useState(null);
 
-  // Dummy data
-  const dummyMissedClasses = [
-    { id: '1', subject: 'English', date: '2025-06-10', time: '09:00 AM', location: 'Room 5' },
-    { id: '2', subject: 'Science', date: '2025-06-12', time: '11:00 AM', location: 'Lab 2' },
-  ];
+  useEffect(() => {
+    const getData = async () => {
+      const result = await fetchStudentData();
+      setData(result);
+    };
+    getData();
+  }, [fetchStudentData]);
 
-  const classes = missedClasses || dummyMissedClasses;
   const conBg = theme.palette.mode === 'light' ? colors.blueAccent[800] : colors.greenAccent[600];
+
+  if (loading) return <Typography>Loading...</Typography>;
+  if (error) return <Typography>Error: {error}</Typography>;
+  if (!data || !data.missedClasses) return <Typography>No missed classes data available</Typography>;
+
+  const { missedClasses } = data;
 
   return (
     <Box>
       <Typography variant="h5" fontWeight="600" mb="15px">
         Missed Classes
       </Typography>
-      {classes.length > 0 ? (
-        classes.map((schedule) => (
+      {missedClasses.length > 0 ? (
+        missedClasses.map((schedule) => (
           <Card key={schedule.id} sx={{ mb: 2 }}>
             <CardContent sx={{ backgroundColor: conBg, textAlign: 'left' }}>
               <Typography variant="h6">{schedule.subject}</Typography>
-              <Typography>{formatDateToDDMMYYYY ? formatDateToDDMMYYYY(schedule.date) : schedule.date}</Typography>
+              <Typography>{formatDateToDDMMYYYY(schedule.date)}</Typography>
               <Typography>{schedule.time}</Typography>
               <Typography>Location: {schedule.location}</Typography>
             </CardContent>
