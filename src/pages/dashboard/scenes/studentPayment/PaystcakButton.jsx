@@ -1,21 +1,24 @@
 import React, { useState } from 'react';
 import { Box, CircularProgress, TextField } from '@mui/material';
-import { endpoints } from '../../../../utils/constants';
-import Modal from '../../components/modal'; 
-import { useSelector, useDispatch } from 'react-redux';
-import useApi from '../../../../hooks/useApi';
-import { setUser} from '../../../../reduxStore/slices/usersSlice';
+import Modal from '../../components/modal';
 import ActionButton from '../../components/actionButton';
 import PaymentIcon from '@mui/icons-material/Payment';
+import useApi from '../../../../hooks/useApi'; // Custom hook for API calls
 
-
-const PaystackButton = ({ onSuccess = () => {} }) => {  // Default to an empty function
+const PaystackButton = ({
+  onSuccess = () => {},
+  studentId,
+  classLevelId,
+  academicYear,
+  termName,
+  subclassLetter,
+  section,
+}) => {
   const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);  // State to control modal visibility
-  const [paymentAmount, setPaymentAmount] = useState('');  // State to store the entered amount
-  const {userId, studentId} = useSelector(state => state.users.user);  // Assuming your userId is stored under `state.users.user.userId`
-  const dispatch = useDispatch(); // Initialize dispatch
-  const { data, callApi } = useApi();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY; // Ensure this is correctly configured
+  const { callApi } = useApi(); // Use custom hook for API calls
 
   const handleOpenModal = () => {
     setModalOpen(true);
@@ -26,104 +29,102 @@ const PaystackButton = ({ onSuccess = () => {} }) => {  // Default to an empty f
   };
 
   const handleConfirmPayment = () => {
-    // Proceed with Paystack payment after confirming the amount
     handlePaystackPayment();
     handleCloseModal();
   };
 
-  const handlePaystackPayment = async () => {
+  const handlePaystackPayment = () => {
     setLoading(true);
 
     try {
-      // Request to your backend to initialize payment
-      const response = await fetch(endpoints.PAYSTACK_INIT, { 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const paystack = window.PaystackPop.setup({
+        key: publicKey,
+        email: 'user@example.com', // Replace with the user's email dynamically if available
+        currency: 'NGN',
+        amount: parseFloat(paymentAmount) * 100, // Convert to kobo
+        metadata: {
+          custom_fields: [
+            {
+              display_name: 'Payment Purpose',
+              variable_name: 'payment_purpose',
+              value: 'School Fees',
+            },
+          ],
         },
-        body: JSON.stringify({
-          userId,  // Pass userId here
-          paymentAmount: parseFloat(paymentAmount)  // Ensure this amount is in Naira, backend will handle conversion
-        }),
+        onClose: function () {
+          console.log('Payment dialog closed');
+        },
+        callback: function (response) {
+          console.log('Paystack callback triggered:', response);
+        
+          const transactionId = response.reference;
+        
+          if (!paymentAmount || isNaN(paymentAmount)) {
+            console.error('Invalid payment amount:', paymentAmount);
+            return;
+          }
+        
+          if (!transactionId) {
+            console.error('Missing transaction reference:', response);
+            return;
+          }
+        
+          const payload = {
+            studentId,
+            classLevelId,
+            academicYear,
+            section,
+            termPayments: [
+              {
+                termName,
+                subclassLetter,
+                payments: [
+                  {
+                    amountPaid: parseFloat(paymentAmount),
+                    method: 'Card',
+                    reference: transactionId,
+                    status: 'success',
+                  },
+                ],
+              },
+            ],
+          };
+        
+          console.log('Payload being sent to backend:', JSON.stringify(payload, null, 2));
+        
+          callApi('http://localhost:5000/api/v1/payment', 'POST', payload)
+            .then((backendResponse) => {
+              console.log('Transaction registered successfully:', backendResponse);
+              onSuccess(payload);
+            })
+            .catch((error) => {
+              console.error('Failed to register transaction:', error.response || error.message);
+              if (error.response) {
+                console.error('Backend error details:', error.response.data);
+              }
+            });
+        
+          setPaymentAmount('');
+        },
       });
 
-      const data = await response.json();
-      const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;  // Ensure this is correctly configured
-
-      if (data && data.payment_url && data.reference) {
-        const paystack = window.PaystackPop.setup({
-          key: publicKey, // Public key from environment
-          email: data.email,
-          currency: 'NGN',
-          amount: data.amount * 100,  // Convert to kobo if amount is in Naira
-          reference: data.reference, // The reference generated by backend
-          metadata: {
-            userId: data.userId, // Pass the userId as metadata
-          },
-          onClose: function () {
-            // Verify transaction even when user closes the modal
-            verifyTransaction(data.reference);
-          },
-          callback: function (response) {
-            const reference = response.reference;
-            // Verify transaction after successful payment
-            verifyTransaction(reference);
-          },
-        });
-
-        // Open the Paystack payment dialog
-        paystack.openIframe();
-      }
+      paystack.openIframe();
     } catch (error) {
-      console.error("Error initializing payment:", error);
+      console.error('Error initializing Paystack payment:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Function to verify the transaction on the backend
-  const verifyTransaction = async (reference) => {
-    try {
-      const response = await fetch(`${endpoints.PAYSTACK_PAYMENT}/${reference}`, { 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      const result = await response.json();
-      if (result.status === 'success') {
-        setPaymentAmount('');
-        onSuccess();  // Call onSuccess if the payment was successful
-        
-        // Fetch user data after payment success
-        const refreshUserData = await callApi(`${endpoints.USER}/${userId}`, 'GET');
-        
-        if (refreshUserData && refreshUserData.student) {
-          dispatch(setUser(refreshUserData.student)); // Use the correct user data from refreshUserData
-          console.log(refreshUserData.student);
-        }
-      } else {
-        console.error("Verification failed:", result);
-        console.log('Payment failed');
-      }
-    } catch (error) {
-      console.error("Error verifying transaction:", error);
-    }
-  };
-  
-
   return (
     <Box>
       <ActionButton
-      icon={<PaymentIcon />}
+        icon={<PaymentIcon />}
         disabled={loading}
-        onClick={handleOpenModal}  // Open modal on button click
-        content= {loading ? <CircularProgress size={24} /> : 'Pay Now'}
-
+        onClick={handleOpenModal}
+        content={loading ? <CircularProgress size={24} /> : 'Pay Now'}
       />
 
-      {/* Modal for inputting payment amount */}
       <Modal
         open={modalOpen}
         onClose={handleCloseModal}
@@ -135,10 +136,11 @@ const PaystackButton = ({ onSuccess = () => {} }) => {  // Default to an empty f
           label="Amount (Naira)"
           type="number"
           value={paymentAmount}
-          onChange={(e) => setPaymentAmount(e.target.value)}  // Update payment amount
+          onChange={(e) => setPaymentAmount(e.target.value)}
           fullWidth
         />
       </Modal>
+      
     </Box>
   );
 };

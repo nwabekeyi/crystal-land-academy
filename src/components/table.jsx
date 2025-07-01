@@ -280,9 +280,9 @@ const TableComponent = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {tableData.map((row) => (
+          {tableData.map((row, index) => (
             <TableRow
-              key={row.id}
+              key={row._id || index} // Use `_id` or fallback to `index` for the key
               onClick={() => onRowClick(row)}
               style={{ cursor: 'pointer', transition: 'background-color 0.3s' }}
               sx={{
@@ -305,7 +305,7 @@ const TableComponent = ({
                       padding: isSmallScreen ? '4px 8px' : '16px 10px',
                     }}
                   >
-                    {column.renderCell ? column.renderCell(row) : formatCellData(row[column.id])}
+                    {column.renderCell ? column.renderCell(row, index) : formatCellData(row[column.id])}
                   </TableCell>
                 ))}
             </TableRow>

@@ -18,52 +18,55 @@ const useApi = () => {
    */
   const callApi = useCallback(
     async (url, method = 'GET', body = null, config = {}) => {
+      console.log(`API call initiated: URL=${url}, Method=${method}, Body=`, body);
       setLoading(true);
       setError(null);
-
-      // Get accessToken from sessionStorage
+  
       const accessToken = sessionStorage.getItem('accessToken');
-      
-      // Initialize headers, merging with any provided in config
+      console.log(`Access Token: ${accessToken}`);
+  
       const headers = { ...config.headers };
-      
-      // Add Bearer token if accessToken exists
+  
       if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`;
       }
-
-      // Set Content-Type if body is not FormData
+  
       if (!(body instanceof FormData)) {
         headers['Content-Type'] = 'application/json';
       }
-
+  
       const options = {
         method,
         headers,
         body: body && !(body instanceof FormData) ? JSON.stringify(body) : body,
       };
-
+  
+      console.log(`Request options:`, options);
+  
       try {
         const response = await fetch(url, options);
+        console.log(`Response status: ${response.status}`);
+  
         if (!response.ok) {
-          let errorMessage = await response.json();
-          console.log(errorMessage);
-          if (errorMessage && errorMessage.message) {
-            setError(errorMessage.message || 'Something went wrong');
-          }
-        } else {
-          const contentType = response.headers.get('Content-Type');
-          let responseData;
-          if (contentType && contentType.includes('application/json')) {
-            responseData = await response.json();
-          } else {
-            responseData = await response.text(); // Fallback for non-JSON responses
-          }
-
-          setData(responseData);
-          return responseData;
+          const errorMessage = await response.json();
+          console.log(`Error response:`, errorMessage);
+          setError(errorMessage.message || 'Something went wrong');
+          return null;
         }
+  
+        const contentType = response.headers.get('Content-Type');
+        let responseData;
+        if (contentType && contentType.includes('application/json')) {
+          responseData = await response.json();
+        } else {
+          responseData = await response.text();
+        }
+  
+        console.log(`Response data:`, responseData);
+        setData(responseData);
+        return responseData;
       } catch (err) {
+        console.error(`Error during API call:`, err);
         setError(err.message || 'Something went wrong');
         return null;
       } finally {

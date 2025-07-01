@@ -1,5 +1,5 @@
 // Import environment variables from Vite
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const STUDENT_LOGIN_ENDPOINT = import.meta.env.VITE_STUDENTS_LOGIN_ENDPOINT;
 const TEACHERS_ENDPOINT = import.meta.env.VITE_TEACHERS_ENDPOINT;
 const ADMIN_LOGIN_ENDPOINT = import.meta.env.VITE_ADMIN_LOGIN_ENDPOINT;

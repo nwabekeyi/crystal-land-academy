@@ -46,6 +46,8 @@ const SubjectPerformance = () => {
     <div style={{ height: '350px' }}>
       <ResponsiveLine
         data={data}
+        animate={true}
+        motionConfig="default"
         theme={{
           axis: { domain: { line: { stroke: colors.grey[100] } }, legend: { text: { fill: colors.grey[100], fontSize: 8 } }, ticks: { line: { stroke: colors.grey[100], strokeWidth: 1 }, text: { fill: colors.grey[100], fontSize: 8 } } },
           legends: { text: { fill: colors.grey[100], fontSize: 8 } },

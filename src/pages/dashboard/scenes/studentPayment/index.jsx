@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, IconButton, Typography, LinearProgress, useTheme } from '@mui/material';
 import { Visibility } from '@mui/icons-material';
 import TableComponent from '../../../../components/table';
@@ -8,58 +8,66 @@ import Header from '../../components/Header';
 import { tokens } from '../../theme';
 import withDashboardWrapper from '../../../../components/dasboardPagesContainer';
 import PaystackButton from './PaystcakButton';
-
-// Dummy payment data
-const dummyPaymentData = {
-  receipts: [
-    {
-      id: 1,
-      transactionId: 'TXN_001',
-      amount: 50000, // Amount in kobo (₦500.00)
-      status: 'success',
-      date: '2025-06-01',
-      userName: 'John Doe',
-      program: 'Secondary Education',
-    },
-    {
-      id: 2,
-      transactionId: 'TXN_002',
-      amount: 75000, // ₦750.00
-      status: 'success',
-      date: '2025-06-05',
-      userName: 'John Doe',
-      program: 'Secondary Education',
-    },
-    {
-      id: 3,
-      transactionId: 'TXN_003',
-      amount: 100000, // ₦1000.00
-      status: 'failed',
-      date: '2025-06-10',
-      userName: 'John Doe',
-      program: 'Secondary Education',
-    },
-  ],
-  outstandings: {
-    totalOutstanding: 150000, // ₦1500.00
-    amountPaid: 125000, // ₦1250.00 (sum of successful payments: 50000 + 75000)
-  },
-};
+import useApi from '../../../../hooks/useApi'; // Custom hook for API calls
+import { endpoints } from '../../../../utils/constants';
+import { useSelector } from 'react-redux';
 
 const PaymentHistory = () => {
+  const user = useSelector((state) => state.users.user); // Retrieve user from Redux
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [receipts, setReceipts] = useState(dummyPaymentData.receipts); // Use dummy data
+
+  // State for payment records
+  const [receipts, setReceipts] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortBy, setSortBy] = useState('date');
+  const [sortBy, setSortBy] = useState('datePaid');
   const [sortDirection, setSortDirection] = useState('asc');
   const [openReceiptModal, setOpenReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [openSuccessModal, setOpenSuccessModal] = useState(false);
 
-  // Use dummy outstandings data
-  const { totalOutstanding, amountPaid } = dummyPaymentData.outstandings;
+  // State for payment summary
+  const [totalOutstanding, setTotalOutstanding] = useState(0);
+  const [amountPaid, setAmountPaid] = useState(0);
 
+  // Custom hook for API calls
+  const { callApi, loading, error } = useApi();
+
+  // Fetch payment records for the student
+useEffect(() => {
+  const fetchPaymentRecords = async () => {
+    const url = `${endpoints.PAYMENT}?studentId=${user._id}&page=${page + 1}&limit=${rowsPerPage}&sortBy=${sortBy}&sortDirection=${sortDirection}`;
+    console.log(`Calling API: ${url}`);
+
+    try {
+      const response = await callApi(url, 'GET');
+      console.log("API Response:", response);
+
+      if (response) {
+        const flatPayments = response.data.flatMap((receipt) => {
+          const term = receipt.termPayments?.[0] || {};
+          return (term.payments || []).map((payment) => ({
+            reference: payment.reference,
+            amountPaid: payment.amountPaid,
+            datePaid: payment.datePaid,
+            status: payment.status || receipt.status,
+            originalReceipt: receipt, // to pass full receipt to view
+          }));
+        });
+      
+        setReceipts(flatPayments); // Flattened structure
+        setTotalOutstanding(response.totalOutstanding || 0);
+        setAmountPaid(response.totalPaid || 0);
+      }
+      
+    } catch (error) {
+      console.error("Error fetching payment records:", error);
+    }
+  };
+
+  fetchPaymentRecords();
+}, [page, rowsPerPage, sortBy, sortDirection, callApi, user._id]);
   // Calculate total amount due and payment percentage
   const totalAmount = totalOutstanding + amountPaid;
   const paymentPercentage = totalAmount > 0 ? (amountPaid / totalAmount) * 100 : 0;
@@ -77,54 +85,82 @@ const PaymentHistory = () => {
     setOpenReceiptModal(true);
   };
 
-  // Simulate payment success
-  const handlePaymentSuccess = () => {
-    const newReceipt = {
-      id: receipts.length + 1,
-      transactionId: `TXN_${String(receipts.length + 1).padStart(3, '0')}`,
-      amount: 50000, // Mock new payment of ₦500.00
-      status: 'success',
-      date: new Date().toLocaleDateString(),
-      userName: 'John Doe',
-      program: 'Secondary Education',
+  // Handle payment success
+  const handlePaymentSuccess = async (paymentDetails) => {
+    console.log("Payment details:", paymentDetails); 
+    setOpenSuccessModal(true); 
+    const payload = {
+      studentId: user._id, // ObjectId from Redux
+      classLevelId: user.classLevelId, // ObjectId from Redux
+      academicYear: user.currentClassLevel?.academicYear?._id, // ObjectId from currentClassLevel
+      section: user.currentClassLevel?.section, // e.g., "Primary" or "Secondary"
+      termPayments: [
+        {
+          termName: "1st Term", // Replace with dynamic value if needed
+          subclassLetter: user.currentClassLevel?.subclass, // e.g., "A"
+          payments: [
+            {
+              amountPaid: paymentDetails.amount, // Ensure this is a valid number
+              method: "Card", // Payment method
+              reference: paymentDetails.reference, // Transaction reference from Paystack
+              status: "success", // Payment status
+            },
+          ],
+        },
+      ],
     };
-
-    setReceipts((prevReceipts) => [newReceipt, ...prevReceipts]);
+  
+    console.log("Payload being sent to backend:", JSON.stringify(payload, null, 2));
+  
+    const response = await callApi(endpoints.createPayment, "POST", payload);
+  
+    if (response) {
+      setReceipts((prevReceipts) => [response.data, ...prevReceipts]);
+      setAmountPaid((prevAmount) => prevAmount + paymentDetails.amount);
+      setTotalOutstanding((prevOutstanding) => prevOutstanding - paymentDetails.amount);
+      setOpenSuccessModal(true);
+    }
   };
 
   // Table Columns
   const columns = [
     {
-      id: 'id',
+      id: 'sn',
       label: 'S/N',
-      flex: 0.5,
-      renderCell: (row) => <Typography>{row.id}</Typography>,
+      flex: 0.3,
+      renderCell: (row, index) => <Typography>{index + 1}</Typography>,
     },
     {
-      id: 'transactionId',
+      id: 'reference',
       label: 'Transaction ID',
       flex: 1,
-      renderCell: (row) => <Typography>{String(row.transactionId || 'N/A')}</Typography>,
+      renderCell: (row) => <Typography>{row.reference || 'N/A'}</Typography>,
     },
     {
-      id: 'amount',
+      id: 'amountPaid',
       label: 'Amount (₦)',
       flex: 1,
-      renderCell: (row) => <Typography>₦{(row.amount / 100).toFixed(2)}</Typography>, // Convert kobo to naira
+      renderCell: (row) => <Typography>₦{row.amountPaid }</Typography>,
     },
     {
       id: 'status',
       label: 'Status',
       flex: 1,
       renderCell: (row) => (
-        <Typography>{row.status.charAt(0).toUpperCase() + row.status.slice(1)}</Typography>
+        <Typography>
+          {row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'N/A'}
+        </Typography>
       ),
     },
     {
-      id: 'date',
+      id: 'datePaid',
       label: 'Date',
       flex: 1,
-      renderCell: (row) => <Typography>{row.date || 'N/A'}</Typography>,
+      renderCell: (row) => (
+        <Typography>
+          {row.datePaid ? new Date(row.datePaid).toLocaleDateString() : 'N/A'}
+        </Typography>
+      ),
     },
     {
       id: 'actions',
@@ -132,13 +168,14 @@ const PaymentHistory = () => {
       flex: 1,
       renderCell: (row) => (
         <Box display="flex" gap="10px">
-          <IconButton onClick={() => handleViewReceipt(row)}>
+          <IconButton onClick={() => handleViewReceipt(row.originalReceipt)}>
             <Visibility />
           </IconButton>
         </Box>
       ),
     },
   ];
+  
 
   const tableProps = {
     columns,
@@ -152,7 +189,7 @@ const PaymentHistory = () => {
     onPageChange: (e, newPage) => setPage(newPage),
     onRowsPerPageChange: (e) => setRowsPerPage(parseInt(e.target.value, 10)),
     onRowClick: (row) => console.log('Row clicked:', row),
-    hiddenColumnsSmallScreen: ['status', 'transactionId'],
+    hiddenColumnsSmallScreen: ['status', 'reference'],
   };
 
   return (
@@ -185,7 +222,15 @@ const PaymentHistory = () => {
               </Typography>
             </Box>
             <Box>
-              <PaystackButton onSuccess={handlePaymentSuccess} />
+              <PaystackButton
+                onSuccess={handlePaymentSuccess}
+                studentId={user._id} // ObjectId
+                classLevelId={user.classLevelId} // ObjectId
+                academicYear={user.currentClassLevel?.academicYear?._id} // ObjectId
+                section={user.currentClassLevel?.section}
+                termName="1st Term"
+                subclassLetter={user.currentClassLevel?.subclass}
+              />
             </Box>
           </Box>
 
@@ -204,6 +249,18 @@ const PaymentHistory = () => {
         </Box>
 
         <TableComponent {...tableProps} />
+
+        {/* Success Modal */}
+        <Modal
+          open={openSuccessModal}
+          onClose={() => setOpenSuccessModal(false)}
+          title="Payment Successful"
+          noConfirm
+        >
+          <Typography variant="h6" align="center" color="green">
+            Your payment was successful!
+          </Typography>
+        </Modal>
 
         {/* View Receipt Modal */}
         <Modal

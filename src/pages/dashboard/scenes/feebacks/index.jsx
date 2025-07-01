@@ -1,60 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Typography, useTheme } from '@mui/material';
 import { tokens } from '../../theme';
 import Header from '../../components/Header';
 import TableComponent from '../../../../components/table';
 import withDashboardWrapper from '../../../../components/dasboardPagesContainer';
-
-// Dummy feedback data
-const dummyFeedbacks = [
-  {
-    id: 1,
-    name: 'Alice Johnson',
-    role: 'Student',
-    date: '2025-06-01',
-    comments: 'The math classes are very engaging, but more practice sessions would help.',
-  },
-  {
-    id: 2,
-    name: 'John Doe',
-    role: 'Instructor',
-    date: '2025-06-02',
-    comments: 'The new teaching tools are effective, but Wi-Fi needs improvement.',
-  },
-  {
-    id: 3,
-    name: 'Mary Smith',
-    role: 'Worker',
-    date: '2025-06-03',
-    comments: 'The staff lounge is great, but cleaning schedules need adjustment.',
-  },
-  {
-    id: 4,
-    name: 'Bob Brown',
-    role: 'Student',
-    date: '2025-06-04',
-    comments: 'Science labs are fun, but safety equipment needs updating.',
-  },
-  {
-    id: 5,
-    name: 'Emma Wilson',
-    role: 'Instructor',
-    date: '2025-06-05',
-    comments: 'Student participation has improved with group activities.',
-  },
-];
+import useApi from '../../../../hooks/useApi';
+import { endpoints } from '../../../../utils/constants';
 
 const Feedbacks = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const [feedbacks] = useState(dummyFeedbacks); // Use dummy data directly
-  const [sortBy, setSortBy] = useState('id');
+  const [students, setStudents] = useState([]);
+  const [sortBy, setSortBy] = useState('_id');
   const [sortDirection, setSortDirection] = useState('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
+  const { data, loading, error, callApi } = useApi();
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      const response = await callApi(endpoints.FEEDBACKS, 'GET');
+      if (response && response.data && response.data.feedbacks) {
+        console.log("Fetched feedbacks:", response.data.feedbacks); // Debugging log
+        setStudents(response.data.feedbacks);
+      }
+    };
+
+    fetchStudents();
+  }, [callApi]);
+
   const columns = [
-    { id: 'id', label: 'S/N', flex: 0.5 },
+    {
+      id: '_id',
+      label: 'S/N',
+      flex: 0.5,
+      renderCell: (row, index) => <Typography>{index + 1}</Typography>, // Fix for S/N column
+    },
     {
       id: 'name',
       label: 'Name',
@@ -102,8 +84,8 @@ const Feedbacks = () => {
 
   const tableProps = {
     columns,
-    tableHeader: 'Feedback',
-    data: feedbacks,
+    tableHeader: 'Feedbacks',
+    data: students,
     sortBy,
     sortDirection,
     onSortChange: handleSortChange,
@@ -116,7 +98,7 @@ const Feedbacks = () => {
 
   return (
     <Box>
-      <Header title="Feedback" subtitle="Feedback from Students, Instructors, and Workers" />
+      <Header title="Feedbacks" subtitle="List of all feedbacks" />
 
       <Box
         height="75vh"
@@ -143,7 +125,13 @@ const Feedbacks = () => {
           },
         }}
       >
-        <TableComponent {...tableProps} />
+        {loading ? (
+          <Typography>Loading...</Typography>
+        ) : error ? (
+          <Typography>Error fetching feedbacks</Typography>
+        ) : (
+          <TableComponent {...tableProps} />
+        )}
       </Box>
     </Box>
   );

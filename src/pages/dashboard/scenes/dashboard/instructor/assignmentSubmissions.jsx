@@ -3,13 +3,12 @@ import { Box, Typography } from '@mui/material';
 import ProgressCircle from '../../../components/ProgressCircle';
 import { useTheme } from '@mui/material';
 import { tokens } from '../../../theme';
-import  useTeacherData  from './useTeacherData';
+import useTeacherData from './useTeacherData';
 
 const AssignmentSubmissions = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  const { assignmentSubmissionRate } = useTeacherData(); // Assumed to return { totalAssignmentRate }
-  const submissionRate = assignmentSubmissionRate?.totalAssignmentRate || 85; // Dummy data: 85%
+  const { assignmentSubmissionRate } = useTeacherData(); // { totalAssignmentRate }
 
   return (
     <Box display="flex" flexDirection="column" alignItems="center">
@@ -17,11 +16,19 @@ const AssignmentSubmissions = () => {
         Assignment Submissions
       </Typography>
       <Box mt="25px">
-        <ProgressCircle size="125" progress={submissionRate / 100} />
-        <Typography variant="h5" color={colors.blueAccent[500]} sx={{ mt: '15px' }}>
-          {`${submissionRate}% submission rate`}
-        </Typography>
-        <Typography>Average assignment submission rate</Typography>
+        {assignmentSubmissionRate && assignmentSubmissionRate.totalAssignmentRate > 0 ? (
+          <>
+            <ProgressCircle size="125" progress={assignmentSubmissionRate.totalAssignmentRate / 100} />
+            <Typography variant="h5" color={colors.blueAccent[500]} sx={{ mt: '15px' }}>
+              {`${assignmentSubmissionRate.totalAssignmentRate}% submission rate`}
+            </Typography>
+            <Typography>Average assignment submission rate</Typography>
+          </>
+        ) : (
+          <Typography variant="body2" color={colors.grey[300]}>
+            No submission data available.
+          </Typography>
+        )}
       </Box>
     </Box>
   );

@@ -65,29 +65,27 @@ const useAcademicYears = () => {
       setError((prev) => ({ ...prev, general: "User not authenticated. Please log in." }));
       return false;
     }
-  
+
     try {
       setIsSubmitting(true);
       setError((prev) => ({ ...prev, general: "" }));
-  
+
       const response = await callApi(`${endpoints.ACADEMIC_YEARS}/${id}`, "DELETE");
       if (!response || response.status !== "success") {
         throw new Error(response?.message || "Failed to delete academic year");
       }
-  
-      // Remove the deleted academic year from the store
+
       dispatch(
         setAcademicYears(academicYears.filter((year) => year._id !== id))
       );
-  
-      // If the deleted year was the current academic year, clear it
+
       if (currentAcademicYear?._id === id) {
         dispatch(setCurrentAcademicYear(null));
       }
-  
+
       await refetchAcademicYears();
       await refetchCurrentYear();
-  
+
       return true;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Failed to delete academic year";
@@ -107,7 +105,6 @@ const useAcademicYears = () => {
       const updatedTerms = [...prev.terms];
       updatedTerms[index] = { ...updatedTerms[index], [name]: val, createdBy: userId };
 
-      // If isCurrent is being set to true, unset isCurrent for other terms
       if (isCurrentChange && val) {
         updatedTerms.forEach((term, i) => {
           if (i !== index) term.isCurrent = false;
@@ -125,7 +122,7 @@ const useAcademicYears = () => {
   };
 
   const validateForm = () => {
-    const { name, fromYear, toYear } = formValues;
+    const { name, fromYear, toYear, isCurrent } = formValues;
     const errors = {
       name: "",
       fromYear: "",
@@ -133,26 +130,61 @@ const useAcademicYears = () => {
       general: "",
     };
 
+    // Validate name
     if (!name.trim()) {
       errors.name = "Academic year name is required";
     } else if (!/^\d{4}\/\d{4}$/.test(name.trim())) {
       errors.name = "Name must be in format YYYY/YYYY (e.g., 2024/2025)";
     }
 
+    // Validate fromYear
     if (!fromYear.trim()) {
       errors.fromYear = "From year is required";
     }
 
+    // Validate toYear
     if (!toYear.trim()) {
       errors.toYear = "To year is required";
     }
 
+    // Validate fromYear is before toYear
+    if (fromYear && toYear && new Date(fromYear) >= new Date(toYear)) {
+      errors.toYear = "To year must be after from year";
+    }
+
+    // Validate minimum duration of one year
+    if (fromYear && toYear) {
+      const fromDate = new Date(fromYear);
+      const toDate = new Date(toYear);
+      const oneYearInMs = 365 * 24 * 60 * 60 * 1000;
+      if ((toDate - fromDate) < oneYearInMs) {
+        errors.general = "Academic year must span at least one year";
+      }
+    }
+
+    // Validate isCurrent date constraints
+    if (isCurrent && fromYear && toYear) {
+      const now = new Date();
+      const oneMonthFromNow = new Date();
+      oneMonthFromNow.setMonth(now.getMonth() + 1);
+
+      const start = new Date(fromYear);
+      const end = new Date(toYear);
+
+      if (start > oneMonthFromNow) {
+        errors.fromYear = "Current academic year cannot start more than one month in the future";
+      }
+      if (end < now) {
+        errors.toYear = "Current academic year cannot end in the past";
+      }
+    }
+
     setError(errors);
-    return !errors.name && !errors.fromYear && !errors.toYear;
+    return !errors.name && !errors.fromYear && !errors.toYear && !errors.general;
   };
 
   const validateTermForm = () => {
-    const { terms } = termFormValues;
+    const { terms, academicYearId } = termFormValues;
     const errors = {
       general: "",
       terms: [
@@ -161,6 +193,11 @@ const useAcademicYears = () => {
         { description: "", duration: "", startDate: "", endDate: "" },
       ],
     };
+
+    // Validate academicYearId
+    if (!academicYearId) {
+      errors.general = "Academic year ID is required";
+    }
 
     // Validate terms array
     if (!terms || terms.length !== 3 || !terms.every((term) => ["1st Term", "2nd Term", "3rd Term"].includes(term.name))) {
@@ -176,6 +213,7 @@ const useAcademicYears = () => {
     // Allowed duration values
     const allowedDurations = Array.from({ length: 10 }, (_, i) => `${i + 1} month${i + 1 > 1 ? "s" : ""}`);
 
+    // Validate term fields
     terms.forEach((term, index) => {
       if (!term.description.trim()) errors.terms[index].description = "Description is required";
       if (!term.duration || !allowedDurations.includes(term.duration)) {
@@ -186,13 +224,21 @@ const useAcademicYears = () => {
       if (term.startDate && term.endDate && new Date(term.startDate) >= new Date(term.endDate)) {
         errors.terms[index].endDate = "End date must be after start date";
       }
+      // Validate isCurrent date constraints
+      if (term.isCurrent && term.startDate && term.endDate) {
+        const now = new Date();
+        const oneMonthFromNow = new Date();
+        oneMonthFromNow.setMonth(now.getMonth() + 1);
+        const start = new Date(term.startDate);
+        const end = new Date(term.endDate);
+        if (start > oneMonthFromNow) {
+          errors.terms[index].startDate = `Term ${term.name} cannot be current: start date is more than one month in the future`;
+        }
+        if (end < now) {
+          errors.terms[index].endDate = `Term ${term.name} cannot be current: end date is in the past`;
+        }
+      }
     });
-
-    // Validate unique durations within terms
-    const durations = terms.map((term) => term.duration);
-    if (new Set(durations).size !== durations.length) {
-      errors.general = "All terms must have unique durations";
-    }
 
     // Validate no date intersection within terms
     for (let i = 0; i < terms.length; i++) {
@@ -297,7 +343,7 @@ const useAcademicYears = () => {
         terms: prev.terms.map(() => ({ description: "", duration: "", startDate: "", endDate: "" })),
       }));
 
-      const termResponse = await callApi(endpoints.ACADEMIC_TERMS, "POST", academicTermData);
+      const termResponse = await callApi(endpoints.ACADEMIC_TERM, "POST", academicTermData);
       if (!termResponse || termResponse.status !== "success") {
         throw new Error(termResponse?.message || "Failed to create academic term");
       }
@@ -464,7 +510,7 @@ const useAcademicYears = () => {
     resetForm,
     resetTermForm,
     termFormValues,
-    handleDeleteAcademicYear
+    handleDeleteAcademicYear,
   };
 };
 

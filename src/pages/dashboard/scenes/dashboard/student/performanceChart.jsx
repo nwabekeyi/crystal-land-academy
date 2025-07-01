@@ -176,6 +176,8 @@ const PerformanceLineChart = ({ isCustomLineColors = false, isDashboard = false 
       )}
       <ResponsiveLine
         data={lineData}
+        animate={true}
+        motionConfig="default"
         theme={{
           axis: {
             domain: {

@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, TextField, FormControlLabel, Checkbox, Typography, Button, MenuItem, Select, InputLabel, FormControl } from "@mui/material";
+import { Box, TextField, FormControlLabel, Checkbox, Typography, Button, FormControl, InputLabel, Select, MenuItem} from "@mui/material";
 import Modal from "../../../components/modal";
 
 const AddAcademicYearModal = ({
@@ -14,6 +14,14 @@ const AddAcademicYearModal = ({
   isSubmitting = false,
 }) => {
   const today = new Date().toISOString().split("T")[0];
+
+  // Calculate minimum toYear (one year after fromYear)
+  const getMinToYear = () => {
+    if (!formValues.fromYear) return today;
+    const fromDate = new Date(formValues.fromYear);
+    fromDate.setFullYear(fromDate.getFullYear() + 1);
+    return fromDate.toISOString().split("T")[0];
+  };
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -93,7 +101,7 @@ const AddAcademicYearModal = ({
               error={!!error.toYear}
               helperText={error.toYear}
               InputLabelProps={{ shrink: true }}
-              inputProps={{ min: formValues.fromYear || today }}
+              inputProps={{ min: getMinToYear() }}
             />
           </Box>
 
@@ -177,28 +185,17 @@ const AddAcademicTermModal = ({
             <Box key={term.name} mb={3} sx={{ border: "1px solid #ccc", p: 2, borderRadius: 1 }}>
               <Typography variant="h6">{term.name}</Typography>
               <Box mb={2}>
-                <FormControl fullWidth required error={!!error.terms?.[index]?.name}>
-                  <InputLabel id={`term-name-label-${index}`}>Term Name</InputLabel>
-                  <Select
-                    labelId={`term-name-label-${index}`}
-                    name="name"
-                    value={term.name || ""}
-                    onChange={(e) => handleChange(e, index)}
-                    label="Term Name"
-                    disabled
-                  >
-                    {["1st Term", "2nd Term", "3rd Term"].map((termName) => (
-                      <MenuItem key={termName} value={termName}>
-                        {termName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {error.terms?.[index]?.name && (
-                    <Typography variant="caption" color="error">
-                      {error.terms[index].name}
-                    </Typography>
-                  )}
-                </FormControl>
+                <TextField
+                  label="Term Name"
+                  name="name"
+                  value={term.name || ""}
+                  onChange={(e) => handleChange(e, index)}
+                  fullWidth
+                  required
+                  disabled
+                  error={!!error.terms?.[index]?.name}
+                  helperText={error.terms?.[index]?.name}
+                />
               </Box>
               <Box mb={2}>
                 <TextField
@@ -270,7 +267,7 @@ const AddAcademicTermModal = ({
                   control={
                     <Checkbox
                       checked={term.isCurrent || false}
-                      onChange={(e) => handleChange(e, index, true)} // Pass isCurrent flag
+                      onChange={(e) => handleChange(e, index, true)}
                       name="isCurrent"
                       color="primary"
                     />

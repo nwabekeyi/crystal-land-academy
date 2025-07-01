@@ -230,15 +230,18 @@ const SubmitFeedback = ({ openFeedbackModal, setModalOpen }) => {
 
     await submitFeedback(endpoints.FEEDBACKS, 'POST', newFeedback);
 
-    if (!submitError) {
-      setConfirmModal(true);
-      // Update feedback list with the newly added feedback
-      setName('');
-      setRole('');
-      setDate('');
-      setComments('');
-    }
-  };
+  if (!submitError) {
+    setConfirmModal(true);
+    // Update feedback list with the newly added feedback
+    setName('');
+    setRole('');
+    setDate('');
+    setComments('');
+  }else{
+    console.error('Error submitting feedback:', submitError);
+  }
+};
+
 
   return (
     <>
@@ -250,38 +253,38 @@ const SubmitFeedback = ({ openFeedbackModal, setModalOpen }) => {
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
-            label="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            fullWidth
-            margin="normal"
-          />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Role</InputLabel>
-            <Select value={role} onChange={(e) => setRole(e.target.value)}>
-              <MenuItem value="student">Student</MenuItem>
-              <MenuItem value="instructor">Instructor</MenuItem>
-              <MenuItem value="worker">Worker</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            label="Date"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            fullWidth
-            margin="normal"
-            InputLabelProps={{ shrink: true }}
-          />
-          <TextField
-            label="Comments"
-            value={comments}
-            onChange={(e) => setComments(e.target.value)}
-            fullWidth
-            margin="normal"
-            multiline
-            rows={4}
-          />
+          label="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          fullWidth
+          margin="normal"
+        />
+        <FormControl fullWidth margin="normal">
+          <InputLabel>Role</InputLabel>
+          <Select value={role} onChange={(e) => setRole(e.target.value)}>
+            <MenuItem value="Student">Student</MenuItem>
+            <MenuItem value="Instructor">Instructor</MenuItem>
+            <MenuItem value="Worker">Worker</MenuItem>
+          </Select>
+        </FormControl>
+        <TextField
+          label="Date"
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          fullWidth
+          margin="normal"
+          InputLabelProps={{ shrink: true }}
+        />
+        <TextField
+          label="Comments"
+          value={comments}
+          onChange={(e) => setComments(e.target.value)}
+          fullWidth
+          margin="normal"
+          multiline
+          rows={4}
+        />
         </Box>
       </Modal>
 
