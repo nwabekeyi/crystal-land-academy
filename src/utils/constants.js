@@ -1,5 +1,5 @@
 // Import environment variables from Vite
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const STUDENT_LOGIN_ENDPOINT = import.meta.env.VITE_STUDENTS_LOGIN_ENDPOINT;
 const TEACHERS_ENDPOINT = import.meta.env.VITE_TEACHERS_ENDPOINT;
 const ADMIN_LOGIN_ENDPOINT = import.meta.env.VITE_ADMIN_LOGIN_ENDPOINT;
@@ -25,7 +25,7 @@ const PASSWORD_LINK = import.meta.env.VITE_PASSWORD_LINK;
 const RESET_PASSWORD = import.meta.env.VITE_RESET_PASSWORD;
 const PAYSTACK_PAYMENT = import.meta.env.VITE_PAYSTACK_PAYMENT;
 const PAYSTACK_INIT = import.meta.env.VITE_PAYSTACK_INIT;
-const ANNOUNCEMENT = import.meta.env.VITE_COURSES_ANNOUNCEMENT;
+const ANNOUNCEMENT = import.meta.env.VITE_ANNOUNCEMENT;
 const MARK_TIMETABLE = import.meta.env.VITE_MARK_TIMETABLEDONE;
 const CREATE_TEACHER = import.meta.env.VITE_CREATE_TEACHER;
 const CREATE_STUDENT = import.meta.env.VITE_CREATE_STUDENT;

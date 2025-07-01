@@ -6,9 +6,9 @@ import TableComponent from "../../../../../components/table";
 import useAcademicYears from "./useAcademicYears";
 import { AddAcademicYearModal, AddAcademicTermModal } from "./academicYearModals";
 import ActionButton from "../../../components/actionButton";
-import { FaEdit, FaPlusCircle, FaTrash } from "react-icons/fa"; // Added FaTrash
+import { FaEdit, FaPlusCircle, FaTrash } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import Modal from "../../../components/modal"; // Import Modal for confirmation
+import Modal from "../../../components/modal";
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
@@ -54,7 +54,7 @@ const Admin = () => {
     termError,
     handleSubmit,
     handleCreateAcademicTerm,
-    handleDeleteAcademicYear, // Add this
+    handleDeleteAcademicYear,
     startEdit,
     startAddTerm,
     editMode,
@@ -69,8 +69,8 @@ const Admin = () => {
   } = useAcademicYears();
   const [openForm, setOpenForm] = useState(false);
   const [openTermForm, setOpenTermForm] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false); // Add state for delete modal
-  const [deleteYearId, setDeleteYearId] = useState(null); // Track year to delete
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteYearId, setDeleteYearId] = useState(null);
   const userId = useSelector((state) => state.users.user?._id) || "";
 
   const [sortBy, setSortBy] = useState("name");
