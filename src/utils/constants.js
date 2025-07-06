@@ -36,6 +36,7 @@ const SUBJECT = import.meta.env.VITE_SUBJECT;
 const CHANGEPASS = import.meta.env.VITE_CHANGE_PASSWORD;
 const REGISTRATION_CODE = import.meta.env.VITE_REGISTRATION_CODE;
 const ACADEMIC_YEAR_ID = import.meta.env.VITE_ACADEMICYEARS_ID;
+const EVENT = import.meta.env.VITE_EVENTS_ENDPOINT;
 
 const endpoints = {
   LOGIN: {
@@ -78,6 +79,7 @@ const endpoints = {
   GET_A_TEACHER: `${BASE_URL}/teacher`,
   REGISTRATION_CODE: `${BASE_URL}${REGISTRATION_CODE}`,
   ACADEMICYEARS_ID: `${BASE_URL}${ACADEMIC_YEAR_ID}`,
+  EVENT: `${BASE_URL}${EVENT}`,
 };
 
 export { endpoints };
