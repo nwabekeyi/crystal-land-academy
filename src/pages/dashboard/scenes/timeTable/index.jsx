@@ -3,6 +3,7 @@ import Student from './student';
 import Instructor from './instructor';
 import { useSelector } from 'react-redux';
 import withDashboardWrapper from '../../../../components/dasboardPagesContainer';
+import Admin from './admin';
 
 const TimeTable = () => {
      // Fetch user data from localStorage
@@ -13,7 +14,9 @@ const TimeTable = () => {
    // Render based on user role
    return (
      <div>
-       {userRole === 'student' ? <Student /> : <Instructor babtechUser = {user}/>}
+       {userRole === 'student' ? <Student /> 
+       :userRole === 'teacher' ? <Instructor />
+      : <Admin />}
      </div>
    );
  };

@@ -76,6 +76,7 @@ function DashboardHome() {
       case "admin":
         return (
           <>
+            <Route path="/timeTable" element={<TimeTable />} />
             <Route path="/messenger" element={<ChatApp />} />
             <Route path="/team" element={<Team />} />
             <Route path="/contacts" element={<Contacts />} />

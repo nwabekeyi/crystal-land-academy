@@ -1,34 +1,40 @@
+// components/OutstandingPayments.js
 import { ResponsivePie } from '@nivo/pie';
 import { useTheme, Box, Typography } from '@mui/material';
 import { tokens } from '../../../theme';
+import useAdminData from './useAdminData';
 
 const OutstandingPayments = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
+  const { outstandingFeesData, outstandingFeesLoading, outstandingFeesError } = useAdminData();
 
-  const dummyData = [
-    { id: 'Kindergarten', label: 'Kindergarten', value: 5000 },
-    { id: 'Nursery 1', label: 'Nursery 1', value: 4500 },
-    { id: 'Nursery 2', label: 'Nursery 2', value: 4700 },
-    { id: 'Primary 1', label: 'Primary 1', value: 6000 },
-    { id: 'Primary 2', label: 'Primary 2', value: 5800 },
-    { id: 'Primary 3', label: 'Primary 3', value: 5600 },
-    { id: 'Primary 4', label: 'Primary 4', value: 5500 },
-    { id: 'Primary 5', label: 'Primary 5', value: 5400 },
-    { id: 'Primary 6', label: 'Primary 6', value: 5300 },
-    { id: 'JSS 1', label: 'JSS 1', value: 7000 },
-    { id: 'JSS 2', label: 'JSS 2', value: 6800 },
-    { id: 'JSS 3', label: 'JSS 3', value: 6600 },
-    { id: 'SS 1', label: 'SS 1', value: 7500 },
-    { id: 'SS 2', label: 'SS 2', value: 7300 },
-    { id: 'SS 3', label: 'SS 3', value: 7200 },
-  ];
+  if (outstandingFeesLoading) {
+    return <Box>Loading data...</Box>;
+  }
+
+  if (outstandingFeesError) {
+    return <Box>Error: {outstandingFeesError.message || 'Failed to load outstanding fees data'}</Box>;
+  }
+
+  if (!outstandingFeesData || !Array.isArray(outstandingFeesData) || outstandingFeesData.length === 0) {
+    return <Box>No outstanding fees data available.</Box>;
+  }
+
+  // Filter out entries with zero values to avoid empty chart, or add a small default value
+  const chartData = outstandingFeesData.map(item => ({
+    ...item,
+    value: item.value === 0 ? 0.01 : item.value, // Small value to ensure chart renders
+  }));
 
   return (
     <Box>
+      <Typography variant="h6" sx={{ mb: 2, color: colors.grey[100] }}>
+        Outstanding Fees by Class (₦)
+      </Typography>
       <div style={{ height: '350px' }}>
         <ResponsivePie
-          data={dummyData}
+          data={chartData}
           theme={{
             axis: {
               domain: { line: { stroke: colors.grey[100] } },
@@ -42,6 +48,7 @@ const OutstandingPayments = () => {
                 color: colors.grey[100],
                 fontSize: 12,
               },
+              format: value => `₦${value.toLocaleString('en-NG')}`, // Format tooltip in Naira
             },
           }}
           margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
@@ -58,6 +65,7 @@ const OutstandingPayments = () => {
           arcLabelsRadiusOffset={0.4}
           arcLabelsSkipAngle={7}
           arcLabelsTextColor={{ from: 'color', modifiers: [['darker', 2]] }}
+          arcLabelsText={value => `₦${value.toLocaleString('en-NG')}`} // Format labels in Naira
           defs={[
             { id: 'dots', type: 'patternDots', background: 'inherit', color: 'rgba(255, 255, 255, 0.3)', size: 4, padding: 1, stagger: true },
             { id: 'lines', type: 'patternLines', background: 'inherit', color: 'rgba(255, 255, 255, 0.3)', rotation: -45, lineWidth: 6, spacing: 10 },
@@ -78,25 +86,25 @@ const OutstandingPayments = () => {
               symbolSize: 18,
               symbolShape: 'circle',
               effects: [{ on: 'hover', style: { itemTextColor: '#000' } }],
-              data: dummyData.map(item => ({
+              data: chartData.map(item => ({
                 id: item.id,
-                label: item.label, // Only class name, no amount
+                label: item.label,
               })),
             },
           ]}
         />
       </div>
       <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
-        {dummyData.map((item) => (
+        {outstandingFeesData.map((item) => (
           <Typography
             key={item.id}
             sx={{
               color: colors.grey[100],
               fontSize: 12,
-              minWidth: 120, // Ensure consistent spacing
+              minWidth: 120,
             }}
           >
-            {item.label}: ${item.value.toLocaleString()}
+            {item.label}: ₦{item.value.toLocaleString('en-NG')}
           </Typography>
         ))}
       </Box>

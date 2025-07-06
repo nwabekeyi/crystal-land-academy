@@ -18,9 +18,9 @@ import PopulationChart from './populationChart';
 import RevenueChart from './revenueChart';
 import SchoolActivities from '../../calendar/schoolActivities';
 import OutstandingPayments from './outstandingPayments';
-import SubjectStats from './subjectStat';
 import TopTeachers from './topTeachers';
 import useAdminData from './useAdminData';
+import EnrollmentStats from './enrollmenttStats';
 
 const Admin = () => {
   const theme = useTheme();
@@ -118,10 +118,9 @@ const Admin = () => {
         <RowContainer>
           <ResponsiveContainer md={8}>
             <DashboardDataBox noFlex>
-              <Typography variant="h5" fontWeight="600" textAlign="center">Revenue Generated</Typography>
+              <Typography variant="h5" fontWeight="600" textAlign="center">School fees data</Typography>
               <Box mt="10px">
                 <RevenueChart />
-                <Typography variant="body1" textAlign="center" mt="10px">Total Revenue: ${totalRevenue.toLocaleString()}</Typography>
               </Box>
             </DashboardDataBox>
           </ResponsiveContainer>
@@ -135,13 +134,13 @@ const Admin = () => {
           </ResponsiveContainer>
         </RowContainer>
 
-        {/* Row 3: Subject Stats, Top Teachers, Classes */}
+        {/* Row 3: Enrollmwent Stats, Top Teachers, Classes */}
         <RowContainer>
           <ResponsiveContainer md={4}>
             <DashboardDataBox noFlex moreStyles={{ height: '400px', overflowY: 'auto' }}>
-              <Typography variant="h5" fontWeight="600" textAlign="center" gutterBottom>Subject Stats</Typography>
+              <Typography variant="h5" fontWeight="600" textAlign="center" gutterBottom>Enrollment Stats</Typography>
               <Box mt="10px">
-                <SubjectStats />
+                <EnrollmentStats />
               </Box>
             </DashboardDataBox>
           </ResponsiveContainer>

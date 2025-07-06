@@ -36,6 +36,10 @@ const SUBJECT = import.meta.env.VITE_SUBJECT;
 const CHANGEPASS = import.meta.env.VITE_CHANGE_PASSWORD;
 const REGISTRATION_CODE = import.meta.env.VITE_REGISTRATION_CODE;
 const ACADEMIC_YEAR_ID = import.meta.env.VITE_ACADEMICYEARS_ID;
+const FINANCIAL_DATA = import.meta.env.VITE_FINANCIAL_DATA;
+const EXPENDITURES = import.meta.env.VITE_EXPENDITURES;
+const OTHER_REVENUE = import.meta.env.VITE_OTHER_REVENUE;
+
 
 const endpoints = {
   LOGIN: {
@@ -78,6 +82,11 @@ const endpoints = {
   GET_A_TEACHER: `${BASE_URL}/teacher`,
   REGISTRATION_CODE: `${BASE_URL}${REGISTRATION_CODE}`,
   ACADEMICYEARS_ID: `${BASE_URL}${ACADEMIC_YEAR_ID}`,
+  SCHOOL_FEES_DATA: `${BASE_URL}${FINANCIAL_DATA}/school-fees`,
+  OUTSTANDING_FEES_DATA: `${BASE_URL}${FINANCIAL_DATA}/outstanding-fees`,
+  EXPENDITURES: `${BASE_URL}${EXPENDITURES}`,
+  OTHER_REVENUES: `${BASE_URL}${OTHER_REVENUE}`,
+
 };
 
 export { endpoints };
